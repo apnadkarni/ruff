@@ -280,6 +280,189 @@ function toggleSource( id )
     }
 }
 
+proc ::ruff::formatter::html::parse_inline_markdown {text} {
+    set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
+
+    set index 0
+    set result {}
+
+    set re_backticks   {\A`+}
+    set re_whitespace  {\s}
+    set re_inlinelink  {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\]\s*\(\s*((?:[^\s\)]+|\([^\s\)]+\))+)?(\s+([\"'])(.*)?\4)?\s*\)}
+    set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\s*\[((?:[^\]]|\[[^\]]*?\])*)\])?}
+    set re_htmltag     {\A</?\w+\s*>|\A<\w+(?:\s+\w+=(?:\"[^\"]+\"|\'[^\']+\'))*\s*/?>}
+    set re_autolink    {\A<(?:(\S+@\S+)|(\S+://\S+))>}
+    set re_comment     {\A<!--.*?-->}
+    set re_entity      {\A\&\S+;}
+
+    while {[set chr [string index $text $index]] ne {}} {
+        switch $chr {
+            "\\" {
+                # ESCAPES
+                set next_chr [string index $text [expr $index + 1]]
+
+                if {[string first $next_chr {\`*_\{\}[]()#+-.!>|}] != -1} {
+                    set chr $next_chr
+                    incr index
+                }
+            }
+            {_} {
+                # Unlike Markdown, do not treat underscores as special char
+            }
+            {*} {
+                # EMPHASIS
+                if {[regexp $re_whitespace [string index $result end]] &&
+                    [regexp $re_whitespace [string index $text [expr $index + 1]]]} \
+                    {
+                        #do nothing
+                    } \
+                    elseif {[regexp -start $index \
+                                 "\\A(\\$chr{1,3})((?:\[^\\$chr\\\\]|\\\\\\$chr)*)\\1" \
+                                 $text m del sub]} \
+                    {
+                        switch [string length $del] {
+                            1 {
+                                append result "<em>[parse_inline_markdown $sub]</em>"
+                            }
+                            2 {
+                                append result "<strong>[parse_inline_markdown $sub]</strong>"
+                            }
+                            3 {
+                                append result "<strong><em>[parse_inline_markdown $sub]</em></strong>"
+                            }
+                        }
+
+                        incr index [string length $m]
+                        continue
+                    }
+            }
+            {`} {
+                # CODE
+                regexp -start $index $re_backticks $text m
+                set start [expr $index + [string length $m]]
+
+                if {[regexp -start $start -indices $m $text m]} {
+                    set stop [expr [lindex $m 0] - 1]
+
+                    set sub [string trim [string range $text $start $stop]]
+
+                    append result "<code>[escape $sub]</code>"
+                    set index [expr [lindex $m 1] + 1]
+                    continue
+                }
+            }
+            {!} -
+            {[} {
+                # LINKS AND IMAGES
+                if {$chr eq {!}} {
+                    set ref_type img
+                } else {
+                    set ref_type link
+                }
+
+                set match_found 0
+
+                if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
+                    # INLINE
+                    incr index [string length $m]
+
+                    set url [escape [string trim $url {<> }]]
+                    set txt [parse_inline_markdown $txt]
+                    set title [parse_inline_markdown $title]
+
+                    set match_found 1
+                } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
+                    if {$lbl eq {}} {
+                        set lbl [regsub -all {\s+} $txt { }]
+                    }
+
+                    set lbl [string tolower $lbl]
+
+                    if {[info exists ::Markdown::_references($lbl)]} {
+                        lassign $::Markdown::_references($lbl) url title
+
+                        set url [escape [string trim $url {<> }]]
+                        set txt [parse_inline_markdown $txt]
+                        set title [parse_inline_markdown $title]
+
+                        # REFERENCED
+                        incr index [string length $m]
+                        set match_found 1
+                    }
+                }
+
+                # PRINT IMG, A TAG
+                if {$match_found} {
+                    if {$ref_type eq {link}} {
+                        if {$title ne {}} {
+                            append result "<a href=\"$url\" title=\"$title\">$txt</a>"
+                        } else {
+                            append result "<a href=\"$url\">$txt</a>"
+                        }
+                    } else {
+                        if {$title ne {}} {
+                            append result "<img src=\"$url\" alt=\"$txt\" title=\"$title\"/>"
+                        } else {
+                            append result "<img src=\"$url\" alt=\"$txt\"/>"
+                        }
+                    }
+
+                    continue
+                }
+            }
+            {<} {
+                # HTML TAGS, COMMENTS AND AUTOLINKS
+                if {[regexp -start $index $re_comment $text m]} {
+                    append result $m
+                    incr index [string length $m]
+                    continue
+                } elseif {[regexp -start $index $re_autolink $text m email link]} {
+                    if {$link ne {}} {
+                        set link [escape $link]
+                        append result "<a href=\"$link\">$link</a>"
+                    } else {
+                        set mailto_prefix "mailto:"
+                        if {![regexp "^${mailto_prefix}(.*)" $email mailto email]} {
+                            # $email does not contain the prefix "mailto:".
+                            set mailto "mailto:$email"
+                        }
+                        append result "<a href=\"$mailto\">$email</a>"
+                    }
+                    incr index [string length $m]
+                    continue
+                } elseif {[regexp -start $index $re_htmltag $text m]} {
+                    append result $m
+                    incr index [string length $m]
+                    continue
+                }
+
+                set chr [escape $chr]
+            }
+            {&} {
+                # ENTITIES
+                if {[regexp -start $index $re_entity $text m]} {
+                    append result $m
+                    incr index [string length $m]
+                    continue
+                }
+
+                set chr [escape $chr]
+            }
+            {>} -
+            {'} -
+            "\"" {
+                # OTHER SPECIAL CHARACTERS
+                set chr [escape $chr]
+            }
+            default {}
+        }
+
+        append result $chr
+        incr index
+    }
+ 
+    return $result
+}
 
 proc ruff::formatter::html::escape {s} {
     # s - string to be escaped
@@ -519,7 +702,8 @@ proc ruff::formatter::html::_fmthead {text level args} {
 }
 
 proc ruff::formatter::html::_fmtpara {text {linkregexp {}} {scope {}}} {
-    return "<p class='ruff'>[_linkify [string trim $text] $linkregexp $scope]</p>\n"
+    set text "<p class='ruff'>[_linkify [string trim $text] $linkregexp $scope]</p>\n"
+    return [parse_inline_markdown $text]
 }
 
 proc ruff::formatter::html::_fmtparas {paras {linkregexp {}} {scope {}}} {
