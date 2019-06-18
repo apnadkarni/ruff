@@ -280,7 +280,9 @@ function toggleSource( id )
     }
 }
 
+# Credits: tcllib/Caius markdown module
 proc ::ruff::formatter::html::parse_inline_markdown {text} {
+
     set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
 
     set index 0
@@ -543,12 +545,18 @@ proc ::ruff::formatter::html::_linkify {text {link_regexp {}} {scope {}}} {
         return [_locate_link $text $scope]
     }
 
+    # Set the delimiters used to indicate links
     if {$::ruff::ProgramOptions(-autolink)} {
+        # Anything that matches passed link regexp will do
         set start_delim {^|[^[:alnum:]_\:]}
         set end_delim {$|[^[:alnum:]_\:]}
     } else {
-        set start_delim {^|\[}
-        set end_delim {$|\]}
+        # Matches must be enclosed in <>
+        # TBD - why is there a ^ in these regexps since autolink is off?
+        # TBD - the link delimiters should really be program options
+        # and not hardcoded to <> as used by markdown
+        set start_delim {^|<}
+        set end_delim {$|>}
     }
     set arg_re {\$[_[:alnum:]]+}
     set const_re {'[<>\._[:alnum:]]+'}
@@ -564,21 +572,24 @@ proc ::ruff::formatter::html::_linkify {text {link_regexp {}} {scope {}}} {
     set remain $text
     while {[regexp -indices "($start_delim)($link_regexp)($end_delim)|($arg_re)|($const_re)" $remain dontcare starter link ender argrange constrange cmdrange]} {
         if {[lindex $link 0] != -1} {
+            # Link to an identifier
             lassign $starter dontcare start_last
             lassign $link link_first link_last
             lassign $ender end_first end_last
-            # Some links will be enclosed in []. Discard the []
-            append processed [escape [string trimright [string range $remain 0 $start_last] \[]]
+            # Some links will be enclosed in <>. Discard these
+            append processed [escape [string trimright [string range $remain 0 $start_last] "<"]]
             set linkval [string range $remain $link_first $link_last]
             append processed [_locate_link $linkval $scope]
-            append processed [escape [string trimleft [string range $remain $end_first $end_last] \]]]
+            append processed [escape [string trimleft [string range $remain $end_first $end_last] ">"]]
             set remain [string range $remain [incr end_last] end]
         } elseif {[lindex $argrange 0] != -1} {
+            # Reference to an argument
             lassign $argrange arg_first arg_last
             append processed [escape [string range $remain 0 $arg_first-1]]
             append processed [_arg [string range $remain $arg_first+1 $arg_last]]
             set remain [string range $remain [incr arg_last] end]
         } else {
+            # Constant or code
             lassign $constrange const_first const_last
             append processed [escape [string range $remain 0 $const_first-1]]
             append processed [_const [string range $remain $const_first+1 $const_last-1]]

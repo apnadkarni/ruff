@@ -1311,7 +1311,7 @@ proc ruff::document_namespaces {formatter namespaces args} {
         -append false
         -title ""
         -recurse false
-        -autolink true
+        -autolink false
     }
     array set opts $args
     variable ProgramOptions
