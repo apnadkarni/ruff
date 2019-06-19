@@ -286,7 +286,7 @@ function toggleSource( id )
 }
 
 # Credits: tcllib/Caius markdown module
-proc ::ruff::formatter::html::parse_inline_markdown {text {scope {}}} {
+proc ::ruff::formatter::html::_parse_inline_markdown {text {scope {}}} {
 
     set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
 
@@ -329,13 +329,13 @@ proc ::ruff::formatter::html::parse_inline_markdown {text {scope {}}} {
                     {
                         switch [string length $del] {
                             1 {
-                                append result "<em>[parse_inline_markdown $sub $scope]</em>"
+                                append result "<em>[_parse_inline_markdown $sub $scope]</em>"
                             }
                             2 {
-                                append result "<strong>[parse_inline_markdown $sub $scope]</strong>"
+                                append result "<strong>[_parse_inline_markdown $sub $scope]</strong>"
                             }
                             3 {
-                                append result "<strong><em>[parse_inline_markdown $sub $scope]</em></strong>"
+                                append result "<strong><em>[_parse_inline_markdown $sub $scope]</em></strong>"
                             }
                         }
 
@@ -375,8 +375,8 @@ proc ::ruff::formatter::html::parse_inline_markdown {text {scope {}}} {
                     incr index [string length $m]
 
                     set url [escape [string trim $url {<> }]]
-                    set txt [parse_inline_markdown $txt $scope]
-                    set title [parse_inline_markdown $title $scope]
+                    set txt [_parse_inline_markdown $txt $scope]
+                    set title [_parse_inline_markdown $title $scope]
 
                     set match_found 1
                 } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
@@ -401,8 +401,8 @@ proc ::ruff::formatter::html::parse_inline_markdown {text {scope {}}} {
                             lassign $::Markdown::_references($lbl) url title
 
                             set url [escape [string trim $url {<> }]]
-                            set txt [parse_inline_markdown $txt $scope]
-                            set title [parse_inline_markdown $title $scope]
+                            set txt [_parse_inline_markdown $txt $scope]
+                            set title [_parse_inline_markdown $title $scope]
 
                             # REFERENCED
                             incr index [string length $m]
@@ -587,12 +587,12 @@ proc ::ruff::formatter::html::_locate_link {link_label scope} {
 
 proc ::ruff::formatter::html::_linkify {text {link_regexp {}} {scope {}}} {
 
-    if {0} {
-        return [parse_inline_markdown $text $scope]
+    if {1} {
+        return [_parse_inline_markdown $text $scope]
     
 
         TBD - rest obsolete! Get rid of this procedure and replace with
-        direct calls to parse_inline_markdown
+        direct calls to _parse_inline_markdown
     } 
 
     # Convert matching substrings to links
@@ -694,20 +694,17 @@ proc ruff::formatter::html::_fmtdeflist {listitems args} {
     # -preformatted is one of both, none, itemname or itemdef
     array set opts {
         -preformatted itemname
-        -linkregexp {}
         -scope {}
     }
     array set opts $args
 
     append doc "<table class='ruff_deflist'>\n"
     foreach {name desc} $listitems {
-        if {$opts(-preformatted) eq "none" ||
-            $opts(-preformatted) eq "itemname"} {
-            set desc [_linkify $desc $opts(-linkregexp) $opts(-scope)]
+        if {$opts(-preformatted) in {none itemname}} {
+            set desc [_parse_inline_markdown $desc $opts(-scope)]
         }
-        if {$opts(-preformatted) eq "none" ||
-            $opts(-preformatted) eq "itemdef"} {
-            set name [_linkify $name $opts(-linkregexp) $opts(-scope)]
+        if {$opts(-preformatted) in {none itemdef}} {
+            set name [_parse_inline_markdown $name $opts(-scope)]
         }
         append doc "<tr><td class='ruff_defitem'>$name</td><td class='ruff_defitem'>$desc</td></tr>\n"
     }
@@ -783,7 +780,7 @@ proc ruff::formatter::html::_fmthead {text level args} {
 
 proc ruff::formatter::html::_fmtpara {text {linkregexp {}} {scope {}}} {
     #set text "<p class='ruff'>[_linkify [string trim $text] $linkregexp $scope]</p>\n"
-    return [parse_inline_markdown $text $scope]
+    return "<p class='ruff'>[_parse_inline_markdown $text $scope]</p>\n"
 }
 
 proc ruff::formatter::html::_fmtparas {paras {linkregexp {}} {scope {}}} {
