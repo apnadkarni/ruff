@@ -586,6 +586,15 @@ proc ::ruff::formatter::html::_locate_link {link_label scope} {
 }
 
 proc ::ruff::formatter::html::_linkify {text {link_regexp {}} {scope {}}} {
+
+    if {0} {
+        return [parse_inline_markdown $text $scope]
+    
+
+        TBD - rest obsolete! Get rid of this procedure and replace with
+        direct calls to parse_inline_markdown
+    } 
+
     # Convert matching substrings to links
     # text - string to be substituted
     # link_regexp - regexp to use for matching potential links

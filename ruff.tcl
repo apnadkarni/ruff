@@ -270,6 +270,9 @@ proc ruff::parse {lines} {
     set result(fragment) {}
     set result(state) init
     set result(output) {}
+    set result(return_added) 0
+    set result(summary) ""
+
     foreach line $lines {
         switch -regexp -- $line {
             {^\s*$} {
@@ -415,14 +418,12 @@ proc ruff::parse {lines} {
     _change_state finish result; # To process any leftovers in result(fragment)
 
     # Special case where the Returns is also the summary
-    if {![dict exists $result(output) return] &&
-        [dict exists $result(output) summary]} {
-        set summary_line [lindex [dict get $result(output) summary] 0]
-        if {[string match -nocase "returns *" $summary_line]} {
-            dict set result(output) return [dict get $result(output) summary]
+    if {! $result(return_added)} {
+        # If the summary matches a Returns statement, use that.
+        if {[string match -nocase "returns *" $result(summary)]} {
+                lappend result(output) return $result(summary)
         }
     }
-    
 
     #ruff
     # Returns a list of key value pairs where key is one 
@@ -462,12 +463,16 @@ proc ruff::_change_state {new v_name} {
         }
         return  {
             lappend result(output) return $result(fragment)
+            set result(return_added) 1
         }
         summary {
             lappend result(output) summary $result(fragment)
 
             # Summary is also included in the paragraphs
             lappend result(output) paragraph $result(fragment)
+
+            # Save in case used for Returns statement
+            set result(summary) $result(fragment)
         }
         paragraph {
             lappend result(output) paragraph $result(fragment)
