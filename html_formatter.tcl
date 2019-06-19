@@ -222,6 +222,10 @@ h6.ruff {
     color: #666666;
 }
 
+pre.ruff {
+    margin-top: 1em;
+}
+
 .ruff_synopsis {
     border: thin solid #cccccc;
     background: #eeeeee;
@@ -282,7 +286,7 @@ function toggleSource( id )
 }
 
 # Credits: tcllib/Caius markdown module
-proc ::ruff::formatter::html::parse_inline_markdown {text} {
+proc ::ruff::formatter::html::parse_inline_markdown {text {scope {}}} {
 
     set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
 
@@ -325,13 +329,13 @@ proc ::ruff::formatter::html::parse_inline_markdown {text} {
                     {
                         switch [string length $del] {
                             1 {
-                                append result "<em>[parse_inline_markdown $sub]</em>"
+                                append result "<em>[parse_inline_markdown $sub $scope]</em>"
                             }
                             2 {
-                                append result "<strong>[parse_inline_markdown $sub]</strong>"
+                                append result "<strong>[parse_inline_markdown $sub $scope]</strong>"
                             }
                             3 {
-                                append result "<strong><em>[parse_inline_markdown $sub]</em></strong>"
+                                append result "<strong><em>[parse_inline_markdown $sub $scope]</em></strong>"
                             }
                         }
 
@@ -364,14 +368,15 @@ proc ::ruff::formatter::html::parse_inline_markdown {text} {
                 }
 
                 set match_found 0
+                set css ""
 
                 if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
                     # INLINE
                     incr index [string length $m]
 
                     set url [escape [string trim $url {<> }]]
-                    set txt [parse_inline_markdown $txt]
-                    set title [parse_inline_markdown $title]
+                    set txt [parse_inline_markdown $txt $scope]
+                    set title [parse_inline_markdown $title $scope]
 
                     set match_found 1
                 } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
@@ -379,34 +384,45 @@ proc ::ruff::formatter::html::parse_inline_markdown {text} {
                         set lbl [regsub -all {\s+} $txt { }]
                     }
 
-                    set lbl [string tolower $lbl]
+                    set code_link [_resolve_code_link $lbl $scope]
+                    if {[llength $code_link]} {
+                        lassign $code_link url txt css
+                        set url [escape $url]
+                        set txt [escape $txt]
+                        set title $txt
 
-                    if {[info exists ::Markdown::_references($lbl)]} {
-                        lassign $::Markdown::_references($lbl) url title
-
-                        set url [escape [string trim $url {<> }]]
-                        set txt [parse_inline_markdown $txt]
-                        set title [parse_inline_markdown $title]
-
-                        # REFERENCED
+                        # RUFF CODE REFERENCE
                         incr index [string length $m]
                         set match_found 1
+                    } else {
+                        set lbl [string tolower $lbl]
+
+                        if {[info exists ::Markdown::_references($lbl)]} {
+                            lassign $::Markdown::_references($lbl) url title
+
+                            set url [escape [string trim $url {<> }]]
+                            set txt [parse_inline_markdown $txt $scope]
+                            set title [parse_inline_markdown $title $scope]
+
+                            # REFERENCED
+                            incr index [string length $m]
+                            set match_found 1
+                        }
                     }
                 }
-
                 # PRINT IMG, A TAG
                 if {$match_found} {
                     if {$ref_type eq {link}} {
                         if {$title ne {}} {
-                            append result "<a href=\"$url\" title=\"$title\">$txt</a>"
+                            append result "<a href=\"$url\" title=\"$title\" $css>$txt</a>"
                         } else {
-                            append result "<a href=\"$url\">$txt</a>"
+                            append result "<a href=\"$url\" $css>$txt</a>"
                         }
                     } else {
                         if {$title ne {}} {
-                            append result "<img src=\"$url\" alt=\"$txt\" title=\"$title\"/>"
+                            append result "<img src=\"$url\" alt=\"$txt\" title=\"$title\" $css/>"
                         } else {
-                            append result "<img src=\"$url\" alt=\"$txt\"/>"
+                            append result "<img src=\"$url\" alt=\"$txt\" $css/>"
                         }
                     }
 
@@ -484,6 +500,45 @@ proc ruff::formatter::html::escape {s} {
 
 proc ::ruff::formatter::html::_fmtpreformatted {content} {
     return "<pre class='ruff'>\n[escape $content]\n</pre>\n"
+}
+
+proc ::ruff::formatter::html::_resolve_code_link {link_label scope} {
+    # Locates the target of a link.
+    # link_label - the potential link to be located, for example the name
+    #  of a proc.
+    # scope - the namespace path to search to locate a target
+    #
+    # Returns a list consisting of the url, text and the CSS class to use.
+    # An empty list is returned if the link_label does not match a code element.
+    variable link_targets
+
+    set css "class='ruff_cmd'"
+
+    # If the label falls within the specified scope, we will hide the scope
+    # in the displayed label. The label may fall within the scope either
+    # as a namespace (::) or a class member (.)
+
+    # First check if this link itself is directly present
+    if {[info exists link_targets($link_label)]} {
+        return [list "#$link_targets($link_label)" [_trim_namespace $link_label $scope] $css]
+    }
+
+    # Only search scope if not fully qualified
+    if {! [string match ::* $link_label]} {
+        while {$scope ne ""} {
+            # Check class (.) and namespace scope (::)
+            foreach sep {. ::} {
+                set qualified ${scope}${sep}$link_label
+                if {[info exists link_targets($qualified)]} {
+                    return [list "#$link_targets($qualified)" [_trim_namespace $link_label $scope] $css]
+                }
+            }
+            set scope [namespace qualifiers $scope]
+        }
+    }
+
+    # Note in this case we return $link_label, not $scoped_label
+    return [list ]
 }
 
 proc ::ruff::formatter::html::_locate_link {link_label scope} {
@@ -718,8 +773,8 @@ proc ruff::formatter::html::_fmthead {text level args} {
 }
 
 proc ruff::formatter::html::_fmtpara {text {linkregexp {}} {scope {}}} {
-    set text "<p class='ruff'>[_linkify [string trim $text] $linkregexp $scope]</p>\n"
-    return [parse_inline_markdown $text]
+    #set text "<p class='ruff'>[_linkify [string trim $text] $linkregexp $scope]</p>\n"
+    return [parse_inline_markdown $text $scope]
 }
 
 proc ruff::formatter::html::_fmtparas {paras {linkregexp {}} {scope {}}} {
