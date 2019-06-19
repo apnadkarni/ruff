@@ -236,6 +236,7 @@ h6.ruff {
 }
 .ruff_arg {
     font-style: italic;
+    font-family: "Courier New", Courier, monospace;
 }
 
 .ruff_dyn_src {
@@ -500,13 +501,15 @@ proc ::ruff::formatter::html::_locate_link {link_label scope} {
 
     variable link_targets
 
+    set css_class "class='ruff_cmd'"
+    
     # If the label falls within the specified scope, we will hide the scope
     # in the displayed label. The label may fall within the scope either
     # as a namespace (::) or a class member (.)
 
     # First check if this link itself is directly present
     if {[info exists link_targets($link_label)]} {
-        return "<a href='#$link_targets($link_label)'>[escape [_trim_namespace $link_label $scope]]</a>"
+        return "<a $css_class href='#$link_targets($link_label)'>[escape [_trim_namespace $link_label $scope]]</a>"
     }
 
     # Only search scope if not fully qualified
@@ -516,7 +519,7 @@ proc ::ruff::formatter::html::_locate_link {link_label scope} {
             foreach sep {. ::} {
                 set qualified ${scope}${sep}$link_label
                 if {[info exists link_targets($qualified)]} {
-                    return "<a href='#$link_targets($qualified)'>[escape [_trim_namespace $link_label $scope]]</a>"
+                    return "<a $css_class href='#$link_targets($qualified)'>[escape [_trim_namespace $link_label $scope]]</a>"
                 }
             }
             set scope [namespace qualifiers $scope]
@@ -591,12 +594,19 @@ proc ::ruff::formatter::html::_linkify {text {link_regexp {}} {scope {}}} {
         } else {
             # Constant or code
             lassign $constrange const_first const_last
+            puts stderr "const: [string range $remain $const_first $const_last]"
             append processed [escape [string range $remain 0 $const_first-1]]
             append processed [_const [string range $remain $const_first+1 $const_last-1]]
             set remain [string range $remain [incr const_last] end]
         }
     }
-    append processed [escape $remain]
+    if {0} {
+        # Commented out because a subsequent markdown parsing
+        # call will further escape the escaped characters
+        append processed [escape $remain]
+    } else {
+        append processed $remain
+    }
 
     # Finally substitute for http links.
     # TBD - this might not work correctly because of HTML escaping above.
