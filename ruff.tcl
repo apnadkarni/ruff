@@ -1291,9 +1291,9 @@ proc ruff::document_namespaces {formatter namespaces args} {
     # -title STRING - specifies the title to use for the page
     # -recurse BOOLEAN - if true, child namespaces are recursively
     #  documented.
-    # -autolink BOOLEAN - if true (default), automatically generate
-    #  links to program element definitions. If false, links are only
-    #  generated if enclosed in [].
+    # -autolink BOOLEAN - if true, automatically generate
+    #  links to program element definitions. If false (default), links are only
+    #  generated if enclosed in `<>`.
     #
     # Any additional arguments are passed through to the document command.
     #
