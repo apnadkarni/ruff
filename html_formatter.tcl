@@ -562,7 +562,6 @@ proc ::ruff::formatter::html::_linkify {text {link_regexp {}} {scope {}}} {
         set end_delim {$|>}
     }
     set arg_re {\$[_[:alnum:]]+}
-    set const_re {'[<>\._[:alnum:]]+'}
 
     # As an aside, initially tried doing this without using indices
     # and instead directly storing the subexpressions for the pre,
@@ -573,7 +572,7 @@ proc ::ruff::formatter::html::_linkify {text {link_regexp {}} {scope {}}} {
 
     set processed ""
     set remain $text
-    while {[regexp -indices "($start_delim)($link_regexp)($end_delim)|($arg_re)|($const_re)" $remain dontcare starter link ender argrange constrange cmdrange]} {
+    while {[regexp -indices "($start_delim)($link_regexp)($end_delim)|($arg_re)" $remain dontcare starter link ender argrange]} {
         if {[lindex $link 0] != -1} {
             # Link to an identifier
             lassign $starter dontcare start_last
@@ -585,19 +584,15 @@ proc ::ruff::formatter::html::_linkify {text {link_regexp {}} {scope {}}} {
             append processed [_locate_link $linkval $scope]
             append processed [escape [string trimleft [string range $remain $end_first $end_last] ">"]]
             set remain [string range $remain [incr end_last] end]
-        } elseif {[lindex $argrange 0] != -1} {
+        } else {
+            if {[lindex $argrange 0] == -1} {
+                error "Internal error: argrange regexp error"
+            }
             # Reference to an argument
             lassign $argrange arg_first arg_last
             append processed [escape [string range $remain 0 $arg_first-1]]
             append processed [_arg [string range $remain $arg_first+1 $arg_last]]
             set remain [string range $remain [incr arg_last] end]
-        } else {
-            # Constant or code
-            lassign $constrange const_first const_last
-            puts stderr "const: [string range $remain $const_first $const_last]"
-            append processed [escape [string range $remain 0 $const_first-1]]
-            append processed [_const [string range $remain $const_first+1 $const_last-1]]
-            set remain [string range $remain [incr const_last] end]
         }
     }
     if {0} {
