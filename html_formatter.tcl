@@ -716,7 +716,7 @@ proc ruff::formatter::html::_fmtdeflist {listitems args} {
 proc ruff::formatter::html::_fmtbulletlist {listitems {linkregexp {}} {scope {}}} {
     append doc "<ul class='ruff'>\n"
     foreach item $listitems {
-        append doc "<li>[_linkify $item $linkregexp $scope]</li>\n"
+        append doc "<li>[_parse_inline_markdown $item $scope]</li>\n"
     }
     append doc "</ul>\n"
     return $doc
@@ -742,7 +742,7 @@ proc ruff::formatter::html::_fmtprochead {name args} {
     dict set navlinks $anchor $linkinfo
     set ns [namespace qualifiers $opts(-displayname)]
     if {[string length $ns]} {
-        set ns_link [_linkify ${ns}]
+        set ns_link [_parse_inline_markdown "\[${ns}\]"]
         set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape [namespace tail $opts(-displayname)]]</a><span class='ns_scope'> \[${ns_link}\]</span></h$opts(-level)>\n"
     } else {
         set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape $opts(-displayname)]</a></h$opts(-level)>\n"
@@ -780,7 +780,7 @@ proc ruff::formatter::html::_fmthead {text level args} {
 
 proc ruff::formatter::html::_fmtpara {text {linkregexp {}} {scope {}}} {
     #set text "<p class='ruff'>[_linkify [string trim $text] $linkregexp $scope]</p>\n"
-    return "<p class='ruff'>[_parse_inline_markdown $text $scope]</p>\n"
+    return "<p class='ruff'>[_parse_inline_markdown [string trim $text] $scope]</p>\n"
 }
 
 proc ruff::formatter::html::_fmtparas {paras {linkregexp {}} {scope {}}} {
@@ -870,11 +870,11 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
             }
         }
         if {[dict exists $param description]} {
-            lappend desc [_linkify [dict get $param description] $opts(-linkregexp) $scope]
+            lappend desc [_parse_inline_markdown [dict get $param description] $scope]
         } elseif {$name eq "args"} {
             lappend desc "Additional options."
         }
-        
+ 
         lappend desclist [_arg $name] [join $desc " "]
     }
 
@@ -901,7 +901,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
         } else {
             set fqn $aproc(name)
         }
-        
+
         if {[info exists summary]} {
             append doc [_fmtprochead $fqn -tooltip $summary -level $header_levels($aproc(proctype))]
         } else {
@@ -1025,7 +1025,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
                 set imp_class [_trim_namespace_multi $imp_class $opts(-hidenamespace)]
             }
             lappend external_methods($imp_class) ${imp_class}.$name
-            set method_summaries($name) [dict create label [escape $name] desc [_linkify "See ${imp_class}.$name" $opts(-linkregexp) $scope]]
+            set method_summaries($name) [dict create label [escape $name] desc [_parse_inline_markdown "See \[${imp_class}.$name\]" $scope]]
         }
         append doc [_fmthead "Inherited and mixed-in methods" $header_levels(nonav)]
         # Construct a sorted list based on inherit/mixin class name
@@ -1045,7 +1045,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     }
 
     if {[info exists aclass(constructor)] && !$opts(-mergeconstructor)} {
-        set method_summaries($aclass(name).constructor) [dict create label [_linkify "$aclass(name).constructor" $opts(-linkregexp) $aclass(name)] desc "Constructor for the class" ]
+        set method_summaries($aclass(name).constructor) [dict create label [_parse_inline_markdown "\[$aclass(name).constructor\]" $aclass(name)] desc "Constructor for the class" ]
         append doc [generate_proc_or_method $aclass(constructor) \
                         -includesource $opts(-includesource) \
                         -hidenamespace $opts(-hidenamespace) \
@@ -1053,7 +1053,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
                        ]
     }
     if {[info exists aclass(destructor)]} {
-        set method_summaries($aclass(name).destructor) [dict create label [_linkify "$aclass(name).destructor" $opts(-linkregexp) $aclass(name)] desc "Destructor for the class" ]
+        set method_summaries($aclass(name).destructor) [dict create label [_parse_inline_markdown "\[$aclass(name).destructor\]" $aclass(name)] desc "Destructor for the class" ]
         append doc [generate_proc_or_method $aclass(destructor) \
                         -includesource $opts(-includesource) \
                         -hidenamespace $opts(-hidenamespace) \
@@ -1087,7 +1087,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
             } else {
                 set summary ""
             }
-            set method_summaries($aclass(name).$name) [dict create label [_linkify $aclass(name).$name $opts(-linkregexp) $aclass(name)] desc $summary]
+            set method_summaries($aclass(name).$name) [dict create label [_linkify "\[$aclass(name).$name\]" $opts(-linkregexp) $aclass(name)] desc $summary]
         } else {
             set forward_text "Method forwarded to [dict get $info forward]"
             append doc [_fmtprochead $aclass(name)::$name -tooltip $forward_text -level $header_levels(method)]
