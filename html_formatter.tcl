@@ -8,9 +8,11 @@
 
 # Ruff! formatter for direct HTML
 
-namespace eval ruff::formatter::html {  
-    namespace import [namespace parent]::*
-    namespace import [namespace parent [namespace parent]]::*
+namespace eval ruff::formatter::html {
+    namespace path [list \
+                        [namespace parent [namespace parent]] \
+                        [namespace parent [namespace parent]]::private \
+                       ]
 
     variable navlinks
     set navlinks [dict create]

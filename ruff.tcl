@@ -5,24 +5,12 @@
 # Ruff! - RUntime Formatting Function
 # ...a document generator using introspection
 #
-# See http://woof.sourceforge.net/ruff_guide for the user guide
-# and http://woof.sourceforge.net/ruff.html
-# for the man pages. The package generates its own documentation
-# (see document_self).
-
-package require textutil::adjust
 
 package require Tcl 8.6
+package require textutil::adjust
 
 namespace eval ruff {
     variable version 0.6.0
-
-    variable names
-    set names(display) "Ruff!"
-    set names(longdisplay) "Runtime Function Formatter"
-
-    variable ruff_dir
-    set ruff_dir [file dirname [info script]]
 
     variable _ruffdoc
     set _ruffdoc {}
@@ -51,26 +39,18 @@ namespace eval ruff {
         Include the following command to load the package into your script.
 
             package require ruff
-        
-        Once loaded, you can use the ::ruff::document_namespaces command to
-        document classes and commands within a namespace. For more
-        flexibility in controlling what is to be documented, use
-        the ::ruff::extract command and pass its results to the 
-        ::ruff::document command.
-        
-        In the simple case, where only the namespace '::NS' and its
-        children are to be documented, the following commands will
-        create the file 'NS.html' using the built-in HTML formatter.
+
+        Once loaded, you can use the ::ruff::document command to document
+        classes and commands within one or more namespaces.
+
+        The following command will create the file 'NS.html' using the
+        built-in HTML formatter.
 
           package require ruff
-          ::ruff::document_namespaces html [list ::NS] -output NS.html -recurse true
+          ::ruff::document html [list ::NS] -output NS.html -recurse true
 
-        Other commands in the package are intended to be used if
-        you want to roll your own custom formatting package.
-
-        Refer to the source code of the command ::ruff::document_self, which
-        generates documentation for Ruff!, for an example of how
-        the package might be used.
+        Refer to [document] for various options that control the
+        content included in the documentation.
     }
     lappend _ruffdoc "Input format" {
         Ruff! extracts documentation from proc and class definitions and
@@ -87,37 +67,40 @@ namespace eval ruff {
         by Ruff!.
     }
     lappend _ruffdoc "Output formats" {
-        Ruff! supports multiple output formats. HTML can be directly
-        generated using the internal formatter which does not require
-        any other external tool. 
 
-        Alternatively, the output can
-        also be generated in a format that is suitable to be fed to
-        an external formatting program such as robodoc or doctools.
-        The command ::ruff::formatters returns a list of supported
-        formatters. These formatters in turn can produce documents in
-        several different formats such as html, latex and docbook.
+        Ruff! is designed to support multiple output formats through
+        pluggable formatters. The command [formatters] returns a list of
+        supported formatters.
 
-        It is recommended that for HTML output, the built-in
-        html formatter be used as it has the best support
-        for cross-referencing, automatic link generation and navigation.
+        Currently however, only a single formatter is implemented,
+        the internal `html` formatter which supports
+        cross-referencing, automatic link generation and navigation.
     }
 
-    namespace export _build_symbol_regexp _sift_names _sift_classprocinfo \
-        _trim_namespace _trim_namespace_multi _wrap_text _identity
+    namespace eval private {
+        namespace path [namespace parent]
+
+        variable ruff_dir
+        set ruff_dir [file dirname [info script]]
+
+        variable names
+        set names(display) "Ruff!"
+        set names(longdisplay) "Runtime Function Formatter"
+    } 
+    namespace path private
 }
 
-proc ruff::_identity {s} {
+proc ruff::private::_identity {s} {
     # Returns the passed string unaltered.
     # Used as a stub to "no-op" some transformations
     return $s
 }
 
-proc ruff::_regexp_escape {s} {
+proc ruff::private::_regexp_escape {s} {
     return [string map {\\ \\\\ $ \\$ ^ \\^ . \\. ? \\? + \\+ * \\* | \\| ( \\( ) \\) [ \\[ ] \\] \{ \\\{ \} \\\} } $s]
 }
 
-proc ruff::_build_symbol_regexp {symlist} {
+proc ruff::private::_build_symbol_regexp {symlist} {
     # Builds a regular expression that matches any of the specified
     # symbols or names
     # symlist - list of symbols or names
@@ -143,7 +126,7 @@ proc ruff::_build_symbol_regexp {symlist} {
     return [join $alternatives "|"]
 }
 
-proc ruff::_namespace_tree {nslist} {
+proc ruff::private::_namespace_tree {nslist} {
     # Return list of namespaces under the specified namespaces
     array set done {}
     while {[llength $nslist]} {
@@ -160,7 +143,7 @@ proc ruff::_namespace_tree {nslist} {
     return [array names done]
 }
 
-proc ruff::_trim_namespace {name ns} {
+proc ruff::private::_trim_namespace {name ns} {
     # Removes a namespace (::) or class qualifier (.) from the specified name.
     # name - name from which the namespace is to be removed
     # ns - the namespace to be removed. If empty, $name
@@ -197,7 +180,7 @@ proc ruff::_trim_namespace {name ns} {
     return $name
 }
 
-proc ruff::_trim_namespace_multi {namelist ns} {
+proc ruff::private::_trim_namespace_multi {namelist ns} {
     # See _trim_namespace for a description. Only difference
     # is that this command takes a list of names instead
     # of a single name.
@@ -208,7 +191,7 @@ proc ruff::_trim_namespace_multi {namelist ns} {
     return $result
 }
 
-proc ruff::_ensembles {pattern} {
+proc ruff::private::_ensembles {pattern} {
     # Returns list of ensembles matching the pattern
     # pattern - fully namespace qualified pattern to match
 
@@ -221,7 +204,7 @@ proc ruff::_ensembles {pattern} {
 }
 
 
-proc ruff::_sift_names {names} {
+proc ruff::private::_sift_names {names} {
     # Given a list of names, separates and sorts them based on their namespace
     # names - a list of names
     #
@@ -237,7 +220,7 @@ proc ruff::_sift_names {names} {
     return $namespaces
 }
 
-proc ruff::_sift_classprocinfo {classprocinfodict} {
+proc ruff::private::_sift_classprocinfo {classprocinfodict} {
     # Sifts through class and proc meta information based
     # on namespace
     #
@@ -265,7 +248,7 @@ proc ruff::_sift_classprocinfo {classprocinfodict} {
     return $result
 }
 
-proc ruff::parse {lines} {
+proc ruff::private::parse {lines} {
     # Creates a parse structure given a list of lines that are assumed
     # to be documentation for a programming structure
     #
@@ -425,7 +408,7 @@ proc ruff::parse {lines} {
 
 # Note new state may be same as old state
 # (but a new fragment)
-proc ruff::_change_state {new v_name} {
+proc ruff::private::_change_state {new v_name} {
     upvar 1 $v_name result
 
     # Close off existing state
@@ -481,7 +464,7 @@ proc ruff::_change_state {new v_name} {
     set result(fragment) {}
 }
 
-proc ruff::distill_docstring {text} {
+proc ruff::private::distill_docstring {text} {
     # Splits a documentation string to return the documentation lines
     # as a list.
     # text - documentation string to be parsed
@@ -523,7 +506,7 @@ proc ruff::distill_docstring {text} {
     return $lines
 }
 
-proc ruff::distill_body {text} {
+proc ruff::private::distill_body {text} {
     # Given a procedure or method body,
     # returns the documentation lines as a list.
     # text - text to be processed to collect all documentation lines.
@@ -597,7 +580,7 @@ proc ruff::distill_body {text} {
     return $lines
 }
 
-proc ruff::extract_docstring {text} {
+proc ruff::private::extract_docstring {text} {
     # Parses a documentation string to return a structured text representation.
     # text - documentation string to be parsed
     #
@@ -655,7 +638,7 @@ proc ruff::extract_docstring {text} {
     return $paragraphs
 }
 
-proc ruff::extract_proc {procname} {
+proc ruff::private::extract_proc {procname} {
 
     # Extracts meta information from a Tcl procedure.
     # procname - name of the procedure
@@ -677,7 +660,7 @@ proc ruff::extract_proc {procname} {
     return [extract_proc_or_method proc $procname [info args $procname] $param_defaults [info body $procname]]
 }
 
-proc ruff::extract_ensemble {ens} {
+proc ruff::private::extract_ensemble {ens} {
     # Extracts metainformation for all subcommands in an ensemble command
     # ens - fully qualified names of the ensemble command
     #
@@ -735,7 +718,7 @@ proc ruff::extract_ensemble {ens} {
     }]
 }
 
-proc ruff::extract_ooclass_method {class method} {
+proc ruff::private::extract_ooclass_method {class method} {
 
     # Extracts metainformation for the method in oo:: class
     # class - name of the class
@@ -775,7 +758,7 @@ proc ruff::extract_ooclass_method {class method} {
 }
 
 
-proc ruff::extract_proc_or_method {proctype procname param_names param_defaults body {class ""}} {
+proc ruff::private::extract_proc_or_method {proctype procname param_names param_defaults body {class ""}} {
     # Helper procedure used by extract_proc and extract_ooclass_method to
     # construct metainformation for a method or proc.
     #  proctype - should be either 'proc' or 'method'
@@ -926,7 +909,7 @@ proc ruff::extract_proc_or_method {proctype procname param_names param_defaults 
 }
 
 
-proc ruff::extract_ooclass {classname args} {
+proc ruff::private::extract_ooclass {classname args} {
     # Extracts metainformation about the specified class
     # classname - name of the class to be documented
     # -includeprivate BOOLEAN - if true private methods are also included
@@ -1043,7 +1026,7 @@ proc ruff::extract_ooclass {classname args} {
 }
 
 
-proc ruff::extract {pattern args} {
+proc ruff::private::extract {pattern args} {
     # Extracts metainformation for procs and classes 
     #
     # pattern - glob-style pattern to match against procedure and class names
@@ -1100,7 +1083,7 @@ proc ruff::extract {pattern args} {
             if {[catch {
                 set class_info [extract_ooclass $class_name -includeprivate $opts(-includeprivate)]
             } msg]} {
-                app::log_error "Could not document class $class_name"
+                app::log_error "Could not document class $class_name: $msg"
             } else {
                 dict set classes $class_name $class_info
             }
@@ -1124,7 +1107,7 @@ proc ruff::extract {pattern args} {
             if {[catch {
                 set proc_info [extract_proc $proc_name]
             } msg]} {
-                app::log_error "Could not document proc $proc_name"
+                app::log_error "Could not document proc $proc_name: $msg"
             } else {
                 dict set procs $proc_name $proc_info
             }
@@ -1157,25 +1140,25 @@ proc ruff::extract {pattern args} {
 }
 
 
-proc ruff::extract_namespace {ns args} {
+proc ruff::private::extract_namespace {ns args} {
     # Extracts metainformation for procs and objects in a namespace
     # ns - namespace to examine
     #
     # Any additional options are passed on to the extract command.
     #
-    # Returns a dictionary with keys 'classes' and 'procs'. See ruff::extract
+    # Returns a dictionary with keys 'classes' and 'procs'. See ruff::private::extract
     # for details.
     
     return [eval [list extract ${ns}::*] $args]
 }
 
-proc ruff::extract_namespaces {namespaces args} {
+proc ruff::private::extract_namespaces {namespaces args} {
     # Extracts metainformation for procs and objects in one or more namespace
     # namespaces - list of namespace to examine
     #
     # Any additional options are passed on to the extract_namespace command.
     #
-    # Returns a dictionary with keys 'classes' and 'procs'. See ruff::extract
+    # Returns a dictionary with keys 'classes' and 'procs'. See ruff::private::extract
     # for details.
     
     set procs [dict create]
@@ -1189,7 +1172,7 @@ proc ruff::extract_namespaces {namespaces args} {
 }
 
 
-proc ruff::get_ooclass_method_path {class_name method_name} {
+proc ruff::private::get_ooclass_method_path {class_name method_name} {
     # Calculates the class search order for a method of the specified class
     # class_name - name of the class to which the method belongs
     # method_name - method name being searched for
@@ -1252,7 +1235,7 @@ proc ruff::get_ooclass_method_path {class_name method_name} {
     return $method_path
 }
 
-proc ruff::locate_ooclass_method {class_name method_name} {
+proc ruff::private::locate_ooclass_method {class_name method_name} {
     # Locates the classe that implement the specified method of a class
     # class_name - name of the class to which the method belongs
     # method_name - method name being searched for
@@ -1292,14 +1275,14 @@ proc ruff::locate_ooclass_method {class_name method_name} {
 }
 
 
-proc ruff::_load_all_formatters {} {
+proc ruff::private::_load_all_formatters {} {
     # Loads all available formatter implementations
     foreach formatter [formatters] {
         _load_formatter $formatter
     }
 }
 
-proc ruff::_load_formatter {formatter {force false}} {
+proc ruff::private::_load_formatter {formatter {force false}} {
     # Loads the specified formatter implementation
     variable ruff_dir
     set fmt_cmd [namespace current]::formatter::${formatter}::generate_document
@@ -1308,41 +1291,7 @@ proc ruff::_load_formatter {formatter {force false}} {
     }
 }
 
-
-proc ruff::document {formatter classprocinfodict {docstrings {}} args} {
-    # Generates documentation for the specified namespaces using the
-    # specified formatter.
-    # formatter - the formatter to be used to produce the documentation
-    # classprocinfodict - dictionary containing the metainformation for
-    #  classes and procs for which documentation is to be generated. This
-    #  must be in the format returned by the extract command.
-    # docstrings - a flat list of pairs consisting of a heading and
-    #    corresponding content. These are inserted into the document
-    #    before the actual class and command descriptions after being
-    #    processed by extract_docstring.
-    #
-    # All additional arguments are passed through to the specified
-    # formatter's generate_document command.
-    #
-    # Returns the documentation string as generated by the specified formatter.
-
-    _load_formatter $formatter
-
-    set preamble [dict create]
-    foreach {sec docstring} $docstrings {
-        # Treate the preamble as a "toplevel" preamble
-        dict lappend preamble "::" $sec [extract_docstring $docstring]
-    }
-
-    return [eval [list [namespace current]::formatter::${formatter}::generate_document $classprocinfodict -preamble $preamble] $args]
-}
-
-proc ruff::document_namespace {formatter ns args} {
-    # Obsolete, use document_namespaces instead.
-    return [eval [list document_namespaces $formatter [list $ns] -title $ns] $args]
-}
-
-proc ruff::document_namespaces {formatter namespaces args} {
+proc ruff::document {formatter namespaces args} {
     # Generates documentation for the specified namespaces using the
     # specified formatter.
     # formatter - the formatter to be used to produce the documentation
@@ -1385,7 +1334,7 @@ proc ruff::document_namespaces {formatter namespaces args} {
         -autolink false
     }
     array set opts $args
-    variable ProgramOptions
+    namespace upvar private ProgramOptions ProgramOptions
     set ProgramOptions(-autolink) $opts(-autolink)
     set ProgramOptions(-hidesourcecomments) $opts(-hidesourcecomments)
     
@@ -1443,16 +1392,16 @@ proc ruff::formatters {} {
     # document.
     #
     # Returns a list of available formatters.
-    variable ruff_dir
+    namespace upvar private ruff_dir ruff_dir
     set formatters {}
     set suffix "_formatter.tcl"
     foreach file [glob [file join $ruff_dir *$suffix]] {
         lappend formatters [string range [file tail $file] 0 end-[string length $suffix]]
-    }
+    } 
     return $formatters
 }
 
-proc ruff::_wrap_text {text args} {
+proc ruff::private::_wrap_text {text args} {
     # Wraps a string such that each line is less than a given width
     # and begins with the specified prefix.
     # text - the string to be reformatted
@@ -1508,7 +1457,7 @@ proc ruff::_wrap_text {text args} {
 }
 
 
-proc ruff::document_self {formatter output_dir args} {
+proc ruff::private::document_self {formatter output_dir args} {
     # Generates documentation for Ruff!
     # formatter - the formatter to use
     # output_dir - the output directory where files will be stored. Note
@@ -1523,86 +1472,34 @@ proc ruff::document_self {formatter output_dir args} {
 
     array set opts {
         -formatterpath ""
-        -includesource FALSE
+        -includesource false
+        -includeprivate false
     }
     array set opts $args
 
     _load_all_formatters;       # So all will be documented!
 
-    set modules [dict create]
-    # Enumerate and set the descriptive text for all the modules.
-    # TBD - use these settings to generate preambles for the modules
-    dict set modules ::ruff \
-        [dict create description "$names(display) main module"]
-    dict set modules ::ruff::formatter \
-        [dict create description "$names(display) formatters"]
-    dict set modules ::ruff::formatter::doctools \
-        [dict create description "$names(display) formatter for Doctools"]
-    dict set modules ::ruff::formatter::html \
-        [dict create description "$names(display) formatter for HTML"]
-    dict set modules ::ruff::app \
-        [dict create description "$names(display) application callbacks"]
-
     file mkdir $output_dir
-    if {$formatter ne "html"} {
-        # For external formatters, we need input and output directories
-        set outdir [file join $output_dir output]
-        set indir  [file join $output_dir Ruff]
-        file mkdir $indir;  # Input for formatter, output for us!
-        file mkdir $outdir
-    }
+    set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"
+    set common_args [list \
+                         -recurse $opts(-includeprivate) \
+                         -titledesc $title \
+                         -version $::ruff::version]
+
     switch -exact -- $formatter {
-        naturaldocs {
-            set projdir [file join $output_dir proj]
-            file mkdir $projdir
-            dict for {ns nsdata} $modules {
-                set fn [string map {:: _} [string trimleft $ns :]]
-                set fn "[file join $indir $fn].tcl"
-                document_namespace naturaldocs $ns -output $fn -hidenamespace $ns
-            }
-            # We want to change the stylesheet for NaturalDocs
-            set fd [open [file join $projdir ruff.css] w]
-            puts $fd "p { text-indent: 0; margin-bottom: 1em; }"
-            puts $fd "blockquote {margin-left: 5em;}"
-            close $fd
-            if {$opts(-formatterpath) ne ""} {
-                if {[catch {
-                    eval exec $opts(-formatterpath) [list --input $indir \
-                                                   --output HTML $outdir \
-                                                   --project $projdir \
-                                                   --rebuild \
-                                                   --style Default ruff \
-                                                  ]
-                } msg]} {
-                    app::log_error "Error executing NaturalDocs using path '$opts(-formatterpath)': $msg"
-                }
-            }
-        }
         doctools {
-            dict for {ns nsdata} $modules {
-                set fn [string map {:: _} [string trimleft $ns :]]
-                set fn "[file join $indir $fn].man"
-                document_namespace doctools $ns -output $fn -hidenamespace $ns \
-                    -name $ns \
-                    -keywords [list "documentation generation"] \
-                    -modulename $ns \
-                    -titledesc [dict get $nsdata description] \
-                    -version $::ruff::version
-            }
-            if {$opts(-formatterpath) ne ""} {
-                if {[catch {
-                    eval exec $opts(-formatterpath) [list -o $outdir html $indir]
-                } msg]} {
-                    app::log_error "Error executing doctools using path '$opts(-formatterpath)': $msg"
-                }
-            }
+            document doctools [list ::ruff] {*}$args \
+                -output [file join $output_dir ruff.man] \
+                -hidenamespace ::ruff \
+                -keywords [list "documentation generation"] \
+                -modulename ::ruff
         }
         html {
             # Note here we use $output_dir since will directly produce HTML
             # and not intermediate files
-            document_namespaces html ::ruff -recurse true \
+            document html [list ::ruff] {*}$args \
                 -output [file join $output_dir ruff.html] \
-                -titledesc "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)" \
+                -titledesc $title \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
                 -includesource $opts(-includesource)
         }
