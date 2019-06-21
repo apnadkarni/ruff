@@ -585,7 +585,7 @@ proc ::ruff::formatter::html::_locate_link {link_label scope} {
     return [_cmd $link_label]
 }
 
-proc ::ruff::formatter::html::_linkify {text {link_regexp {}} {scope {}}} {
+proc ::ruff::formatter::html::_linkify_TBD_GET_RID_OF_THIS {text {link_regexp {}} {scope {}}} {
 
     if {1} {
         return [_parse_inline_markdown $text $scope]
@@ -779,7 +779,6 @@ proc ruff::formatter::html::_fmthead {text level args} {
 }
 
 proc ruff::formatter::html::_fmtpara {text {linkregexp {}} {scope {}}} {
-    #set text "<p class='ruff'>[_linkify [string trim $text] $linkregexp $scope]</p>\n"
     return "<p class='ruff'>[_parse_inline_markdown [string trim $text] $scope]</p>\n"
 }
 
@@ -1032,10 +1031,8 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
         set ext_list {}
         foreach imp_class [lsort -dictionary [array names external_methods]] {
             lappend ext_list \
-                [_linkify $imp_class $opts(-linkregexp) $scope] \
-                [_linkify $external_methods($imp_class) \
-                     $opts(-linkregexp) \
-                     $imp_class]
+                [_parse_inline_markdown $imp_class $scope] \
+                [_parse_inline_markdown $external_methods($imp_class) $imp_class]
         }
         append doc [_fmtdeflist $ext_list -preformatted both]
     }
@@ -1045,7 +1042,11 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     }
 
     if {[info exists aclass(constructor)] && !$opts(-mergeconstructor)} {
-        set method_summaries($aclass(name).constructor) [dict create label [_parse_inline_markdown "\[$aclass(name).constructor\]" $aclass(name)] desc "Constructor for the class" ]
+        set method_summaries($aclass(name).constructor) \
+            [dict create label \
+                 [_parse_inline_markdown "\[$aclass(name).constructor\]" $aclass(name)] \
+                 desc \
+                 "Constructor for the class" ]
         append doc [generate_proc_or_method $aclass(constructor) \
                         -includesource $opts(-includesource) \
                         -hidenamespace $opts(-hidenamespace) \
@@ -1087,12 +1088,20 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
             } else {
                 set summary ""
             }
-            set method_summaries($aclass(name).$name) [dict create label [_linkify "\[$aclass(name).$name\]" $opts(-linkregexp) $aclass(name)] desc $summary]
+            set method_summaries($aclass(name).$name) \
+                [dict create label \
+                     [_parse_inline_markdown "\[$aclass(name).$name\]" $aclass(name)] \
+                     desc \
+                     $summary]
         } else {
             set forward_text "Method forwarded to [dict get $info forward]"
             append doc [_fmtprochead $aclass(name)::$name -tooltip $forward_text -level $header_levels(method)]
             append doc [_fmtpara $forward_text $opts(-linkregexp) $scope]
-            set method_summaries($aclass(name).$name) [dict create label [_linkify $aclass(name).$name  $opts(-linkregexp) $aclass(name)] desc [_linkify $forward_text $opts(-linkregexp) $scope]]
+            set method_summaries($aclass(name).$name) \
+                [dict create label \
+                     [_parse_inline_markdown "\[$aclass(name).$name\]" $aclass(name)] \
+                     desc \
+                     [_parse_inline_markdown $forward_text $scope]]
         }
     }
 

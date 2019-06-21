@@ -327,7 +327,7 @@ proc ruff::parse {lines} {
                     #ruff
                     # As a special case, a parameter definition where the
                     # term begins with a `-` is treated as a option definition.
-                    if {[string index [lindex $matches 1] 1] eq "-"} {
+                    if {[string index [lindex $matches 1] 0] eq "-"} {
                         _change_state option result
                     } else {
                         _change_state parameter result
