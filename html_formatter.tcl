@@ -734,7 +734,7 @@ proc ruff::formatter::html::_fmtparas {paras {linkregexp {}} {scope {}}} {
 proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     # Formats the documentation for a proc in HTML format
     # procinfo - proc or method information in the format returned
-    #   by extract_ooclass
+    #   by extract_proc or extract_ooclass
     #
     # The following options may be specified:
     #   -includesource BOOLEAN - if true, the source code of the
@@ -856,11 +856,16 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     # Do we include the source code in the documentation?
     if {$opts(-includesource)} {
         set src_id [_new_srcid]
+        if {[info exists aproc(ensemble)]} {
+            set note "<em style='font-size:small;'># NOTE: showing source of procedure implementing ensemble subcommand.</em>"
+        } else {
+            set note ""
+        }
         append doc "<div class='ruff_source'>"
         append doc "<p class='ruff_source_link'>"
         append doc "<a id='l_$src_id' href=\"javascript:toggleSource('$src_id')\">Show source</a>"
         append doc "</p>\n"
-        append doc "<div id='$src_id' class='ruff_dyn_src'><pre>\n[escape $aproc(source)]\n</pre></div>\n"
+        append doc "<div id='$src_id' class='ruff_dyn_src'>$note\n<pre>\n[escape $aproc(source)]\n</pre></div>\n"
         append doc "</div>";    # class='ruff_source'
     }
 

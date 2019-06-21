@@ -714,7 +714,7 @@ proc ruff::extract_ensemble {ens} {
 
     return [lmap cmd $cmds {
         if {[dict exists $ens_config(-map) $cmd]} {
-            set real_cmd [dict get $ens_config(-map)]
+            set real_cmd [dict get $ens_config(-map) $cmd]
         } else {
             set real_cmd $cmd
         }
