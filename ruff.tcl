@@ -208,6 +208,19 @@ proc ruff::_trim_namespace_multi {namelist ns} {
     return $result
 }
 
+proc ruff::_ensembles {pattern} {
+    # Returns list of ensembles matching the pattern
+    # pattern - fully namespace qualified pattern to match
+
+    return [lmap cmd [info commands $pattern] {
+        if {![namespace ensemble exists $cmd]} {
+            continue
+        }
+        set cmd
+    }]
+}
+
+
 proc ruff::_sift_names {names} {
     # Given a list of names, separates and sorts them based on their namespace
     # names - a list of names
@@ -664,6 +677,64 @@ proc ruff::extract_proc {procname} {
     return [extract_proc_or_method proc $procname [info args $procname] $param_defaults [info body $procname]]
 }
 
+proc ruff::extract_ensemble {ens} {
+    # Extracts metainformation for all subcommands in an ensemble command
+    # ens - fully qualified names of the ensemble command
+    #
+    # Only ensemble commands that satisfy the following are supported:
+    # - the ensemble implementation must be in the form of Tcl procedures
+    # - the ensemble must not have been configured with the `-parameters`
+    #   option as that changes location of arguments
+    #
+    # Each element of the returned list is of the form returned by [extract_proc]
+    # with two changes. The `name` key in the dictionary element is the
+    # includes the ensemble name. Secondly, an additional key `ensemble` is
+    # added to indicate which ensemble the element belongs to.
+    #
+    # Returns a list of elements each of the form returned by [extract_proc].
+
+    array set ens_config [namespace ensemble configure $ens]
+    if {[llength $ens_config(-parameters)]} {
+        app::log_error "Skipping ensemble command $ens has it has a non-empty -parameters attribute."
+    }
+
+    if {[llength $ens_config(-subcommands)]} {
+        set cmds $ens_config(-subcommands)
+    } elseif {[dict size $ens_config(-map)]} {
+        set cmds [dict keys $ens_config(-map)]
+    } else {
+        set exported [namespace eval $ens_config(-namespace) {namespace export}]
+        set cmds {}
+        foreach pat $exported {
+            foreach cmd [info commands ${ens_config(-namespace)}::$pat] {
+                lappend cmds [namespace tail $cmd]
+            }
+        }
+    }
+
+    return [lmap cmd $cmds {
+        if {[dict exists $ens_config(-map) $cmd]} {
+            set real_cmd [dict get $ens_config(-map)]
+        } else {
+            set real_cmd $cmd
+        }
+        if {![string match ::* $real_cmd]} {
+            set real_cmd "${ens_config(-namespace)}::$real_cmd"
+        }
+        if {[info procs $real_cmd] ne "$real_cmd"} {
+            app::log_error "Skipping subcommand \"$cmd\" for ensemble \"$ens\" because it is not a procedure."
+            continue
+        }
+        if {[catch {extract_proc $real_cmd} result]} {
+            app::log_error "Could not retrieve information for \"$real_cmd\" implementing ensemble command \"$ens $cmd\": $result"
+            continue
+        }
+        dict set result name "$ens $cmd"
+        dict set result ensemble $ens
+        set result
+    }]
+}
+
 proc ruff::extract_ooclass_method {class method} {
 
     # Extracts metainformation for the method in oo:: class
@@ -676,7 +747,7 @@ proc ruff::extract_ooclass_method {class method} {
     # Returns a dictionary containing documentation related to the command.
     #
 
-    
+
     switch -exact -- $method {
         constructor {
             foreach {params body} [info class constructor $class] break
@@ -982,6 +1053,8 @@ proc ruff::extract {pattern args} {
     #     collected
     # -includeprivate BOOLEAN - if true private methods are also included.
     #  Default is false.
+    # -includeimports BOOLEAN - if true commands imported from other
+    #  namespaces are also included. Default is false.
     #
     # The value of the classes key in the returned dictionary is
     # a dictionary whose keys are class names and whose corresponding values
@@ -1036,10 +1109,8 @@ proc ruff::extract {pattern args} {
 
     set procs [dict create]
     if {$opts(-includeprocs)} {
+        # Collect procs
         foreach proc_name [info procs $pattern] {
-            #ruff
-            # -includeimports BOOLEAN - if true commands imported from other
-            #  namespaces are also included. Default is false.
             if {(! $opts(-includeimports)) &&
                 [namespace origin $proc_name] ne $proc_name} {
                 continue;       # Do not want to include imported commands
@@ -1056,6 +1127,28 @@ proc ruff::extract {pattern args} {
                 app::log_error "Could not document proc $proc_name"
             } else {
                 dict set procs $proc_name $proc_info
+            }
+        }
+        # Collect ensembles
+        foreach ens_name [_ensembles $pattern] {
+            if {(! $opts(-includeimports)) &&
+                [namespace origin $ens_name] ne $ens_name} {
+                continue;       # Do not want to include imported commands
+            }
+            # Names beginning with _ are treated as private
+            if {(!$opts(-includeprivate)) &&
+                [string index [namespace tail $ens_name] 0] eq "_"} {
+                continue
+            }
+
+            if {[catch {
+                set ens_cmds [extract_ensemble $ens_name]
+            } msg]} {
+                app::log_error "Could not document ensemble command $ens_name: $msg"
+            } else {
+                foreach ens_info $ens_cmds {
+                    dict set procs [dict get $ens_info name] $ens_info
+                }
             }
         }
     }
