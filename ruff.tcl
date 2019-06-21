@@ -274,7 +274,7 @@ proc ruff::parse {lines} {
     set result(summary) ""
 
     foreach line $lines {
-        switch -regexp -- $line {
+        switch -regexp -matchvar matches -- $line {
             {^\s*$} {
                 #ruff
                 # Empty lines or lines with only whitespace
@@ -304,17 +304,15 @@ proc ruff::parse {lines} {
                 # list is returned as a list containing the list items, each
                 # of which is a list of lines.
                 _change_state bulletlist result
-                if {![regexp {^\s*[-\*]\s+(.*)$} $line dontcare fragment]} {
-                    error "Internal error: regexp did not match after switch statement matched."
-                }
-                lappend result(fragment) $fragment
+                lappend result(fragment) [lindex $matches 1]
             }
-            {^\s*(\S+)\s+-(\s+.*)$} {
+            {^\s*(\S.*?)\s+-\s+(.*)$} {
                 #ruff
-                # A definition list or parameter list begins with a word
-                # followed by whitespace, a '-' character, whitespace
-                # and descriptive 
-                # text. Whether it is treated as a parameter list or a
+                # A definition list or parameter list element begins with
+                # a line that contains a `-` character surrounded by
+                # whitespace. The text before the `-` separator is the
+                # definition term and the text after is the description.
+                # Whether it is treated as a parameter list or a
                 # definition list depends on whether it occurs in the comment
                 # block. If it occurs at the beginning or just after the
                 # summary line, it is treated as a parameter list.
@@ -322,40 +320,23 @@ proc ruff::parse {lines} {
                 # Like a bulleted list, each list item may be continued
                 # on succeeding lines by indenting them.
                 # Definition and parameter lists
-                # are returned as flat list 
+                # are returned as flat list
                 # of alternating list item name and list item value
                 # pairs. The list item value is itself a list of lines.
-                if {[lsearch -exact {init summary postsummary parameter} $result(state)] >= 0} {
-                    _change_state parameter result
+                if {[lsearch -exact {init summary postsummary parameter option} $result(state)] >= 0} {
+                    #ruff
+                    # As a special case, a parameter definition where the
+                    # term begins with a `-` is treated as a option definition.
+                    if {[string index [lindex $matches 1] 1] eq "-"} {
+                        _change_state option result
+                    } else {
+                        _change_state parameter result
+                    }
                 } else {
                     _change_state deflist result
                 }
-                if {![regexp {^\s*(\S+)\s+-(\s+.*)$} $line dontcare result(name) fragment]} {
-                    error "Internal error: regexp did not match after switch statement matched."
-                }
-                lappend result(fragment) $fragment
-            }
-            {^\s*(-\w+.*)\s+-(\s+.*)$} {
-                #ruff
-                # An option list is similar to a parameter list except that
-                # the first word on the line begins with a '-' character and
-                # is possibly followed by more words before the '-' character
-                # that separates the descriptive text. The '-' separator
-                # must be surrounded by whitespace. The value returned
-                # for an option list follows the same structure as for
-                # parameter or definition list items. Any line in any 
-                # documentation block that matches this is always added
-                # to the option list, irrespective of where it occurs. This
-                # means option descriptions can be mingled with other
-                # documentation fragments and will show up in the options
-                # section.
-
-                _change_state option result
-
-                if {![regexp {^\s*(-\w+.*)\s+-(.*)$} $line dontcare result(name) fragment]} {
-                    error "Internal error: regexp did not match after switch statement matched."
-                }
-                lappend result(fragment) $fragment
+                set result(name) [lindex $matches 1]
+                lappend result(fragment) [lindex $matches 2]
             }
             {^Returns($|\s.*$)} {
                 #ruff
