@@ -15,7 +15,7 @@ package require textutil::adjust
 package require Tcl 8.6
 
 namespace eval ruff {
-    variable version 0.5.0
+    variable version 0.6.0
 
     variable names
     set names(display) "Ruff!"
@@ -1023,7 +1023,7 @@ proc ruff::extract {pattern args} {
                 [string index [namespace tail $class_name] 0] eq "_"} {
                 continue
             }
-            
+
             if {[catch {
                 set class_info [extract_ooclass $class_name -includeprivate $opts(-includeprivate)]
             } msg]} {

@@ -467,6 +467,16 @@ proc ::ruff::formatter::html::_parse_inline_markdown {text {scope {}}} {
 
                 set chr [escape $chr]
             }
+            {$} {
+                # Ruff extension - treat $var as variables name
+                # Note: no need to escape characters but do so
+                # if you change the regexp
+                if {[regexp -start $index {\$\w+} $text m]} {
+                    append result "<code>$m</code>"
+                    incr index [string length $m]
+                    continue
+                }
+            }
             {>} -
             {'} -
             "\"" {
