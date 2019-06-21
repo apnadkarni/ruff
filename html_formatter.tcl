@@ -585,96 +585,6 @@ proc ::ruff::formatter::html::_locate_link {link_label scope} {
     return [_cmd $link_label]
 }
 
-proc ::ruff::formatter::html::_linkify_TBD_GET_RID_OF_THIS {text {link_regexp {}} {scope {}}} {
-
-    if {1} {
-        return [_parse_inline_markdown $text $scope]
-    
-
-        TBD - rest obsolete! Get rid of this procedure and replace with
-        direct calls to _parse_inline_markdown
-    } 
-
-    # Convert matching substrings to links
-    # text - string to be substituted
-    # link_regexp - regexp to use for matching potential links
-    # scope - the current namespace for this text. This is
-    #  used to try and locate the appropriate link reference in the
-    #  namespace hierarchy.
-    #
-    # Returns $text with any substrings matching $link_regexp being
-    # replaced by links.
-
-    if {$link_regexp eq ""} {
-        #ruff
-        # If $link_regexp is empty or unspecified, will check if
-        # the entire string is itself a link.
-        return [_locate_link $text $scope]
-    }
-
-    # Set the delimiters used to indicate links
-    if {$::ruff::ProgramOptions(-autolink)} {
-        # Anything that matches passed link regexp will do
-        set start_delim {^|[^[:alnum:]_\:]}
-        set end_delim {$|[^[:alnum:]_\:]}
-    } else {
-        # Matches must be enclosed in <>
-        # TBD - why is there a ^ in these regexps since autolink is off?
-        # TBD - the link delimiters should really be program options
-        # and not hardcoded to <> as used by markdown
-        set start_delim {^|<}
-        set end_delim {$|>}
-    }
-    set arg_re {\$[_[:alnum:]]+}
-
-    # As an aside, initially tried doing this without using indices
-    # and instead directly storing the subexpressions for the pre,
-    # match, and post strings. But could not get the greediness working
-    # correctly when the link regexp components were substrings of
-    # other components (as will generally be the case with namespaces)
-    # and both forms were contained in the passed text.
-
-    set processed ""
-    set remain $text
-    while {[regexp -indices "($start_delim)($link_regexp)($end_delim)|($arg_re)" $remain dontcare starter link ender argrange]} {
-        if {[lindex $link 0] != -1} {
-            # Link to an identifier
-            lassign $starter dontcare start_last
-            lassign $link link_first link_last
-            lassign $ender end_first end_last
-            # Some links will be enclosed in <>. Discard these
-            append processed [escape [string trimright [string range $remain 0 $start_last] "<"]]
-            set linkval [string range $remain $link_first $link_last]
-            append processed [_locate_link $linkval $scope]
-            append processed [escape [string trimleft [string range $remain $end_first $end_last] ">"]]
-            set remain [string range $remain [incr end_last] end]
-        } else {
-            if {[lindex $argrange 0] == -1} {
-                error "Internal error: argrange regexp error"
-            }
-            # Reference to an argument
-            lassign $argrange arg_first arg_last
-            append processed [escape [string range $remain 0 $arg_first-1]]
-            append processed [_arg [string range $remain $arg_first+1 $arg_last]]
-            set remain [string range $remain [incr arg_last] end]
-        }
-    }
-    if {0} {
-        # Commented out because a subsequent markdown parsing
-        # call will further escape the escaped characters
-        append processed [escape $remain]
-    } else {
-        append processed $remain
-    }
-
-    # Finally substitute for http links.
-    # TBD - this might not work correctly because of HTML escaping above.
-    # Matching expression modified from http://wiki.tcl.tk/15536. Modified
-    # to not assume trailing punctuation characters to be part of URI.
-    return [regsub -all -- {(?:[[:alpha:]]?)(?:\w){2,7}:(?://?)(?:[^[:space:]>\"]*)[[:alnum:]]} $processed {<a href='&'>&</a>}]
-}
-
-
 proc ruff::formatter::html::_anchor args {
     # Given a list of strings, constructs an anchor from them
     # and returns it. It is already HTML-escaped. Empty arguments
@@ -686,7 +596,7 @@ proc ruff::formatter::html::_anchor args {
         }
     }
 
-    return [escape [join $parts -]]
+    return [regsub -all {[^-:\w_.]} [join $parts -] _]
 }
 
 proc ruff::formatter::html::_fmtdeflist {listitems args} {
@@ -1202,7 +1112,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
              -titledesc "" \
              -modulename "Reference" \
              ]
-                        
+
     array set opts $args
 
     # TBD - create a link_target entry for each namespace
@@ -1346,7 +1256,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     # Add the navigation bits
     append doc "<div class='yui-b navbox'>"
     dict for {text link} $navlinks {
-        set label [dict get $link label]
+        set label [escape [dict get $link label]]
         set tag  [dict get $link tag]
         set href [dict get $link href]
         if {[dict exists $link tip]} {

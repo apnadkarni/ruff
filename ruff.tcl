@@ -12,14 +12,7 @@
 
 package require textutil::adjust
 
-
-# TBD
-# - Wiki formatting (uppercase as [arg ...] etc.
-
-# Stuff to emulate 8.6 core on older versions.
-if {[info commands dict] == ""} {
-    package require dict
-}
+package require Tcl 8.6
 
 namespace eval ruff {
     variable version 0.5.0
@@ -758,9 +751,8 @@ proc ruff::extract_proc_or_method {proctype procname param_names param_defaults 
                     if {[lsearch -exact $param_names $name] >= 0} {
                         set params($name) [join $desc " "]
                     } else {
-                        #TBD - how to handle this? For now, assume it's
-                        #a parameter as well. Perhaps it might be a possible
-                        #token in the args parameter
+                        # Assume it's a parameter as well. Perhaps it
+                        # might be a possible token in the args parameter
                         app::log_error "Parameter '$name' not listed in arguments for '$procname'"
                         set params($name) [join $desc " "]
                     }
@@ -1453,10 +1445,6 @@ proc ruff::document_self {formatter output_dir args} {
         [dict create description "$names(display) formatters"]
     dict set modules ::ruff::formatter::doctools \
         [dict create description "$names(display) formatter for Doctools"]
-    dict set modules ::ruff::formatter::naturaldocs \
-        [dict create description "$names(display) formatter for NaturalDocs"]
-    dict set modules ::ruff::formatter::robodoc \
-        [dict create description "$names(display) formatter for ROBODoc"]
     dict set modules ::ruff::formatter::html \
         [dict create description "$names(display) formatter for HTML"]
     dict set modules ::ruff::app \
