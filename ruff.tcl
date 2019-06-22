@@ -15,22 +15,41 @@ namespace eval ruff {
     variable _ruffdoc
     set _ruffdoc {}
     lappend _ruffdoc Introduction {
-        Ruff! generates reference documentation for Tcl programs using
-        runtime introspection.
+        Ruff! (Runtime function formatter) is a documentation generation
+        system for programs written in the Tcl programming language. Ruff! is
+        included with Woof! but can be used independently of it. Ruff! uses
+        runtime introspection in conjunction with comment analysis to generate
+        reference manuals for Tcl programs.
 
-        Unlike most source code based documentation generators, Ruff!
-        generates documentation using Tcl's runtime system to extract
-        proc, class and method definitions. The code for procedures
-        and methods is parsed to extract documentation from free-form
-        comments. Tcl introspection is used to retrieve information
-        about namespaces, inheritance graphs, default parameter values and
-        so on.
+        Ruff! is covered by a liberal BSD open-source license that permits use
+        for any purpose.
 
-        This document contains reference material for Ruff!. For
-        more introductory and tutorial documentation, a user
-        guide is available at http://woof.sourceforge.net/ruff_guide.html.
-        The SourceForge site http://sourceforge.net/projects/woof hosts the
-        Ruff! source tree as part of the Woof! project.
+    } "Why Ruff!" {
+        In comparison with other source code based documentation generators, Ruff!
+        produces documentation that not only requires less effort from the
+        programmer, but is also more complete, more accurate and more
+        maintainable.
+
+        Ruff! saves the programmer the initial effort required for
+        documentation:
+
+        * Comments in source code do not have to be
+        reproduced for documentation purposes.
+        * Ruff! requires minimal
+        markup in the comments making it very lightweight.
+        * Program elements
+        like command arguments and defaults, are automatically derived.
+        * In object oriented code, class relationships are extracted
+        and the full API for a class, with inherited and mixed-in methods,
+        is easily seen.
+        * Hyperlinking between program elements, and optionally, source code
+        makes navigation of documentation easy and efficient.
+
+        Further, maintaining documentation in sync with the code is much
+        easier. For example, changing the defaults for arguments, or adding
+        a mix-in to a class, is taken care of with no additional
+        documentation effort.
+
     }
     lappend _ruffdoc Usage {
         Ruff! is not intended to be a standalone script. Rather the package
@@ -40,7 +59,7 @@ namespace eval ruff {
 
             package require ruff
 
-        Once loaded, you can use the ::ruff::document command to document
+        Once loaded, you can use the [document] command to document
         classes and commands within one or more namespaces.
 
         The following command will create the file 'NS.html' using the
@@ -52,11 +71,64 @@ namespace eval ruff {
         Refer to [document] for various options that control the
         content included in the documentation.
     }
-    lappend _ruffdoc "Input format" {
-        Ruff! extracts documentation from proc and class definitions and
-        comments within the proc and method bodies. The comments are
-        expected to have some simple structure but no extraneous markup
-        is required.
+    lappend _ruffdoc "Documenting procedures" {
+        Ruff! generates documentation using Tcl's runtime system to gather
+        proc definitions. Comments in procedure bodies are further parsed to
+        extract the documentation for the procedure.
+
+        The general form of a procedure is as follows:
+
+            proc myapp::myproc {arg {optarg AVALUE} args} {
+                # This first line is the summary line for documentation.
+                # arg - first parameter
+                # optarg - an optional parameter
+                # -switch VALUE - an optional switch
+                #
+                # This is the general description of the procedure
+                # composed of multiple paragraphs. It is separated from
+                # the parameter list above by one or more empty comments.
+                #
+                # This is the second paragraph. The next paragraph
+                # starts with the word Returns and hence will be treated
+                # by Ruff! as describing the return value.
+                #
+                # Returns a value.
+                #
+                # The above Return paragraph may appear anywhere, not
+                # necessarily as the last paragraph.
+                #
+                # A definition list has a similar form to the argument
+                # list. For example, optarg may take the following values:
+                #  AVALUE - one possible value
+                #  BVALUE - another possible value
+                #
+                # Bullet lists are indicated by a starting `-` or `*` character.
+                # - This is a bullet list iterm
+                # * This is also a bullet list item
+
+                # This paragraph will be ignored by Ruff! as it is not part
+                # of the initial block of comments.
+
+                some code
+
+                #ruff
+                # Thanks to the #ruff marker above, this paragraph will be
+                # included by Ruff! even though it is not in the initial block
+                # of comments. This is useful for putting documentation for
+                # a feature right next to the code implementing it.
+
+                some more code.
+            }
+
+        The code for procedures
+        and methods is parsed to extract documentation from free-form
+        comments. Tcl introspection is used to retrieve information
+        about namespaces, inheritance graphs, default parameter values and
+        so on.
+
+
+        Procedure and class methods are expected to have a structure similar
+        to the following:
 
         The lines within the body of a proc or method are first filtered
         as described in documentation for the ::ruff::distill_body command.
@@ -65,6 +137,8 @@ namespace eval ruff {
 
         Refer to those commands for the syntax and comment structure expected
         by Ruff!.
+    } "Documenting classes" {
+        
     }
     lappend _ruffdoc "Output formats" {
 
@@ -282,23 +356,40 @@ proc ruff::private::parse {lines} {
                     }
                 }
             }
+            {^\s{4,}} {
+                #ruff
+                # Lines beginning with at least 4 spaces
+                # are treated as preformatted text unless they are part
+                # of a list item. Preformatted text is returned as a list
+                # of lines.
+                switch -exact -- $result(state) {
+                    preformatted -
+                    bulletlist -
+                    deflist -
+                    parameter -
+                    option {
+                        # No change. Keep adding to existing block
+                    }
+                    default {
+                        _change_state preformatted result
+                    }
+                }
+                lappend result(fragment) $line
+            }
             {^\s*[-\*]\s+(.*)$} {
                 #ruff
-                # A bulleted list item starts with a '-' or '*' character.
-                # A list item may be continued across multiple lines by
-                # indending succeeding lines belonging to the same list item.
-                # Note an indented line will terminate the previous list
-                # item if it itself looks like a new list item.
-                # A bulleted
-                # list is returned as a list containing the list items, each
-                # of which is a list of lines.
+                # A bulleted list item starts with a '-' or '*' character
+                # and is not a preformatted line.
+                # A list item may be continued across multiple lines.
+                # A bulleted list is returned as a list containing the list
+                # items, each of which is a list of lines.
                 _change_state bulletlist result
                 lappend result(fragment) [lindex $matches 1]
             }
             {^\s*(\S.*?)\s+-\s+(.*)$} {
                 #ruff
-                # A definition list or parameter list element begins with
-                # a line that contains a `-` character surrounded by
+                # A definition list or parameter list element that is not
+                # preformatted and contains a `-` character surrounded by
                 # whitespace. The text before the `-` separator is the
                 # definition term and the text after is the description.
                 # Whether it is treated as a parameter list or a
@@ -339,29 +430,10 @@ proc ruff::private::parse {lines} {
                 }
                 lappend result(fragment) $line
             }
-            {^\s+} {
-                #ruff
-                # Lines beginning with spaces
-                # are treated as preformatted text unless they are part
-                # of a list item. Preformatted text is returned as a list
-                # of lines.
-                switch -exact -- $result(state) {
-                    preformatted -
-                    bulletlist -
-                    deflist -
-                    parameter -
-                    option {
-                        # No change. Keep adding to existing block
-                    }
-                    default {
-                        _change_state preformatted result
-                    }
-                }
-                lappend result(fragment) $line
-            }
             default {
                 #ruff
-                # All other text blocks are descriptive text paragraphs.
+                # All other lines either continue an existing paragrapsh
+                # or list element, or begin a new paragraph.
                 # Paragraphs may extend across multiple lines and are
                 # terminated either when the line matches one of the list
                 # items patterns, an indented line (which is treated
@@ -372,11 +444,15 @@ proc ruff::private::parse {lines} {
                     init { _change_state summary result }
                     postsummary -
                     blank -
+                    preformatted { _change_state paragraph result }
                     bulletlist -
                     parameter -
                     deflist -
-                    option -
-                    preformatted { _change_state paragraph result }
+                    option {
+                        # Stay in same state.
+                        # Originally, additional list lines were required to
+                        # be indented but no more (for Markdown compatibility)
+                    }
                     default {
                         # Stay in same state
                     }
