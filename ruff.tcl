@@ -251,7 +251,7 @@ namespace eval ruff {
         `[document]` - [document]
         `[::ruff::formatters]` - [::ruff::formatters]
 
-        If does not match a program element name, it is
+        If the text does not match a program element name, it is
         treated as a normal Markdown reference. 
 
 
@@ -437,12 +437,17 @@ proc ruff::private::_sift_classprocinfo {classprocinfodict} {
     return $result
 }
 
-proc ruff::private::parse {lines} {
+proc ruff::private::parse {lines {mode proc}} {
     # Creates a parse structure given a list of lines that are assumed
     # to be documentation for a programming structure
     #
     # lines - a list of lines comprising the documentation
+    # mode - parsing mode, must be one of `proc`, `method`, `docstring`
     #
+
+    if {$mode ni {proc method docstring}} {
+        error "Argument \"mode\" must be one of \"proc\", \"method\" or \"docstring\""
+    }
     set result(name) ""
     set result(listcollector) {}
     set result(fragment) {}
@@ -512,13 +517,16 @@ proc ruff::private::parse {lines} {
                 # block. If it occurs at the beginning or just after the
                 # summary line, it is treated as a parameter list.
                 # In all other cases, it is treated as a definition list.
+                # Note that when $mode is `docstring` it is always treated
+                # as a definition list.
                 # Like a bulleted list, each list item may be continued
                 # on succeeding lines by indenting them.
                 # Definition and parameter lists
                 # are returned as flat list
                 # of alternating list item name and list item value
                 # pairs. The list item value is itself a list of lines.
-                if {[lsearch -exact {init summary postsummary parameter option} $result(state)] >= 0} {
+                if {$mode ne "docstring" &&
+                    [lsearch -exact {init summary postsummary parameter option} $result(state)] >= 0} {
                     #ruff
                     # As a special case, a parameter definition where the
                     # term begins with a `-` is treated as a option definition.
@@ -535,9 +543,12 @@ proc ruff::private::parse {lines} {
             }
             {^Returns($|\s.*$)} {
                 #ruff
-                # Any paragraph that begins with the word 'Returns' is treated
+                # If $mode is not `docstring`,
+                # any paragraph that begins with the word 'Returns' is treated
                 # as a description of the return value irrespective of where
                 # it occurs. It is returned as a list of lines.
+                # TBD - fix to be normal line if in docstring mode
+                
                 if {$result(state) eq "init"} {
                     _change_state summary result
                 } else {
@@ -792,7 +803,7 @@ proc ruff::private::extract_docstring {text} {
     set paragraphs {}
 
     # Loop and construct the documentation
-    foreach {type content} [parse [distill_docstring $text]] {
+    foreach {type content} [parse [distill_docstring $text] docstring] {
         switch -exact -- $type {
             deflist {
                 # Each named list is a list of pairs
@@ -987,7 +998,7 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names param_
     set paragraphs {}
 
     # Loop and construct the documentation
-    foreach {type content} [parse [distill_body $body]] {
+    foreach {type content} [parse [distill_body $body] $proctype] {
         switch -exact -- $type {
             parameter {
                 # For each parameter, check if it is a 

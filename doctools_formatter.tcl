@@ -6,8 +6,10 @@
 # Ruff! formatter for doctools
 
 namespace eval ruff::formatter::doctools {  
-    namespace import [namespace parent]::*
-    namespace import [namespace parent [namespace parent]]::*
+    namespace path [list \
+                        [namespace parent [namespace parent]] \
+                        [namespace parent [namespace parent]]::private \
+                       ]
 }
 
 proc ruff::formatter::doctools::escape {s} {
