@@ -120,27 +120,142 @@ namespace eval ruff {
                 some more code.
             }
 
-        The code for procedures
-        and methods is parsed to extract documentation from free-form
-        comments. Tcl introspection is used to retrieve information
-        about namespaces, inheritance graphs, default parameter values and
-        so on.
+        Of course, any of the comment sections may be missing. For example,
+        the following suffices for a simple procedure.
 
+            proc answer {} {
+                # Returns the Answer to the Ultimate Question of Life
+                return 42
+            }
 
-        Procedure and class methods are expected to have a structure similar
-        to the following:
+        The structure Ruff! expects is described below. In practice,
+        the structure is simple and intuitive though the description may be
+        a bit long winded.
 
-        The lines within the body of a proc or method are first filtered
-        as described in documentation for the ::ruff::distill_body command.
-        These lines are then parsed as described in the ::ruff::parse command
-        to extract different documentation components. 
+        The first block of comments within a procedure that appear before
+        the first line of code are always processed by Ruff!. Note preceding
+        blank lines are OK. We will refer to this block as the lead comment
+        block. It is terminated by either a line of code or a completely
+        blank line (without even the comment character).
+
+        Any comments appearing after the first line of code are not
+        processed by Ruff! unless immediately preceded by a line beginning
+        with `#ruff` which indicates the start of another Ruff! comment
+        block.
+
+        The lead comment block begins with a summary line that will be used
+        anywhere the document output inserts a procedure summary, for
+        example, in the Table of Contents. The summary line is terminated
+        with a blank comment or by the parameter block.
+
+        The parameter block is a definition list (see below) and follows its
+        syntactic structure. It only differs from definition lists in that
+        it must directly follow the summary line and receives special
+        treatment in that the default value, if any for the argument, is
+        automatically inserted by Ruff!. Options and switches may also be
+        documented here as shown in the example above. The parameter block
+        is terminated by a blank comment or a blank line or code.
+
+        Any blocks following the parameter block, whether part of the lead
+        block or appearing in a subsequent comment block marked with a
+        leading `#ruff`, are processed as follows.
+
+        * All processed lines are stripped of the leading `#` character and a
+        single following space if there is one.
+
+        * If the line is indented 4 or more spaces, it is treated a
+        preformatted line and passed through to the output as is without any
+        of the processing described above. This takes priority over all
+        other types.
+
+        * Lines starting with a `-` or a `*` character followed by at least
+        one space are treated as a bulleted list item.
+
+        * Lines containing a `-` surrounded by whitespace is treated as a
+        definition list element. The text before the `-` separator is the
+        definition term and the text after is the description.
+        The built-in HTML formatter displays definition lists as tables.
+        Note parameter blocks have the same format and are distringuished
+        from definition lists only by their presence in the lead block.
+
+        * Any line beginning with the word `Returns` is treated as
+        description of the return value.
+
+        * All other lines are treated as part of the previous block of
+          lines, for example a continued list element. If there was no
+          previous block (e.g. preceded by a blank comment line), the line
+          and subsequent lines are treated as a normal text paragraph.
 
         Refer to those commands for the syntax and comment structure expected
         by Ruff!.
     } "Documenting classes" {
-        
-    }
-    lappend _ruffdoc "Output formats" {
+
+        Documentation for class methods is exactly as described above for
+        procedures. Information about class relationships is automatically
+        collected and need not be explicitly provided. Note that unlike for
+        procedures and methods, Tcl does not provide a means to retrieve the
+        body of the class so that comments can be extracted from them. Thus
+        to document information about the class as a whole, you can either
+        include it in the comments for the constructor, which is often a
+        reasonable place for such information, or include it in the general
+        information section as described in the next section.
+
+    } "Documenting namespaces" {
+
+        Documentation for a namespace is generated by looking for the
+        variable `_ruffdoc` within the namespace. If present, its content
+        should be a list of alternating pairs comprising a section title and
+        section content.
+
+        The section content is processed in the same manner as the procedure
+        and method bodies except that (obviously) there is no
+        summary or parameter block. The indentation of the first line
+        of section content is stripped off from all subsequent lines
+        before processing or Ruff! (This impacts what constitutes a
+        preformatted line).
+
+        The documentation generated from the `_ruffdoc` content is placed
+        before the documentation of the commands in classes for that namespace.
+
+    } "Inline formatting" {
+
+        The text within paragraphs can be formatted as bold, italic, code
+        etc. by using Markdown syntax with some minor extensions. Note
+        Markdown compatibility is only for inline elements. **Markdown block
+        level markup is not supported.**
+
+        In particular, the following inline markup is supported:
+
+        \`   - `Text surrounded by backquotes is formatted as inline code`
+        `*`    - *Text surrounded by single asterisks is emphasize*
+        `**`   - **Text surrounded by double asterisks is bolded**
+        `***`  - ***Text surrounded by triple asterisks is bold emphasized***
+        `[]`   - Text surrounded by square brackets is treated as a link
+        (more below).
+        `<>`   - Text in angle brackets are treated as HTML tags and
+        auto-links as in Markdown.
+        `$`    - Words beginning with `$` are treated as variable names and
+        shown as inline code similar to backquotes (non-standard Markdown).
+
+        The default HTML formatter supports other Markdown inline elements
+        but other formatters might not.
+
+        Text enclosed in `[]` is checked whether it references another
+        program element name (namespaces, classes, methods, procedures). If so,
+        it is replaced by a link to the documentation of that element. If
+        the text is not a fully qualified name, it is treated relative to
+        namespace or class within whose documentation the link appears. If
+        it is fully qualified, it is displayed relative to the namespace of
+        the link location. See example below.
+
+        `[document]` - [document]
+        `[::ruff::formatters]` - [::ruff::formatters]
+
+        If does not match a program element name, it is
+        treated as a normal Markdown reference. 
+
+
+    } "Output formats" {
 
         Ruff! is designed to support multiple output formats through
         pluggable formatters. The command [formatters] returns a list of
