@@ -549,10 +549,10 @@ proc ::ruff::formatter::html::_resolve_code_link {link_label scope} {
         }
     }
 
-    # Note in this case we return $link_label, not $scoped_label
     return [list ]
 }
 
+# TBD - is _locate_link even used?
 proc ::ruff::formatter::html::_locate_link {link_label scope} {
     # Locates the target of a link and returns it as
     # a HTML link.
@@ -1226,6 +1226,14 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         append doc [_fmthead $opts(-modulename) 1]
     }
 
+    # Arrange procs and classes by namespace
+    set info_by_ns [_sift_classprocinfo $classprocinfodict]
+
+    # Collect links to namespaces. Need to do this before generating preamble
+    foreach ns [dict keys $info_by_ns] {
+        set link_targets($ns) [_anchor $ns]
+    }
+
     if {[info exists opts(-preamble)] &&
         [dict exists $opts(-preamble) "::"]} {
         # Print the toplevel (global stuff)
@@ -1235,9 +1243,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         }
     }
 
-    set info_by_ns [_sift_classprocinfo $classprocinfodict]
     foreach ns [lsort [dict keys $info_by_ns]] {
-        set link_targets($ns) [_anchor $ns]
         append doc [_fmthead $ns 1]
         
         if {[info exists opts(-preamble)] &&

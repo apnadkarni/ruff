@@ -1504,7 +1504,7 @@ proc ruff::private::_load_all_formatters {} {
 proc ruff::private::_load_formatter {formatter {force false}} {
     # Loads the specified formatter implementation
     variable ruff_dir
-    set fmt_cmd [namespace current]::formatter::${formatter}::generate_document
+    set fmt_cmd [namespace parent]::formatter::${formatter}::generate_document
     if {[info commands $fmt_cmd] eq "" || $force} {
         uplevel #0 [list source [file join $ruff_dir ${formatter}_formatter.tcl]]
     }
