@@ -145,8 +145,9 @@ namespace eval ruff {
 
         The lead comment block begins with a summary line that will be used
         anywhere the document output inserts a procedure summary, for
-        example, in the Table of Contents. The summary line is terminated
-        with a blank comment or by the parameter block.
+        example, in the Table of Contents. It also appears as the first
+        paragraph in the **Description** section of procedure The summary
+        line is terminated with a blank comment or by the parameter block.
 
         The parameter block is a definition list (see below) and follows its
         syntactic structure. It only differs from definition lists in that
@@ -173,18 +174,21 @@ namespace eval ruff {
 
         * Lines containing a `-` surrounded by whitespace is treated as a
         definition list element. The text before the `-` separator is the
-        definition term and the text after is the description.
-        The built-in HTML formatter displays definition lists as tables.
-        Note parameter blocks have the same format and are distringuished
-        from definition lists only by their presence in the lead block.
+        definition term and the text after is the description. The built-in
+        HTML formatter displays definition lists as tables. Note parameter
+        blocks have the same format and are distringuished from definition
+        lists only by their presence in the lead block.
 
         * Any line beginning with the word `Returns` is treated as
         description of the return value.
 
         * All other lines are treated as part of the previous block of
-          lines, for example a continued list element. If there was no
-          previous block (e.g. preceded by a blank comment line), the line
-          and subsequent lines are treated as a normal text paragraph.
+        lines. In the case of list elements, including parameter blocks and
+        definition lists, the line is only treated as a continuation if its
+        indentation is not less than the indentation of the first line of
+        that list element. Otherwise it is treated as the start of a text
+        paragraph. Lines following a blank line or a blank comment line are
+        also treated as the start of a normal text paragraph.
 
         Refer to those commands for the syntax and comment structure expected
         by Ruff!.
@@ -455,6 +459,7 @@ proc ruff::private::parse {lines {mode proc}} {
     set result(output) {}
     set result(return_added) 0
     set result(summary) ""
+    set result(indent) 0
 
     foreach line $lines {
         switch -regexp -matchvar matches -- $line {
@@ -496,7 +501,7 @@ proc ruff::private::parse {lines {mode proc}} {
                 }
                 lappend result(fragment) $line
             }
-            {^\s*[-\*]\s+(.*)$} {
+            {^(\s*)[-\*]\s+(.*)$} {
                 #ruff
                 # A bulleted list item starts with a '-' or '*' character
                 # and is not a preformatted line.
@@ -504,9 +509,9 @@ proc ruff::private::parse {lines {mode proc}} {
                 # A bulleted list is returned as a list containing the list
                 # items, each of which is a list of lines.
                 _change_state bulletlist result
-                lappend result(fragment) [lindex $matches 1]
+                lappend result(fragment) [lindex $matches 2]
             }
-            {^\s*(\S.*?)\s+-\s+(.*)$} {
+            {^(\s*)(\S.*?)\s+-\s+(.*)$} {
                 #ruff
                 # A definition list or parameter list element that is not
                 # preformatted and contains a `-` character surrounded by
@@ -525,12 +530,13 @@ proc ruff::private::parse {lines {mode proc}} {
                 # are returned as flat list
                 # of alternating list item name and list item value
                 # pairs. The list item value is itself a list of lines.
+                set result(indent) [string length [lindex $matches 1]]
                 if {$mode ne "docstring" &&
                     [lsearch -exact {init summary postsummary parameter option} $result(state)] >= 0} {
                     #ruff
                     # As a special case, a parameter definition where the
                     # term begins with a `-` is treated as a option definition.
-                    if {[string index [lindex $matches 1] 0] eq "-"} {
+                    if {[string index [lindex $matches 2] 0] eq "-"} {
                         _change_state option result
                     } else {
                         _change_state parameter result
@@ -538,33 +544,34 @@ proc ruff::private::parse {lines {mode proc}} {
                 } else {
                     _change_state deflist result
                 }
-                set result(name) [lindex $matches 1]
-                lappend result(fragment) [lindex $matches 2]
+                set result(name) [lindex $matches 2]
+                lappend result(fragment) [lindex $matches 3]
             }
-            {^Returns($|\s.*$)} {
+            {^(\s*)Returns($|\s.*$)} {
                 #ruff
                 # If $mode is not `docstring`,
                 # any paragraph that begins with the word 'Returns' is treated
                 # as a description of the return value irrespective of where
                 # it occurs. It is returned as a list of lines.
                 # TBD - fix to be normal line if in docstring mode
-                
+
+                set result(indent) [string length [lindex $matches 1]]
                 if {$result(state) eq "init"} {
                     _change_state summary result
                 } else {
                     _change_state return result
                 }
-                lappend result(fragment) $line
+                lappend result(fragment) [string trimleft $line]
             }
             default {
                 #ruff
                 # All other lines either continue an existing paragrapsh
                 # or list element, or begin a new paragraph.
                 # Paragraphs may extend across multiple lines and are
-                # terminated either when the line matches one of the list
-                # items patterns, an indented line (which is treated
-                # as preformatted text), or an empty line. Paragraphs
-                # are returned as a list of lines.
+                # terminated either when the line is recognized as
+                # preformatted or matches one of the list
+                # items patterns, or an empty line.
+                # Paragraphs are returned as a list of lines.
 
                 switch -exact -- $result(state) {
                     init { _change_state summary result }
@@ -575,9 +582,19 @@ proc ruff::private::parse {lines {mode proc}} {
                     parameter -
                     deflist -
                     option {
-                        # Stay in same state.
-                        # Originally, additional list lines were required to
-                        # be indented but no more (for Markdown compatibility)
+                        #ruff
+                        # For list items, the line should not be indented
+                        # less than the leading list item indent.
+                        if {[regexp {^(\s*)} $line -> spaces]} {
+                            set indent [string length $spaces]
+                        } else {
+                            set indent 0
+                        }
+                        if {$indent < $result(indent)} {
+                            _change_state paragraph result
+                        } else {
+                            # Stay in same state
+                        }
                     }
                     default {
                         # Stay in same state
