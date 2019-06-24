@@ -1136,31 +1136,34 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     append doc "<div class='yui-b'>"
     append doc "<a name='_top'></a>"
 
-    # Build a regexp that can be used to convert references to classes, methods
-    # and procedures to links. 
-    set methods {}
-    foreach {class_name class_info} [dict get $classprocinfodict classes] {
-        # Note we add both forms of method qualification - using :: and . -
-        # since comments might be use both forms.
-        foreach name {constructor destructor} {
-            if {[dict exists $class_info $name]} {
-                lappend methods ${class_name}.$name ${class_name}::$name
+    if {0} {
+        Was used for autolinking. Not used any more.
+        # Build a regexp that can be used to convert references to classes, methods
+        # and procedures to links. 
+        set methods {}
+        foreach {class_name class_info} [dict get $classprocinfodict classes] {
+            # Note we add both forms of method qualification - using :: and . -
+            # since comments might be use both forms.
+            foreach name {constructor destructor} {
+                if {[dict exists $class_info $name]} {
+                    lappend methods ${class_name}.$name ${class_name}::$name
+                }
+            }
+            foreach method_info [dict get $class_info methods] {
+                lappend methods ${class_name}.[dict get $method_info name] ${class_name}::[dict get $method_info name]
+            }
+            foreach method_info [dict get $class_info forwards] {
+                lappend methods ${class_name}.[dict get $method_info name] ${class_name}::[dict get $method_info name]
             }
         }
-        foreach method_info [dict get $class_info methods] {
-            lappend methods ${class_name}.[dict get $method_info name] ${class_name}::[dict get $method_info name]
-        }
-        foreach method_info [dict get $class_info forwards] {
-            lappend methods ${class_name}.[dict get $method_info name] ${class_name}::[dict get $method_info name]
-        }
+        set ref_regexp [build_symbol_regexp \
+                            [concat \
+                                [dict keys [dict get $classprocinfodict procs]] \
+                                [dict keys [dict get $classprocinfodict classes]] \
+                                $methods
+                                ]
+                      ]
     }
-    set ref_regexp [build_symbol_regexp \
-                        [concat \
-                             [dict keys [dict get $classprocinfodict procs]] \
-                             [dict keys [dict get $classprocinfodict classes]] \
-                             $methods
-                            ]
-                   ]
 
     if {$opts(-modulename) ne ""} {
         append doc [fmthead $opts(-modulename) 1]
