@@ -1,18 +1,15 @@
-# TBD - in class summary table, constructor, destructor and
-# forwarded methods are not getting linked properly.
-
-# Copyright (c) 2009, Ashok P. Nadkarni
+# Copyright (c) 2009-2019, Ashok P. Nadkarni
 # All rights reserved.
 # See the file WOOF_LICENSE in the Woof! root directory for license
 
 
 # Ruff! formatter for direct HTML
 
+# TBD - in class summary table, constructor, destructor and
+# forwarded methods are not getting linked properly.
+
 namespace eval ruff::formatter::html {
-    namespace path [list \
-                        [namespace parent [namespace parent]] \
-                        [namespace parent [namespace parent]]::private \
-                       ]
+    namespace path [list ::ruff ::ruff::private]
 
     variable navlinks
     set navlinks [dict create]
@@ -510,7 +507,7 @@ proc ruff::formatter::html::escape {s} {
     } $s]
 }
 
-proc ::ruff::formatter::html::_fmtpreformatted {content} {
+proc ::ruff::formatter::html::fmtpreformatted {content} {
     return "<pre class='ruff'>\n[escape $content]\n</pre>\n"
 }
 
@@ -597,7 +594,7 @@ proc ::ruff::formatter::html::_locate_link {link_label scope} {
     return [_cmd $link_label]
 }
 
-proc ruff::formatter::html::_anchor args {
+proc ruff::formatter::html::anchor args {
     # Given a list of strings, constructs an anchor from them
     # and returns it. It is already HTML-escaped. Empty arguments
     # are ignored
@@ -611,7 +608,7 @@ proc ruff::formatter::html::_anchor args {
     return [regsub -all {[^-:\w_.]} [join $parts -] _]
 }
 
-proc ruff::formatter::html::_fmtdeflist {listitems args} {
+proc ruff::formatter::html::fmtdeflist {listitems args} {
 
     # -preformatted is one of both, none, itemname or itemdef
     array set opts {
@@ -635,7 +632,7 @@ proc ruff::formatter::html::_fmtdeflist {listitems args} {
     return $doc
 }
 
-proc ruff::formatter::html::_fmtbulletlist {listitems {linkregexp {}} {scope {}}} {
+proc ruff::formatter::html::fmtbulletlist {listitems {linkregexp {}} {scope {}}} {
     append doc "<ul class='ruff'>\n"
     foreach item $listitems {
         append doc "<li>[_parse_inline_markdown $item $scope]</li>\n"
@@ -645,7 +642,7 @@ proc ruff::formatter::html::_fmtbulletlist {listitems {linkregexp {}} {scope {}}
 }
 
 
-proc ruff::formatter::html::_fmtprochead {name args} {
+proc ruff::formatter::html::fmtprochead {name args} {
     # Procedure for formatting proc, class and method headings
     variable navlinks
     variable link_targets
@@ -655,7 +652,7 @@ proc ruff::formatter::html::_fmtprochead {name args} {
     set opts(-cssclass) "ruff"
     array set opts $args
 
-    set anchor [_anchor $name]
+    set anchor [anchor $name]
     set linkinfo [dict create tag h$opts(-level) href "#$anchor"]
     if {[info exists opts(-tooltip)]} {
         dict set linkinfo tip [escape $opts(-tooltip)]
@@ -679,7 +676,7 @@ proc ruff::formatter::html::_fmtprochead {name args} {
     return "${doc}\n<p class='linkline'>$linkline</p>"
 }
 
-proc ruff::formatter::html::_fmthead {text level args} {
+proc ruff::formatter::html::fmthead {text level args} {
     variable navlinks
 
     set opts(-link) [expr {$level > 4 ? false : true}]
@@ -687,7 +684,7 @@ proc ruff::formatter::html::_fmthead {text level args} {
     array set opts $args
 
     if {$opts(-link)} {
-        set anchor [_anchor $opts(-namespace) $text]
+        set anchor [anchor $opts(-namespace) $text]
         set linkinfo [dict create tag h$level href "#$anchor"]
         if {[info exists opts(-tooltip)]} {
             dict set linkinfo tip [escape $opts(-tooltip)]
@@ -700,11 +697,11 @@ proc ruff::formatter::html::_fmthead {text level args} {
     }
 }
 
-proc ruff::formatter::html::_fmtpara {text {linkregexp {}} {scope {}}} {
+proc ruff::formatter::html::fmtpara {text {linkregexp {}} {scope {}}} {
     return "<p class='ruff'>[_parse_inline_markdown [string trim $text] $scope]</p>\n"
 }
 
-proc ruff::formatter::html::_fmtparas {paras {linkregexp {}} {scope {}}} {
+proc ruff::formatter::html::fmtparas {paras {linkregexp {}} {scope {}}} {
     # Given a list of paragraph elements, returns
     # them appropriately formatted for html output.
     # paras - a flat list of pairs with the first element
@@ -714,16 +711,16 @@ proc ruff::formatter::html::_fmtparas {paras {linkregexp {}} {scope {}}} {
     foreach {type content} $paras {
         switch -exact -- $type {
             paragraph {
-                append doc [_fmtpara $content $linkregexp $scope]
+                append doc [fmtpara $content $linkregexp $scope]
             }
             deflist {
-                append doc [_fmtdeflist $content -preformatted none -linkregexp $linkregexp -scope $scope]
+                append doc [fmtdeflist $content -preformatted none -linkregexp $linkregexp -scope $scope]
             }
             bulletlist {
-                append doc [_fmtbulletlist $content $linkregexp $scope]
+                append doc [fmtbulletlist $content $linkregexp $scope]
             }
             preformatted {
-                append doc [_fmtpreformatted $content]
+                append doc [fmtpreformatted $content]
             }
             default {
                 error "Unknown paragraph element type '$type'."
@@ -824,35 +821,35 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
         }
 
         if {[info exists summary]} {
-            append doc [_fmtprochead $fqn -tooltip $summary -level $header_levels($aproc(proctype))]
+            append doc [fmtprochead $fqn -tooltip $summary -level $header_levels($aproc(proctype))]
         } else {
-            append doc [_fmtprochead $fqn -level $header_levels($aproc(proctype))]
+            append doc [fmtprochead $fqn -level $header_levels($aproc(proctype))]
         }
     }
 
     if {[info exists summary]} {
-        append doc [_fmtpara $summary $opts(-linkregexp) $scope]
+        append doc [fmtpara $summary $opts(-linkregexp) $scope]
     }
 
     append doc "<p><div class='ruff_synopsis'>$synopsis</div></p>\n"
 
     if {[llength $desclist]} {
-        append doc [_fmthead Parameters $header_levels(nonav)]
+        append doc [fmthead Parameters $header_levels(nonav)]
         # Parameters are output as a list.
-        append doc [_fmtdeflist $desclist -preformatted both]
+        append doc [fmtdeflist $desclist -preformatted both]
     }
 
     if {[info exists aproc(return)] && $aproc(return) ne ""} {
-        append doc [_fmthead "Return value" $header_levels(nonav)]
-        append doc [_fmtpara $aproc(return) $opts(-linkregexp) $scope]
+        append doc [fmthead "Return value" $header_levels(nonav)]
+        append doc [fmtpara $aproc(return) $opts(-linkregexp) $scope]
     }
 
     # Loop through all the paragraphs. Note the first para is also 
     # the summary (already output) but we will show that in the general
     # description as well.
     if {[llength $aproc(description)]} {
-        append doc [_fmthead "Description" $header_levels(nonav)]
-        append doc [_fmtparas $aproc(description) $opts(-linkregexp) $scope]
+        append doc [fmthead "Description" $header_levels(nonav)]
+        append doc [fmtparas $aproc(description) $opts(-linkregexp) $scope]
     }
 
     # Do we include the source code in the documentation?
@@ -888,7 +885,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     # -linkregexp REGEXP - if specified, any word matching the
     #  regular expression REGEXP is marked as a link.
     #
-    # Returns the class documentation as a NaturalDocs formatted string.
+    # Returns the class documentation as a HTML formatted string.
 
     variable header_levels
     array set opts {
@@ -908,7 +905,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     # We want to put the class summary right after the header but cannot
     # generate it till the end so we put the header in a separate variable
     # to be merged at the end.
-    append dochdr [_fmtprochead $aclass(name) -level $header_levels(class)]
+    append dochdr [fmtprochead $aclass(name) -level $header_levels(class)]
 
     set doc ""
     # Include constructor in main class definition
@@ -924,21 +921,21 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     }
 
     if {[llength $aclass(superclasses)]} {
-        append doc [_fmthead Superclasses $header_levels(nonav)]
+        append doc [fmthead Superclasses $header_levels(nonav)]
         # Don't sort - order matters! 
-        append doc [_fmtpara [join [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
+        append doc [fmtpara [join [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
     }
     if {[llength $aclass(mixins)]} {
-        append doc [_fmthead "Mixins" $header_levels(nonav)]
+        append doc [fmthead "Mixins" $header_levels(nonav)]
 
         # Don't sort - order matters!
-        append doc [_fmtpara [join [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
+        append doc [fmtpara [join [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
     }
 
     if {[llength $aclass(subclasses)]} {
         # Don't sort - order matters!
-        append doc [_fmthead "Subclasses" $header_levels(nonav)]
-        append doc [_fmtpara [join [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
+        append doc [fmthead "Subclasses" $header_levels(nonav)]
+        append doc [fmtpara [join [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
     }
 
     # Inherited and derived methods are listed as such.
@@ -953,7 +950,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
             lappend external_methods($imp_class) ${imp_class}.$name
             set method_summaries($name) [dict create label [escape $name] desc [_parse_inline_markdown "See \[${imp_class}.$name\]" $scope]]
         }
-        append doc [_fmthead "Inherited and mixed-in methods" $header_levels(nonav)]
+        append doc [fmthead "Inherited and mixed-in methods" $header_levels(nonav)]
         # Construct a sorted list based on inherit/mixin class name
         set ext_list {}
         foreach imp_class [lsort -dictionary [array names external_methods]] {
@@ -961,11 +958,11 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
                 [_parse_inline_markdown $imp_class $scope] \
                 [_parse_inline_markdown $external_methods($imp_class) $imp_class]
         }
-        append doc [_fmtdeflist $ext_list -preformatted both]
+        append doc [fmtdeflist $ext_list -preformatted both]
     }
     if {[llength $aclass(filters)]} {
-        append doc [_fmthead "Filters" $header_levels(nonav)]
-        append doc [_fmtpara [join [lsort $aclass(filters)] {, }] $opts(-linkregexp) $scope]
+        append doc [fmthead "Filters" $header_levels(nonav)]
+        append doc [fmtpara [join [lsort $aclass(filters)] {, }] $opts(-linkregexp) $scope]
     }
 
     if {[info exists aclass(constructor)] && !$opts(-mergeconstructor)} {
@@ -1022,8 +1019,8 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
                      $summary]
         } else {
             set forward_text "Method forwarded to [dict get $info forward]"
-            append doc [_fmtprochead $aclass(name)::$name -tooltip $forward_text -level $header_levels(method)]
-            append doc [_fmtpara $forward_text $opts(-linkregexp) $scope]
+            append doc [fmtprochead $aclass(name)::$name -tooltip $forward_text -level $header_levels(method)]
+            append doc [fmtpara $forward_text $opts(-linkregexp) $scope]
             set method_summaries($aclass(name).$name) \
                 [dict create label \
                      [_parse_inline_markdown "\[$aclass(name).$name\]" $aclass(name)] \
@@ -1037,8 +1034,8 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
         lappend summary_list [dict get $method_summaries($name) label] [dict get $method_summaries($name) desc]
     }
     if {[llength $summary_list]} {
-        # append dochdr [_fmthead "Method summary" $header_levels(nonav)]
-        append dochdr [_fmtdeflist $summary_list -preformatted both]
+        # append dochdr [fmthead "Method summary" $header_levels(nonav)]
+        append dochdr [fmtdeflist $summary_list -preformatted both]
     }
 
     return "$dochdr\n$doc"
@@ -1149,7 +1146,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     # in the navigation menu.
     foreach {class_name class_info} [dict get $classprocinfodict classes] {
         set ns [namespace qualifiers $class_name]
-        set link_targets($class_name) [_anchor $class_name]
+        set link_targets($class_name) [anchor $class_name]
         set method_info_list [concat [dict get $class_info methods] [dict get $class_info forwards]]
         foreach name {constructor destructor} {
             if {[dict exists $class_info $name]} {
@@ -1163,13 +1160,13 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             # store it a second time using the "." separator as that
             # is how they are sometimes referenced.
             set method_name [dict get $method_info name]
-            set anchor [_anchor ${class_name}::${method_name}]
+            set anchor [anchor ${class_name}::${method_name}]
             set link_targets(${class_name}::${method_name}) $anchor
             set link_targets(${class_name}.${method_name}) $anchor
         }
     }
     foreach proc_name [dict keys [dict get $classprocinfodict procs]] {
-        set link_targets(${proc_name}) [_anchor $proc_name]
+        set link_targets(${proc_name}) [anchor $proc_name]
     }
 
     set doc {<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">}
@@ -1223,7 +1220,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
                    ]
 
     if {$opts(-modulename) ne ""} {
-        append doc [_fmthead $opts(-modulename) 1]
+        append doc [fmthead $opts(-modulename) 1]
     }
 
     # Arrange procs and classes by namespace
@@ -1231,32 +1228,32 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
 
     # Collect links to namespaces. Need to do this before generating preamble
     foreach ns [dict keys $info_by_ns] {
-        set link_targets($ns) [_anchor $ns]
+        set link_targets($ns) [anchor $ns]
     }
 
     if {[info exists opts(-preamble)] &&
         [dict exists $opts(-preamble) "::"]} {
         # Print the toplevel (global stuff)
         foreach {sec paras} [dict get $opts(-preamble) "::"] {
-            append doc [_fmthead $sec 1]
-            append doc [_fmtparas $paras $ref_regexp]
+            append doc [fmthead $sec 1]
+            append doc [fmtparas $paras $ref_regexp]
         }
     }
 
     foreach ns [lsort [dict keys $info_by_ns]] {
-        append doc [_fmthead $ns 1]
+        append doc [fmthead $ns 1]
         
         if {[info exists opts(-preamble)] &&
             [dict exists $opts(-preamble) $ns]} {
             # Print the preamble for this namespace
             foreach {sec paras} [dict get $opts(-preamble) $ns] {
-                append doc [_fmthead $sec 2]
-                append doc [_fmtparas $paras $ref_regexp $ns]
+                append doc [fmthead $sec 2]
+                append doc [fmtparas $paras $ref_regexp $ns]
             }
         }
 
         if {[dict exists $info_by_ns $ns procs]} {
-            append doc [_fmthead "Commands" 2 -namespace $ns]
+            append doc [fmthead "Commands" 2 -namespace $ns]
             append doc [generate_procs [dict get $info_by_ns $ns procs] \
                             -includesource $opts(-includesource) \
                             -hidenamespace $opts(-hidenamespace) \
@@ -1265,7 +1262,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         }
 
         if {[dict exists $info_by_ns $ns classes]} {
-            append doc [_fmthead "Classes" 2 -namespace $ns]
+            append doc [fmthead "Classes" 2 -namespace $ns]
             append doc [generate_ooclasses [dict get $info_by_ns $ns classes] \
                             -includesource $opts(-includesource) \
                             -hidenamespace $opts(-hidenamespace) \
