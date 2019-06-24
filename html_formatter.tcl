@@ -549,51 +549,6 @@ proc ::ruff::formatter::html::_resolve_code_link {link_label scope} {
     return [list ]
 }
 
-# TBD - is _locate_link even used?
-proc ::ruff::formatter::html::_locate_link {link_label scope} {
-    # Locates the target of a link and returns it as
-    # a HTML link.
-    # link_label - the potential link to be located, for example the name
-    #  of a proc.
-    # scope - the namespace path to search to locate a target
-    #
-    # Returns a HTML formatted link to the located target or
-    # the plain link itself if no target is found.
-    #
-    # If $link_label falls in the $scope namespace, the namespace
-    # qualifiers are removed from the displayed link.
-
-    variable link_targets
-
-    set css_class "class='ruff_cmd'"
-    
-    # If the label falls within the specified scope, we will hide the scope
-    # in the displayed label. The label may fall within the scope either
-    # as a namespace (::) or a class member (.)
-
-    # First check if this link itself is directly present
-    if {[info exists link_targets($link_label)]} {
-        return "<a $css_class href='#$link_targets($link_label)'>[escape [trim_namespace $link_label $scope]]</a>"
-    }
-
-    # Only search scope if not fully qualified
-    if {! [string match ::* $link_label]} {
-        while {$scope ne ""} {
-            # Check class (.) and namespace scope (::)
-            foreach sep {. ::} {
-                set qualified ${scope}${sep}$link_label
-                if {[info exists link_targets($qualified)]} {
-                    return "<a $css_class href='#$link_targets($qualified)'>[escape [trim_namespace $link_label $scope]]</a>"
-                }
-            }
-            set scope [namespace qualifiers $scope]
-        }
-    }
-
-    # Note in this case we return $link_label, not $scoped_label
-    return [_cmd $link_label]
-}
-
 proc ruff::formatter::html::anchor args {
     # Given a list of strings, constructs an anchor from them
     # and returns it. It is already HTML-escaped. Empty arguments
@@ -632,7 +587,7 @@ proc ruff::formatter::html::fmtdeflist {listitems args} {
     return $doc
 }
 
-proc ruff::formatter::html::fmtbulletlist {listitems {linkregexp {}} {scope {}}} {
+proc ruff::formatter::html::fmtbulletlist {listitems {scope {}}} {
     append doc "<ul class='ruff'>\n"
     foreach item $listitems {
         append doc "<li>[_parse_inline_markdown $item $scope]</li>\n"
@@ -697,11 +652,11 @@ proc ruff::formatter::html::fmthead {text level args} {
     }
 }
 
-proc ruff::formatter::html::fmtpara {text {linkregexp {}} {scope {}}} {
+proc ruff::formatter::html::fmtpara {text {scope {}}} {
     return "<p class='ruff'>[_parse_inline_markdown [string trim $text] $scope]</p>\n"
 }
 
-proc ruff::formatter::html::fmtparas {paras {linkregexp {}} {scope {}}} {
+proc ruff::formatter::html::fmtparas {paras {scope {}}} {
     # Given a list of paragraph elements, returns
     # them appropriately formatted for html output.
     # paras - a flat list of pairs with the first element
@@ -711,13 +666,13 @@ proc ruff::formatter::html::fmtparas {paras {linkregexp {}} {scope {}}} {
     foreach {type content} $paras {
         switch -exact -- $type {
             paragraph {
-                append doc [fmtpara $content $linkregexp $scope]
+                append doc [fmtpara $content $scope]
             }
             deflist {
-                append doc [fmtdeflist $content -preformatted none -linkregexp $linkregexp -scope $scope]
+                append doc [fmtdeflist $content -preformatted none -scope $scope]
             }
             bulletlist {
-                append doc [fmtbulletlist $content $linkregexp $scope]
+                append doc [fmtbulletlist $content $scope]
             }
             preformatted {
                 append doc [fmtpreformatted $content]
@@ -745,8 +700,6 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     #    out from the generated document. This is generally useful
     #    if the return value is to be included as part of a larger
     #    section (e.g. constructor within a class)
-    #   -linkregexp REGEXP - if specified, any word matching the
-    #    regular expression REGEXP is marked as a link.
     #
     # Returns the proc documentation as a HTML formatted string.
 
@@ -756,7 +709,6 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
         -includesource false
         -hidenamespace ""
         -skipsections {}
-        -linkregexp ""
     }
     array set opts $args
 
@@ -828,7 +780,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     }
 
     if {[info exists summary]} {
-        append doc [fmtpara $summary $opts(-linkregexp) $scope]
+        append doc [fmtpara $summary $scope]
     }
 
     append doc "<p><div class='ruff_synopsis'>$synopsis</div></p>\n"
@@ -841,7 +793,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
 
     if {[info exists aproc(return)] && $aproc(return) ne ""} {
         append doc [fmthead "Return value" $header_levels(nonav)]
-        append doc [fmtpara $aproc(return) $opts(-linkregexp) $scope]
+        append doc [fmtpara $aproc(return) $scope]
     }
 
     # Loop through all the paragraphs. Note the first para is also 
@@ -849,7 +801,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     # description as well.
     if {[llength $aproc(description)]} {
         append doc [fmthead "Description" $header_levels(nonav)]
-        append doc [fmtparas $aproc(description) $opts(-linkregexp) $scope]
+        append doc [fmtparas $aproc(description) $scope]
     }
 
     # Do we include the source code in the documentation?
@@ -882,8 +834,6 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     # -hidenamespace NAMESPACE - if specified as non-empty,
     #  program element names beginning with NAMESPACE are shown
     #  with that namespace component removed.
-    # -linkregexp REGEXP - if specified, any word matching the
-    #  regular expression REGEXP is marked as a link.
     #
     # Returns the class documentation as a HTML formatted string.
 
@@ -892,7 +842,6 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
         -includesource false
         -hidenamespace ""
         -mergeconstructor false
-        -linkregexp ""
     }
     array set opts $args
 
@@ -916,26 +865,25 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
                         -includesource $opts(-includesource) \
                         -hidenamespace $opts(-hidenamespace) \
                         -skipsections [list header name] \
-                        -linkregexp $opts(-linkregexp) \
                        ]
     }
 
     if {[llength $aclass(superclasses)]} {
         append doc [fmthead Superclasses $header_levels(nonav)]
         # Don't sort - order matters! 
-        append doc [fmtpara [join [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
+        append doc [fmtpara [join [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)] {, }] $scope]
     }
     if {[llength $aclass(mixins)]} {
         append doc [fmthead "Mixins" $header_levels(nonav)]
 
         # Don't sort - order matters!
-        append doc [fmtpara [join [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
+        append doc [fmtpara [join [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)] {, }] $scope]
     }
 
     if {[llength $aclass(subclasses)]} {
         # Don't sort - order matters!
         append doc [fmthead "Subclasses" $header_levels(nonav)]
-        append doc [fmtpara [join [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
+        append doc [fmtpara [join [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)] {, }] $scope]
     }
 
     # Inherited and derived methods are listed as such.
@@ -962,7 +910,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     }
     if {[llength $aclass(filters)]} {
         append doc [fmthead "Filters" $header_levels(nonav)]
-        append doc [fmtpara [join [lsort $aclass(filters)] {, }] $opts(-linkregexp) $scope]
+        append doc [fmtpara [join [lsort $aclass(filters)] {, }] $scope]
     }
 
     if {[info exists aclass(constructor)] && !$opts(-mergeconstructor)} {
@@ -974,7 +922,6 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
         append doc [generate_proc_or_method $aclass(constructor) \
                         -includesource $opts(-includesource) \
                         -hidenamespace $opts(-hidenamespace) \
-                        -linkregexp $opts(-linkregexp) \
                        ]
     }
     if {[info exists aclass(destructor)]} {
@@ -982,7 +929,6 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
         append doc [generate_proc_or_method $aclass(destructor) \
                         -includesource $opts(-includesource) \
                         -hidenamespace $opts(-hidenamespace) \
-                        -linkregexp $opts(-linkregexp) \
                         ]
     }
 
@@ -1003,7 +949,6 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
             append doc [generate_proc_or_method $info \
                             -includesource $opts(-includesource) \
                             -hidenamespace $opts(-hidenamespace) \
-                            -linkregexp $opts(-linkregexp) \
                            ]
             if {[dict exists $info summary]} {
                 set summary [escape [dict get $info summary]]
@@ -1020,7 +965,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
         } else {
             set forward_text "Method forwarded to [dict get $info forward]"
             append doc [fmtprochead $aclass(name)::$name -tooltip $forward_text -level $header_levels(method)]
-            append doc [fmtpara $forward_text $opts(-linkregexp) $scope]
+            append doc [fmtpara $forward_text $scope]
             set method_summaries($aclass(name).$name) \
                 [dict create label \
                      [_parse_inline_markdown "\[$aclass(name).$name\]" $aclass(name)] \
@@ -1129,8 +1074,6 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
 
     array set opts $args
 
-    # TBD - create a link_target entry for each namespace
-
     # First collect all "important" names so as to build a list of
     # linkable targets. These will be used for cross-referencing and
     # also to generate links correctly in the case of
@@ -1236,7 +1179,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         # Print the toplevel (global stuff)
         foreach {sec paras} [dict get $opts(-preamble) "::"] {
             append doc [fmthead $sec 1]
-            append doc [fmtparas $paras $ref_regexp]
+            append doc [fmtparas $paras]
         }
     }
 
@@ -1248,7 +1191,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             # Print the preamble for this namespace
             foreach {sec paras} [dict get $opts(-preamble) $ns] {
                 append doc [fmthead $sec 2]
-                append doc [fmtparas $paras $ref_regexp $ns]
+                append doc [fmtparas $paras $ns]
             }
         }
 
@@ -1257,7 +1200,6 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             append doc [generate_procs [dict get $info_by_ns $ns procs] \
                             -includesource $opts(-includesource) \
                             -hidenamespace $opts(-hidenamespace) \
-                            -linkregexp $ref_regexp \
                            ]
         }
 
@@ -1266,7 +1208,6 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             append doc [generate_ooclasses [dict get $info_by_ns $ns classes] \
                             -includesource $opts(-includesource) \
                             -hidenamespace $opts(-hidenamespace) \
-                            -linkregexp $ref_regexp \
                            ]
         }
     }

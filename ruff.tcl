@@ -283,6 +283,7 @@ namespace eval ruff {
     namespace path private
 }
 
+# TBD - is this needed
 proc ruff::private::identity {s} {
     # Returns the passed string unaltered.
     # Used as a stub to "no-op" some transformations
@@ -1530,9 +1531,6 @@ proc ruff::document {formatter namespaces args} {
     # -title STRING - specifies the title to use for the page
     # -recurse BOOLEAN - if true, child namespaces are recursively
     #  documented.
-    # -autolink BOOLEAN - if true, automatically generate
-    #  links to program element definitions. If false (default), links are only
-    #  generated if enclosed in `<>`.
     #
     # Any additional arguments are passed through to the document command.
     #
@@ -1550,11 +1548,9 @@ proc ruff::document {formatter namespaces args} {
         -append false
         -title ""
         -recurse false
-        -autolink false
     }
     array set opts $args
     namespace upvar private ProgramOptions ProgramOptions
-    set ProgramOptions(-autolink) $opts(-autolink)
     set ProgramOptions(-hidesourcecomments) $opts(-hidesourcecomments)
     
     if {$opts(-recurse)} {
