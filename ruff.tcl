@@ -283,17 +283,17 @@ namespace eval ruff {
     namespace path private
 }
 
-proc ruff::private::_identity {s} {
+proc ruff::private::identity {s} {
     # Returns the passed string unaltered.
     # Used as a stub to "no-op" some transformations
     return $s
 }
 
-proc ruff::private::_regexp_escape {s} {
+proc ruff::private::regexp_escape {s} {
     return [string map {\\ \\\\ $ \\$ ^ \\^ . \\. ? \\? + \\+ * \\* | \\| ( \\( ) \\) [ \\[ ] \\] \{ \\\{ \} \\\} } $s]
 }
 
-proc ruff::private::_build_symbol_regexp {symlist} {
+proc ruff::private::build_symbol_regexp {symlist} {
     # Builds a regular expression that matches any of the specified
     # symbols or names
     # symlist - list of symbols or names
@@ -308,18 +308,18 @@ proc ruff::private::_build_symbol_regexp {symlist} {
     # position of its own () groups.
     set alternatives {}
     foreach sym $symlist {
-        lappend alternatives "[_regexp_escape $sym]"
+        lappend alternatives "[regexp_escape $sym]"
         # Add the tail component
         set tail [namespace tail $sym]
         if {$tail ne "$sym"} {
-            lappend alternatives "[_regexp_escape $tail]"
+            lappend alternatives "[regexp_escape $tail]"
         }
     }
 
     return [join $alternatives "|"]
 }
 
-proc ruff::private::_namespace_tree {nslist} {
+proc ruff::private::namespace_tree {nslist} {
     # Return list of namespaces under the specified namespaces
     array set done {}
     while {[llength $nslist]} {
@@ -336,7 +336,7 @@ proc ruff::private::_namespace_tree {nslist} {
     return [array names done]
 }
 
-proc ruff::private::_trim_namespace {name ns} {
+proc ruff::private::trim_namespace {name ns} {
     # Removes a namespace (::) or class qualifier (.) from the specified name.
     # name - name from which the namespace is to be removed
     # ns - the namespace to be removed. If empty, $name
@@ -373,18 +373,18 @@ proc ruff::private::_trim_namespace {name ns} {
     return $name
 }
 
-proc ruff::private::_trim_namespace_multi {namelist ns} {
-    # See _trim_namespace for a description. Only difference
+proc ruff::private::trim_namespace_multi {namelist ns} {
+    # See trim_namespace for a description. Only difference
     # is that this command takes a list of names instead
     # of a single name.
     set result {}
     foreach name $namelist {
-        lappend result [_trim_namespace $name $ns]
+        lappend result [trim_namespace $name $ns]
     }
     return $result
 }
 
-proc ruff::private::_ensembles {pattern} {
+proc ruff::private::ensembles {pattern} {
     # Returns list of ensembles matching the pattern
     # pattern - fully namespace qualified pattern to match
 
@@ -397,7 +397,7 @@ proc ruff::private::_ensembles {pattern} {
 }
 
 
-proc ruff::private::_sift_names {names} {
+proc ruff::private::sift_names {names} {
     # Given a list of names, separates and sorts them based on their namespace
     # names - a list of names
     #
@@ -413,7 +413,7 @@ proc ruff::private::_sift_names {names} {
     return $namespaces
 }
 
-proc ruff::private::_sift_classprocinfo {classprocinfodict} {
+proc ruff::private::sift_classprocinfo {classprocinfodict} {
     # Sifts through class and proc meta information based
     # on namespace
     #
@@ -474,10 +474,10 @@ proc ruff::private::parse {lines {mode proc}} {
                         # No change
                     }
                     summary {
-                        _change_state postsummary result
+                        change_state postsummary result
                     }
                     default {
-                        _change_state blank result
+                        change_state blank result
                     }
                 }
             }
@@ -496,7 +496,7 @@ proc ruff::private::parse {lines {mode proc}} {
                         # No change. Keep adding to existing block
                     }
                     default {
-                        _change_state preformatted result
+                        change_state preformatted result
                     }
                 }
                 lappend result(fragment) $line
@@ -508,7 +508,7 @@ proc ruff::private::parse {lines {mode proc}} {
                 # A list item may be continued across multiple lines.
                 # A bulleted list is returned as a list containing the list
                 # items, each of which is a list of lines.
-                _change_state bulletlist result
+                change_state bulletlist result
                 lappend result(fragment) [lindex $matches 2]
             }
             {^(\s*)(\S.*?)\s+-\s+(.*)$} {
@@ -537,12 +537,12 @@ proc ruff::private::parse {lines {mode proc}} {
                     # As a special case, a parameter definition where the
                     # term begins with a `-` is treated as a option definition.
                     if {[string index [lindex $matches 2] 0] eq "-"} {
-                        _change_state option result
+                        change_state option result
                     } else {
-                        _change_state parameter result
+                        change_state parameter result
                     }
                 } else {
-                    _change_state deflist result
+                    change_state deflist result
                 }
                 set result(name) [lindex $matches 2]
                 lappend result(fragment) [lindex $matches 3]
@@ -557,9 +557,9 @@ proc ruff::private::parse {lines {mode proc}} {
 
                 set result(indent) [string length [lindex $matches 1]]
                 if {$result(state) eq "init"} {
-                    _change_state summary result
+                    change_state summary result
                 } else {
-                    _change_state return result
+                    change_state return result
                 }
                 lappend result(fragment) [string trimleft $line]
             }
@@ -574,10 +574,10 @@ proc ruff::private::parse {lines {mode proc}} {
                 # Paragraphs are returned as a list of lines.
 
                 switch -exact -- $result(state) {
-                    init { _change_state summary result }
+                    init { change_state summary result }
                     postsummary -
                     blank -
-                    preformatted { _change_state paragraph result }
+                    preformatted { change_state paragraph result }
                     bulletlist -
                     parameter -
                     deflist -
@@ -591,7 +591,7 @@ proc ruff::private::parse {lines {mode proc}} {
                             set indent 0
                         }
                         if {$indent < $result(indent)} {
-                            _change_state paragraph result
+                            change_state paragraph result
                         } else {
                             # Stay in same state
                         }
@@ -604,7 +604,7 @@ proc ruff::private::parse {lines {mode proc}} {
             }
         }
     }
-    _change_state finish result; # To process any leftovers in result(fragment)
+    change_state finish result; # To process any leftovers in result(fragment)
 
     # Special case where the Returns is also the summary
     if {! $result(return_added)} {
@@ -627,7 +627,7 @@ proc ruff::private::parse {lines {mode proc}} {
 
 # Note new state may be same as old state
 # (but a new fragment)
-proc ruff::private::_change_state {new v_name} {
+proc ruff::private::change_state {new v_name} {
     upvar 1 $v_name result
 
     # Close off existing state
@@ -1332,7 +1332,7 @@ proc ruff::private::extract {pattern args} {
             }
         }
         # Collect ensembles
-        foreach ens_name [_ensembles $pattern] {
+        foreach ens_name [ensembles $pattern] {
             if {(! $opts(-includeimports)) &&
                 [namespace origin $ens_name] ne $ens_name} {
                 continue;       # Do not want to include imported commands
@@ -1494,14 +1494,14 @@ proc ruff::private::locate_ooclass_method {class_name method_name} {
 }
 
 
-proc ruff::private::_load_all_formatters {} {
+proc ruff::private::load_all_formatters {} {
     # Loads all available formatter implementations
     foreach formatter [formatters] {
-        _load_formatter $formatter
+        load_formatter $formatter
     }
 }
 
-proc ruff::private::_load_formatter {formatter {force false}} {
+proc ruff::private::load_formatter {formatter {force false}} {
     # Loads the specified formatter implementation
     variable ruff_dir
     set fmt_cmd [namespace parent]::formatter::${formatter}::generate_document
@@ -1558,7 +1558,7 @@ proc ruff::document {formatter namespaces args} {
     set ProgramOptions(-hidesourcecomments) $opts(-hidesourcecomments)
     
     if {$opts(-recurse)} {
-        set namespaces [_namespace_tree $namespaces]
+        set namespaces [namespace_tree $namespaces]
     }
 
     set preamble [dict create]
@@ -1575,7 +1575,7 @@ proc ruff::document {formatter namespaces args} {
                                -includeprocs $opts(-includeprocs) \
                                -includeprivate $opts(-includeprivate)]
 
-    _load_formatter $formatter
+    load_formatter $formatter
     set doc  [eval \
                   [list formatter::${formatter}::generate_document \
                        $classprocinfodict \
@@ -1620,7 +1620,7 @@ proc ruff::formatters {} {
     return $formatters
 }
 
-proc ruff::private::_wrap_text {text args} {
+proc ruff::private::wrap_text {text args} {
     # Wraps a string such that each line is less than a given width
     # and begins with the specified prefix.
     # text - the string to be reformatted
@@ -1696,7 +1696,7 @@ proc ruff::private::document_self {formatter output_dir args} {
     }
     array set opts $args
 
-    _load_all_formatters;       # So all will be documented!
+    load_all_formatters;       # So all will be documented!
 
     file mkdir $output_dir
     set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"

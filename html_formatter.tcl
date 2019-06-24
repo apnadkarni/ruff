@@ -532,7 +532,7 @@ proc ::ruff::formatter::html::_resolve_code_link {link_label scope} {
 
     # First check if this link itself is directly present
     if {[info exists link_targets($link_label)]} {
-        return [list "#$link_targets($link_label)" [_trim_namespace $link_label $scope] $css]
+        return [list "#$link_targets($link_label)" [trim_namespace $link_label $scope] $css]
     }
 
     # Only search scope if not fully qualified
@@ -542,7 +542,7 @@ proc ::ruff::formatter::html::_resolve_code_link {link_label scope} {
             foreach sep {. ::} {
                 set qualified ${scope}${sep}$link_label
                 if {[info exists link_targets($qualified)]} {
-                    return [list "#$link_targets($qualified)" [_trim_namespace $link_label $scope] $css]
+                    return [list "#$link_targets($qualified)" [trim_namespace $link_label $scope] $css]
                 }
             }
             set scope [namespace qualifiers $scope]
@@ -576,7 +576,7 @@ proc ::ruff::formatter::html::_locate_link {link_label scope} {
 
     # First check if this link itself is directly present
     if {[info exists link_targets($link_label)]} {
-        return "<a $css_class href='#$link_targets($link_label)'>[escape [_trim_namespace $link_label $scope]]</a>"
+        return "<a $css_class href='#$link_targets($link_label)'>[escape [trim_namespace $link_label $scope]]</a>"
     }
 
     # Only search scope if not fully qualified
@@ -586,7 +586,7 @@ proc ::ruff::formatter::html::_locate_link {link_label scope} {
             foreach sep {. ::} {
                 set qualified ${scope}${sep}$link_label
                 if {[info exists link_targets($qualified)]} {
-                    return "<a $css_class href='#$link_targets($qualified)'>[escape [_trim_namespace $link_label $scope]]</a>"
+                    return "<a $css_class href='#$link_targets($qualified)'>[escape [trim_namespace $link_label $scope]]</a>"
                 }
             }
             set scope [namespace qualifiers $scope]
@@ -773,8 +773,8 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
 
     set doc "";                 # Document string
 
-    set header_title [_trim_namespace $aproc(name) $opts(-hidenamespace)]
-    set proc_name [_trim_namespace $aproc(name) $opts(-hidenamespace)]
+    set header_title [trim_namespace $aproc(name) $opts(-hidenamespace)]
+    set proc_name [trim_namespace $aproc(name) $opts(-hidenamespace)]
 
     # Construct the synopsis and simultaneously the parameter descriptions
     # These are constructed as HTML (ie. already escaped) since we want
@@ -900,7 +900,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     array set opts $args
 
     array set aclass $classinfo
-    set class_name [_trim_namespace $aclass(name) $opts(-hidenamespace)]
+    set class_name [trim_namespace $aclass(name) $opts(-hidenamespace)]
     set scope [namespace qualifiers $aclass(name)]
 
     array set method_summaries {}
@@ -926,19 +926,19 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     if {[llength $aclass(superclasses)]} {
         append doc [_fmthead Superclasses $header_levels(nonav)]
         # Don't sort - order matters! 
-        append doc [_fmtpara [join [_trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
+        append doc [_fmtpara [join [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
     }
     if {[llength $aclass(mixins)]} {
         append doc [_fmthead "Mixins" $header_levels(nonav)]
 
         # Don't sort - order matters!
-        append doc [_fmtpara [join [_trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
+        append doc [_fmtpara [join [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
     }
 
     if {[llength $aclass(subclasses)]} {
         # Don't sort - order matters!
         append doc [_fmthead "Subclasses" $header_levels(nonav)]
-        append doc [_fmtpara [join [_trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
+        append doc [_fmtpara [join [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)] {, }] $opts(-linkregexp) $scope]
     }
 
     # Inherited and derived methods are listed as such.
@@ -948,7 +948,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
             # Qualify the name with the name of the implenting class
             foreach {name imp_class} $external_method break
             if {$imp_class ne ""} {
-                set imp_class [_trim_namespace_multi $imp_class $opts(-hidenamespace)]
+                set imp_class [trim_namespace_multi $imp_class $opts(-hidenamespace)]
             }
             lappend external_methods($imp_class) ${imp_class}.$name
             set method_summaries($name) [dict create label [escape $name] desc [_parse_inline_markdown "See \[${imp_class}.$name\]" $scope]]
@@ -1075,7 +1075,7 @@ proc ::ruff::formatter::html::generate_procs {procinfodict args} {
     # within each namespace.
 
     set doc ""
-    set namespaces [_sift_names [dict keys $procinfodict]]
+    set namespaces [sift_names [dict keys $procinfodict]]
     foreach ns [lsort -dictionary [dict keys $namespaces]] {
         foreach name [lsort -dictionary [dict get $namespaces $ns]] {
             append doc \
@@ -1214,7 +1214,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             lappend methods ${class_name}.[dict get $method_info name] ${class_name}::[dict get $method_info name]
         }
     }
-    set ref_regexp [_build_symbol_regexp \
+    set ref_regexp [build_symbol_regexp \
                         [concat \
                              [dict keys [dict get $classprocinfodict procs]] \
                              [dict keys [dict get $classprocinfodict classes]] \
@@ -1227,7 +1227,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     }
 
     # Arrange procs and classes by namespace
-    set info_by_ns [_sift_classprocinfo $classprocinfodict]
+    set info_by_ns [sift_classprocinfo $classprocinfodict]
 
     # Collect links to namespaces. Need to do this before generating preamble
     foreach ns [dict keys $info_by_ns] {

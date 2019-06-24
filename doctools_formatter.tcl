@@ -122,13 +122,13 @@ proc ruff::formatter::doctools::generate_proc_or_method {procinfo args} {
         }
         lappend itemlist $item
     }
-    set proc_name $opts(-displayprefix)[_trim_namespace $aproc(name) $opts(-hidenamespace)]
+    set proc_name $opts(-displayprefix)[trim_namespace $aproc(name) $opts(-hidenamespace)]
 
     if {$aproc(proctype) ne "method"} {
         append doc [eval [list call [cmd $proc_name]] $arglist]\n
     } else {
         switch -exact -- $aproc(name) {
-            constructor {append doc [eval [list call [cmd "::oo::class create [_trim_namespace $aproc(class) $opts(-hidenamespace)]"]] $arglist]}
+            constructor {append doc [eval [list call [cmd "::oo::class create [trim_namespace $aproc(class) $opts(-hidenamespace)]"]] $arglist]}
             destructor  {append doc [call "[arg OBJECT] [cmd destroy]"]}
             default  {append doc [eval [list call "[arg OBJECT] [cmd $aproc(name)]"] $arglist]}
         }
@@ -225,7 +225,7 @@ proc ruff::formatter::doctools::generate_ooclass {classinfo args} {
     # Such strings are quoted using the escape command. Arguments to
     # doctools commands are quoted using {}.
 
-    set class_name [_trim_namespace $aclass(name) $opts(-hidenamespace)]
+    set class_name [trim_namespace $aclass(name) $opts(-hidenamespace)]
     set displayprefix "$class_name."
 
     append doc [section "Class $class_name"]
@@ -243,17 +243,17 @@ proc ruff::formatter::doctools::generate_ooclass {classinfo args} {
     if {[llength $aclass(superclasses)]} {
         append doc [subsection "Superclasses"]
         # Don't sort - order matters!
-        append doc [escape [join [_trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)]]]\n
+        append doc [escape [join [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)]]]\n
     }
     if {[llength $aclass(subclasses)]} {
         append doc [subsection "Subclasses"]
         # Don't sort - order matters!
-        append doc [escape [join [_trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)]]]\n
+        append doc [escape [join [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)]]]\n
     }
     if {[llength $aclass(mixins)]} {
         append doc [subsection "Mixins"]
         # Don't sort - order matters!
-        append doc [escape [join [_trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)]]]\n
+        append doc [escape [join [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)]]]\n
     }
     if {[llength $aclass(filters)]} {
         append doc [subsection "Filters"]
@@ -267,7 +267,7 @@ proc ruff::formatter::doctools::generate_ooclass {classinfo args} {
             # Qualify the name with the name of the implenting class
             foreach {name imp_class} $external_method break
             if {$imp_class ne ""} {
-                set name [_trim_namespace $imp_class $opts(-hidenamespace)].$name
+                set name [trim_namespace $imp_class $opts(-hidenamespace)].$name
             }
             lappend external_methods $name
         }
@@ -313,7 +313,7 @@ proc ruff::formatter::doctools::generate_ooclass {classinfo args} {
                             -displayprefix $displayprefix]
         } else {
             # TBD - check formatting of forwarded methods
-            # append doc [call [cmd "${displayprefix}[_trim_namespace [dict get $info name] $opts(-hidenamespace)]"]]
+            # append doc [call [cmd "${displayprefix}[trim_namespace [dict get $info name] $opts(-hidenamespace)]"]]
             append doc [call "[arg OBJECT] [cmd $name]"]
             # TBD - link to forwarded method if possible
             append doc "Method forwarded to [cmd [escape [dict get $info forward]]].\n"
@@ -431,7 +431,7 @@ proc ::ruff::formatter::doctools::generate_document {classprocinfodict args} {
         }
     }
 
-    set info_by_ns [_sift_classprocinfo $classprocinfodict]
+    set info_by_ns [sift_classprocinfo $classprocinfodict]
 
     foreach ns [lsort -dictionary [dict keys $info_by_ns]] {
         append doc [section "Module $ns"]
