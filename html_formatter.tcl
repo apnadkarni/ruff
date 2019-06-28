@@ -574,7 +574,11 @@ proc ruff::formatter::html::anchor args {
 }
 
 proc ruff::formatter::html::ns_link {ns name} {
-    return "[ns_file_base $ns]#[anchor $name]"
+    if {$ns eq "::" && $name eq ""} {
+        return [ns_file_base $ns]
+    } else {
+        return "[ns_file_base $ns]#[anchor $name]"
+    }
 }
 
 proc ruff::formatter::html::fmtdeflist {listitems args} {
@@ -640,7 +644,11 @@ proc ruff::formatter::html::fmtprochead {name args} {
     if {[info exists link_targets($ns)]} {
         set linkline "<a href='$link_targets($ns)'>[namespace tail $ns]</a>, "
     }
-    append linkline "<a href='#_top'>Top</a>"
+    if {[program_option -singlepage]} {
+        append linkline "<a href='#_top'>Top</a>"
+    } else {
+        append linkline "<a href='[ns_link :: {}]'>Top</a>"
+    }
     return "${doc}\n<p class='linkline'>$linkline</p>"
 }
 
@@ -1170,12 +1178,12 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     # YUI stylesheet templates
     append header "<div id='doc3' class='yui-t2'>"
     if {$opts(-titledesc) ne ""} {
-        append header "<div id='hd' class='banner'>\n$opts(-titledesc)\n</div>\n"
+        append header "<div id='hd' class='banner'>\n<a style='text-decoration:none;' href='[ns_link :: {}]'>$opts(-titledesc)</a>\n</div>\n"
     }
     append header "<div id='bd'>"
 
     if {$opts(-modulename) ne ""} {
-        append header [fmthead $opts(-modulename) 1]
+        append header [fmthead $opts(-modulename) 1 -link 0]
     }
 
     # Generate the footer used by all files
@@ -1216,9 +1224,15 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         }
     }
 
-    # If not single page, close off main page and append to return
+    # If not single page, append links to namespace pages and close page
     if {!$opts(-singlepage)} {
         append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
+        # Add the navigation bits
+        set nav_common ""
+        foreach ns [lsort [dict keys $info_by_ns]] {
+            append nav_common "<h1><a href='[ns_file_base $ns]'>$ns</a></h1>"
+        }
+        append doc "<div class='yui-b navbox'>$nav_common</div>"
         append doc $footer
         lappend docs "::" $doc
     }
@@ -1259,6 +1273,9 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
             # Add the navigation bits
             append doc "<div class='yui-b navbox'>"
+            # First the toplevel links
+            #append doc $nav_common
+            # Then the navlinks for this namespace
             dict for {text link} $navlinks {
                 set label [escape [dict get $link label]]
                 set tag  [dict get $link tag]

@@ -65,8 +65,8 @@ namespace eval ruff {
         The following command will create the file 'NS.html' using the
         built-in HTML formatter.
 
-          package require ruff
-          ::ruff::document html [list ::NS] -output NS.html -recurse true
+            package require ruff
+            ::ruff::document html [list ::NS] -output NS.html -recurse true
 
         Refer to [document] for various options that control the
         content included in the documentation.
@@ -305,6 +305,11 @@ proc ruff::private::fqn! {name} {
     if {![fqn? $name]} {
         error "\"name\" is not fully qualified."
     }
+}
+
+proc ruff::private::program_option {opt} {
+    variable ProgramOptions
+    return $ProgramOptions($opt)
 }
 
 proc ruff::private::ns_file_base {ns} {
@@ -1594,6 +1599,7 @@ proc ruff::document {formatter namespaces args} {
     set ProgramOptions(-hidesourcecomments) $opts(-hidesourcecomments)
     set ProgramOptions(-singlepage) $opts(-singlepage)
 
+    array unset private::ns_file_base_cache
     if {$opts(-output) eq ""} {
         if {! $opts(-singlepage)} {
             # Need to link across files so output must be specified.
@@ -1735,7 +1741,6 @@ proc ruff::private::wrap_text {text args} {
     return [string replace $text 0 [expr {[string length $prefix]-1}] $prefix1]
 }
 
-
 proc ruff::private::document_self {formatter output_dir args} {
     # Generates documentation for Ruff!
     # formatter - the formatter to use
@@ -1752,6 +1757,7 @@ proc ruff::private::document_self {formatter output_dir args} {
     array set opts {
         -formatterpath ""
         -includesource false
+        -singlepage true
         -includeprivate false
     }
     array set opts $args
@@ -1763,20 +1769,19 @@ proc ruff::private::document_self {formatter output_dir args} {
     set common_args [list \
                          -recurse $opts(-includeprivate) \
                          -titledesc $title \
+                         -singlepage $opts(-singlepage) \
                          -version $::ruff::version]
 
     switch -exact -- $formatter {
         doctools {
-            document doctools [list ::ruff] {*}$args \
+            document doctools [list ::ruff] {*}$common_args \
                 -output [file join $output_dir ruff.man] \
                 -hidenamespace ::ruff \
                 -keywords [list "documentation generation"] \
                 -modulename ::ruff
         }
         html {
-            # Note here we use $output_dir since will directly produce HTML
-            # and not intermediate files
-            document html [list ::ruff] {*}$args \
+            document html [list ::ruff] {*}$common_args \
                 -output [file join $output_dir ruff.html] \
                 -titledesc $title \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
