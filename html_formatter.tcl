@@ -11,8 +11,18 @@
 namespace eval ruff::formatter::html {
     namespace path [list ::ruff ::ruff::private]
 
+    # navlinks is used to build the navigation links that go on the
+    # left side of a page. As such since all links are within the page,
+    # only anchors need to be stored without the filename portion.
+    # This is cleared for every page generation (in a multifile ouput).
     variable navlinks
-    set navlinks [dict create]
+
+    # link_targets maps a program element name to a file url.
+    # Unlike navlinks, it is not cleared for every page
+    # generation but rather content exists for the duration of a single
+    # document generation. Also since the links may be across pages,
+    # it includes the filename portion as well.
+    variable link_targets
 
     # The header levels to use for various elements
     variable header_levels
@@ -529,7 +539,7 @@ proc ::ruff::formatter::html::_resolve_code_link {link_label scope} {
 
     # First check if this link itself is directly present
     if {[info exists link_targets($link_label)]} {
-        return [list "#$link_targets($link_label)" [trim_namespace $link_label $scope] $css]
+        return [list "$link_targets($link_label)" [trim_namespace $link_label $scope] $css]
     }
 
     # Only search scope if not fully qualified
@@ -539,7 +549,7 @@ proc ::ruff::formatter::html::_resolve_code_link {link_label scope} {
             foreach sep {. ::} {
                 set qualified ${scope}${sep}$link_label
                 if {[info exists link_targets($qualified)]} {
-                    return [list "#$link_targets($qualified)" [trim_namespace $link_label $scope] $css]
+                    return [list "$link_targets($qualified)" [trim_namespace $link_label $scope] $css]
                 }
             }
             set scope [namespace qualifiers $scope]
@@ -561,6 +571,10 @@ proc ruff::formatter::html::anchor args {
     }
 
     return [regsub -all {[^-:\w_.]} [join $parts -] _]
+}
+
+proc ruff::formatter::html::ns_link {ns name} {
+    return "[ns_file_base $ns]#[anchor $name]"
 }
 
 proc ruff::formatter::html::fmtdeflist {listitems args} {
@@ -602,11 +616,11 @@ proc ruff::formatter::html::fmtprochead {name args} {
     variable navlinks
     variable link_targets
 
-    set opts(-displayname) $name
     set opts(-level) 3
     set opts(-cssclass) "ruff"
     array set opts $args
 
+    set ns [namespace qualifiers $name]
     set anchor [anchor $name]
     set linkinfo [dict create tag h$opts(-level) href "#$anchor"]
     if {[info exists opts(-tooltip)]} {
@@ -614,18 +628,17 @@ proc ruff::formatter::html::fmtprochead {name args} {
     }
     dict set linkinfo label [namespace tail $name]
     dict set navlinks $anchor $linkinfo
-    set ns [namespace qualifiers $opts(-displayname)]
     if {[string length $ns]} {
         set ns_link [_parse_inline_markdown "\[${ns}\]"]
-        set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape [namespace tail $opts(-displayname)]]</a><span class='ns_scope'> \[${ns_link}\]</span></h$opts(-level)>\n"
+        set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape [namespace tail $name]]</a><span class='ns_scope'> \[${ns_link}\]</span></h$opts(-level)>\n"
     } else {
-        set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape $opts(-displayname)]</a></h$opts(-level)>\n"
+        set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape $name]</a></h$opts(-level)>\n"
     }
 
     # Include a link to top of class/namespace if possible.
 
     if {[info exists link_targets($ns)]} {
-        set linkline "<a href='#$link_targets($ns)'>[namespace tail $ns]</a>, "
+        set linkline "<a href='$link_targets($ns)'>[namespace tail $ns]</a>, "
     }
     append linkline "<a href='#_top'>Top</a>"
     return "${doc}\n<p class='linkline'>$linkline</p>"
@@ -1046,6 +1059,8 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     #   -hidenamespace NAMESPACE - if specified as non-empty,
     #    program element names beginning with NAMESPACE are shown
     #    with that namespace component removed.
+    #   -singlepage BOOLEAN - if `true` (default) files are written
+    #    as a single page. Else each namespace is written to a separate file.
     #   -titledesc STRING - the title for the documentation.
     #    Used as the title for the document.
     #    If undefined, the string "Reference" is used.
@@ -1068,6 +1083,8 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         [list \
              -includesource false \
              -hidenamespace "" \
+             -outdir "." \
+             -singlepage true \
              -titledesc "" \
              -modulename "Reference" \
              ]
@@ -1081,15 +1098,9 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     #
     # A class name is also treated as a namespace component
     # although that is not strictly true.
-    # TBD - the linked_targets and navlinks should really be merged
-    # in some fashion as they overlap in function. The difference is
-    # that the former needs to be built before any text processing is
-    # done so linking in paras can be done. The latter is created as
-    # the text is processed and also contains only links to be displayed
-    # in the navigation menu.
     foreach {class_name class_info} [dict get $classprocinfodict classes] {
         set ns [namespace qualifiers $class_name]
-        set link_targets($class_name) [anchor $class_name]
+        set link_targets($class_name) [ns_link $ns $class_name]
         set method_info_list [concat [dict get $class_info methods] [dict get $class_info forwards]]
         foreach name {constructor destructor} {
             if {[dict exists $class_info $name]} {
@@ -1103,38 +1114,14 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             # store it a second time using the "." separator as that
             # is how they are sometimes referenced.
             set method_name [dict get $method_info name]
-            set anchor [anchor ${class_name}::${method_name}]
-            set link_targets(${class_name}::${method_name}) $anchor
-            set link_targets(${class_name}.${method_name}) $anchor
+            set link_targets(${class_name}::${method_name}) [ns_link $ns ${class_name}::${method_name}]
+            set link_targets(${class_name}.${method_name}) $link_targets(${class_name}::${method_name}) 
         }
     }
     foreach proc_name [dict keys [dict get $classprocinfodict procs]] {
-        set link_targets(${proc_name}) [anchor $proc_name]
+        fqn! $proc_name
+        set link_targets(${proc_name}) [ns_link [namespace qualifiers $proc_name] $proc_name]
     }
-
-    set doc {<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">}
-    append doc "<html><head><title>$opts(-titledesc)</title>\n"
-    if {[info exists opts(-stylesheets)]} {
-        append doc "<style>\n$yui_style\n</style>\n"
-        foreach url $opts(-stylesheets) {
-            append doc "<link rel='stylesheet' type='text/css' href='$url' />"
-        }
-    } else {
-        # Use built-in styles
-        append doc "<style>\n$yui_style\n$ruff_style\n</style>\n"
-    }
-    append doc "<script>$javascript</script>"
-    append doc "</head><body>"
-
-    # YUI stylesheet templates
-    append doc "<div id='doc3' class='yui-t2'>"
-    if {$opts(-titledesc) ne ""} {
-        append doc "<div id='hd' class='banner'>\n$opts(-titledesc)\n</div>\n"
-    }
-    append doc "<div id='bd'>"
-    append doc "<div id='yui-main'>"
-    append doc "<div class='yui-b'>"
-    append doc "<a name='_top'></a>"
 
     if {0} {
         Was used for autolinking. Not used any more.
@@ -1165,30 +1152,85 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
                       ]
     }
 
-    if {$opts(-modulename) ne ""} {
-        append doc [fmthead $opts(-modulename) 1]
+    # Generate the header used by all files
+    set header {<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">}
+    append header "<html><head><title>$opts(-titledesc)</title>\n"
+    if {[info exists opts(-stylesheets)]} {
+        append header "<style>\n$yui_style\n</style>\n"
+        foreach url $opts(-stylesheets) {
+            append header "<link rel='stylesheet' type='text/css' href='$url' />"
+        }
+    } else {
+        # Use built-in styles
+        append header "<style>\n$yui_style\n$ruff_style\n</style>\n"
     }
+    append header "<script>$javascript</script>"
+    append header "</head>\n<body>"
+
+    # YUI stylesheet templates
+    append header "<div id='doc3' class='yui-t2'>"
+    if {$opts(-titledesc) ne ""} {
+        append header "<div id='hd' class='banner'>\n$opts(-titledesc)\n</div>\n"
+    }
+    append header "<div id='bd'>"
+
+    if {$opts(-modulename) ne ""} {
+        append header [fmthead $opts(-modulename) 1]
+    }
+
+    # Generate the footer used by all files
+    append footer "</div>";        # <div id='bd'>
+    append footer "<div id='ft'>"
+    append footer "<div style='float: right;'>Document generated by Ruff!</div>"
+    if {[info exists opts(-copyright)]} {
+        append footer "<div>&copy; [escape $opts(-copyright)]</div>"
+    }
+    append footer "</div>\n"
+    append footer "</div>";        # <div id='doc3' ...>
+    append footer "</body></html>"
+
 
     # Arrange procs and classes by namespace
     set info_by_ns [sift_classprocinfo $classprocinfodict]
 
     # Collect links to namespaces. Need to do this before generating preamble
     foreach ns [dict keys $info_by_ns] {
-        set link_targets($ns) [anchor $ns]
+        set link_targets($ns) [ns_link $ns $ns]
     }
 
+    # Now generate documentation in one of two modes: single page or separate.
+    set docs [list ]
+
+    # Generate the main page. Further sections will be either appended to
+    # it or generated separately.
+    set doc $header
+    append doc "<div id='yui-main'><div class='yui-b'><a name='_top'></a>"
     if {[info exists opts(-preamble)] &&
-        [dict exists $opts(-preamble) "::"]} {
+        [dict exists $opts(-preamble) ""]} {
         # Print the toplevel (global stuff)
-        foreach {sec paras} [dict get $opts(-preamble) "::"] {
-            append doc [fmthead $sec 1]
+        foreach {sec paras} [dict get $opts(-preamble) ""] {
+            if {[string length $sec]} {
+                append doc [fmthead $sec 1]
+            }
             append doc [fmtparas $paras]
         }
     }
 
+    # If not single page, close off main page and append to return
+    if {!$opts(-singlepage)} {
+        append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
+        append doc $footer
+        lappend docs "::" $doc
+    }
+
     foreach ns [lsort [dict keys $info_by_ns]] {
+        if {!$opts(-singlepage)} {
+            set doc $header
+            append doc "<div id='yui-main'><div class='yui-b'><a name='_top'></a>"
+        }
+
         append doc [fmthead $ns 1]
-        
+ 
         if {[info exists opts(-preamble)] &&
             [dict exists $opts(-preamble) $ns]} {
             # Print the preamble for this namespace
@@ -1213,38 +1255,49 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
                             -hidenamespace $opts(-hidenamespace) \
                            ]
         }
-    }
-    append doc "</div>";        # <div class='yui-b'>
-    append doc "</div>";        # <div id='yui-main'>
+        if {! $opts(-singlepage)} {
+            append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
+            # Add the navigation bits
+            append doc "<div class='yui-b navbox'>"
+            dict for {text link} $navlinks {
+                set label [escape [dict get $link label]]
+                set tag  [dict get $link tag]
+                set href [dict get $link href]
+                if {[dict exists $link tip]} {
+                    append doc "<$tag><a class='tooltip' href='$href'>$label<span>[dict get $link tip]</span></a></$tag>"
+                } else {
+                    append doc "<$tag><a href='$href'>$label</a></$tag>"
+                }
+            }
+            append doc "</div>";        # <div class='yui-b navbox'>
+            append doc $footer
+            lappend docs $ns $doc
 
-    # Add the navigation bits
-    append doc "<div class='yui-b navbox'>"
-    dict for {text link} $navlinks {
-        set label [escape [dict get $link label]]
-        set tag  [dict get $link tag]
-        set href [dict get $link href]
-        if {[dict exists $link tip]} {
-            append doc "<$tag><a class='tooltip' href='$href'>$label<span>[dict get $link tip]</span></a></$tag>"
-        } else {
-            append doc "<$tag><a href='$href'>$label</a></$tag>"
+            # Reset navigation links for nxt page
+            set navlinks [dict create]
         }
     }
-    append doc "</div>";        # <div class='yui-b' for navigation>
+    if {$opts(-singlepage)} {
+        append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
 
-    append doc "</div>";        # <div id='bd'>
-
-    # The footer
-    append doc "<div id='ft'>"
-    append doc "<div style='float: right;'>Document generated by Ruff!</div>"
-    if {[info exists opts(-copyright)]} {
-        append doc "<div>&copy; [escape $opts(-copyright)]</div>"
+        # Add the navigation bits
+        append doc "<div class='yui-b navbox'>"
+        dict for {text link} $navlinks {
+            set label [escape [dict get $link label]]
+            set tag  [dict get $link tag]
+            set href [dict get $link href]
+            if {[dict exists $link tip]} {
+                append doc "<$tag><a class='tooltip' href='$href'>$label<span>[dict get $link tip]</span></a></$tag>"
+            } else {
+                append doc "<$tag><a href='$href'>$label</a></$tag>"
+            }
+        }
+        append doc "</div>";        # <div class='yui-b navbox'>
+        append doc $footer
+        lappend docs "::" $doc
     }
-    append doc "</div>\n"
-    
-    append doc "</div>";        # <div id='doc3' class='t3'>
-    append doc "</body></html>"
-
-    return $doc
+        
+    return $docs
 }
 
 proc ::ruff::formatter::html::_const {text} {

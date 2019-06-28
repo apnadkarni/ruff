@@ -279,6 +279,11 @@ namespace eval ruff {
         variable names
         set names(display) "Ruff!"
         set names(longdisplay) "Runtime Function Formatter"
+
+        # Base file name for output. Needed for linking.
+        variable output_file_base ""
+        # Extension of base output file
+        variable output_file_ext ""
     } 
     namespace path private
 }
@@ -290,10 +295,40 @@ proc ruff::private::identity {s} {
     return $s
 }
 
+proc ruff::private::fqn? {name} {
+    # Returns `1` if $name is fully qualified, else `0`.
+    return [string match ::* $name]
+}
+
+proc ruff::private::fqn! {name} {
+    # Raises an error if $name is not a fully qualified name.
+    if {![fqn? $name]} {
+        error "\"name\" is not fully qualified."
+    }
+}
+
+proc ruff::private::ns_file_base {ns} {
+    # Returns the file name to use for documenting namespace $ns.
+    variable output_file_base
+    variable output_file_ext
+    variable ns_file_base_cache
+    variable ProgramOptions
+    if {[info exists ns_file_base_cache($ns)]} {
+        return $ns_file_base_cache($ns)
+    }
+    if {$ProgramOptions(-singlepage) || $ns eq "::"} {
+        set fn "$output_file_base$output_file_ext"
+    } else {
+        set fn "${output_file_base}_[regsub -all {[^-\w_.]} $ns _]$output_file_ext"
+    }
+    set ns_file_base_cache($ns) $fn
+}
+
 proc ruff::private::regexp_escape {s} {
     return [string map {\\ \\\\ $ \\$ ^ \\^ . \\. ? \\? + \\+ * \\* | \\| ( \\( ) \\) [ \\[ ] \\] \{ \\\{ \} \\\} } $s]
 }
 
+# TBD - is this needed
 proc ruff::private::build_symbol_regexp {symlist} {
     # Builds a regular expression that matches any of the specified
     # symbols or names
@@ -1531,6 +1566,8 @@ proc ruff::document {formatter namespaces args} {
     # -title STRING - specifies the title to use for the page
     # -recurse BOOLEAN - if true, child namespaces are recursively
     #  documented.
+    # -singlepage BOOLEAN - if `true` (default) files are written
+    #  as a single page. Else each namespace is written to a separate file.
     #
     # Any additional arguments are passed through to the document command.
     #
@@ -1539,25 +1576,51 @@ proc ruff::document {formatter namespaces args} {
     # documentation to the specified file.
 
     array set opts {
-        -includeclasses true
-        -includeprocs true
-        -includeprivate false
-        -includesource false
-        -hidesourcecomments false
-        -output ""
         -append false
-        -title ""
+        -hidesourcecomments false
+        -includeclasses true
+        -includeprivate false
+        -includeprocs true
+        -includesource false
+        -output ""
+        -preamble ""
         -recurse false
+        -singlepage true
+        -title ""
     }
+
     array set opts $args
     namespace upvar private ProgramOptions ProgramOptions
     set ProgramOptions(-hidesourcecomments) $opts(-hidesourcecomments)
-    
+    set ProgramOptions(-singlepage) $opts(-singlepage)
+
+    if {$opts(-output) eq ""} {
+        if {! $opts(-singlepage)} {
+            # Need to link across files so output must be specified.
+            error "Output file must be specified with -output if -singlepage is false."
+        }
+    } else {
+        set private::output_file_base [file root [file tail $opts(-output)]]
+        set private::output_file_ext [file extension $opts(-output)]
+    }
+
+    # Fully qualify namespaces
+    set namespaces [lmap ns $namespaces {
+        if {[string match ::* $ns]} {
+            set ns
+        } else {
+            return -level 0 "[uplevel 1 {namespace current}]::$ns"
+        }
+    }]
+
     if {$opts(-recurse)} {
         set namespaces [namespace_tree $namespaces]
     }
 
     set preamble [dict create]
+    if {$opts(-preamble) ne ""} {
+        dict lappend preamble "" [list "" [extract_docstring $opts(-preamble)]]
+    }
     foreach ns $namespaces {
         if {[info exists ${ns}::_ruffdoc]} {
             foreach {section docstring} [set ${ns}::_ruffdoc] {
@@ -1572,19 +1635,21 @@ proc ruff::document {formatter namespaces args} {
                                -includeprivate $opts(-includeprivate)]
 
     load_formatter $formatter
-    set doc  [eval \
-                  [list formatter::${formatter}::generate_document \
-                       $classprocinfodict \
-                       -preamble $preamble \
-                       -modulename $opts(-title) \
-                      ] \
-                  $args]
-    if {$opts(-output) ne ""} {
-        if {$opts(-append)} {
-            set fd [open $opts(-output) a]
-        } else {
-            set fd [open $opts(-output) w]
-        }
+    set docs [formatter::${formatter}::generate_document \
+                 $classprocinfodict \
+                 -preamble $preamble \
+                 -modulename $opts(-title) \
+                 {*}$args]
+
+    if {$opts(-output) eq ""} {
+        return $docs
+    }
+
+    set dir [file dirname $opts(-output)]
+    file mkdir $dir
+    foreach {ns doc} $docs {
+        set fn [private::ns_file_base $ns]
+        set fd [open [file join $dir $fn] w]
         if {[catch {
             puts $fd $doc
         } msg]} {
@@ -1592,10 +1657,8 @@ proc ruff::document {formatter namespaces args} {
             error $msg
         }
         close $fd
-        return
-    } else {
-        return $doc
     }
+    return
 }
 
 proc ruff::formatters {} {
@@ -1616,6 +1679,7 @@ proc ruff::formatters {} {
     return $formatters
 }
 
+# TBD - where is this used
 proc ruff::private::wrap_text {text args} {
     # Wraps a string such that each line is less than a given width
     # and begins with the specified prefix.
