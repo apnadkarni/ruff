@@ -1030,7 +1030,7 @@ proc ::ruff::formatter::html::generate_ooclasses {classinfodict args} {
     set doc ""
     foreach name [lsort [dict keys $classinfodict]] {
         append doc \
-            [eval [list generate_ooclass [dict get $classinfodict $name]] $args]
+            [generate_ooclass [dict get $classinfodict $name] {*}$args]
         append doc "\n\n"
     }
 
@@ -1054,7 +1054,7 @@ proc ::ruff::formatter::html::generate_procs {procinfodict args} {
     foreach ns [lsort -dictionary [dict keys $namespaces]] {
         foreach name [lsort -dictionary [dict get $namespaces $ns]] {
             append doc \
-                [eval [list generate_proc_or_method [dict get $procinfodict $name]] $args]\n\n
+                [generate_proc_or_method [dict get $procinfodict $name] {*}$args]\n\n
         }
     }
 

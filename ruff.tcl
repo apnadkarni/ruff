@@ -371,7 +371,7 @@ proc ruff::private::namespace_tree {nslist} {
             continue
         }
         set done($ns) true
-        eval [list lappend nslist] [namespace children $ns]
+        lappend nslist {*}[namespace children $ns]
     }
 
     return [array names done]
@@ -1189,7 +1189,7 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names param_
     }
     set doc(source) $source
 
-    return [eval dict create [array get doc]]
+    return [dict create {*}[array get doc]]
 }
 
 
@@ -1433,7 +1433,7 @@ proc ruff::private::extract_namespace {ns args} {
     # Returns a dictionary with keys 'classes' and 'procs'. See ruff::private::extract
     # for details.
     
-    return [eval [list extract ${ns}::*] $args]
+    return [extract ${ns}::* {*}$args]
 }
 
 proc ruff::private::extract_namespaces {namespaces args} {
@@ -1448,7 +1448,7 @@ proc ruff::private::extract_namespaces {namespaces args} {
     set procs [dict create]
     set classes [dict create]
     foreach ns $namespaces {
-        set nscontent [eval [list extract ${ns}::*] $args]
+        set nscontent [extract ${ns}::* {*}$args]
         set procs   [dict merge $procs [dict get $nscontent procs]]
         set classes [dict merge $classes [dict get $nscontent classes]]
     }
@@ -1649,7 +1649,7 @@ proc ruff::document {formatter namespaces args} {
 
     set preamble [dict create]
     if {$opts(-preamble) ne ""} {
-        dict lappend preamble "" [list "" [extract_docstring $opts(-preamble)]]
+        dict lappend preamble "" "" [extract_docstring $opts(-preamble)]
     }
     foreach ns $namespaces {
         if {[info exists ${ns}::_ruffdoc]} {
