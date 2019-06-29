@@ -123,7 +123,7 @@ p.linkline {
 }
 
 div.navbox {
-    margin-top: 1em;
+    /* margin-top: 1em; */
     color: #006666;
 }
 
