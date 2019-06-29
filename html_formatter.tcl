@@ -300,7 +300,7 @@ function toggleSource( id )
 }
 
 # Credits: tcllib/Caius markdown module
-proc ::ruff::formatter::html::_parse_inline_markdown {text {scope {}}} {
+proc ::ruff::formatter::html::md_inline {text {scope {}}} {
 
     set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
 
@@ -343,13 +343,13 @@ proc ::ruff::formatter::html::_parse_inline_markdown {text {scope {}}} {
                     {
                         switch [string length $del] {
                             1 {
-                                append result "<em>[_parse_inline_markdown $sub $scope]</em>"
+                                append result "<em>[md_inline $sub $scope]</em>"
                             }
                             2 {
-                                append result "<strong>[_parse_inline_markdown $sub $scope]</strong>"
+                                append result "<strong>[md_inline $sub $scope]</strong>"
                             }
                             3 {
-                                append result "<strong><em>[_parse_inline_markdown $sub $scope]</em></strong>"
+                                append result "<strong><em>[md_inline $sub $scope]</em></strong>"
                             }
                         }
 
@@ -389,8 +389,8 @@ proc ::ruff::formatter::html::_parse_inline_markdown {text {scope {}}} {
                     incr index [string length $m]
 
                     set url [escape [string trim $url {<> }]]
-                    set txt [_parse_inline_markdown $txt $scope]
-                    set title [_parse_inline_markdown $title $scope]
+                    set txt [md_inline $txt $scope]
+                    set title [md_inline $title $scope]
 
                     set match_found 1
                 } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
@@ -415,8 +415,8 @@ proc ::ruff::formatter::html::_parse_inline_markdown {text {scope {}}} {
                             lassign $::Markdown::_references($lbl) url title
 
                             set url [escape [string trim $url {<> }]]
-                            set txt [_parse_inline_markdown $txt $scope]
-                            set title [_parse_inline_markdown $title $scope]
+                            set txt [md_inline $txt $scope]
+                            set title [md_inline $title $scope]
 
                             # REFERENCED
                             incr index [string length $m]
@@ -522,6 +522,10 @@ proc ruff::formatter::html::escape {s} {
     } $s]
 }
 
+proc ruff::formatter::html::symbol_link {sym {scope {}}} {
+    return [md_inline [symbol_ref $sym] $scope]
+}
+
 proc ::ruff::formatter::html::fmtpreformatted {content} {
     return "<pre class='ruff'>\n[escape $content]\n</pre>\n"
 }
@@ -598,10 +602,10 @@ proc ruff::formatter::html::fmtdeflist {listitems args} {
     append doc "<table class='ruff_deflist'>\n"
     foreach {name desc} $listitems {
         if {$opts(-preformatted) in {none itemname}} {
-            set desc [_parse_inline_markdown $desc $opts(-scope)]
+            set desc [md_inline $desc $opts(-scope)]
         }
         if {$opts(-preformatted) in {none itemdef}} {
-            set name [_parse_inline_markdown $name $opts(-scope)]
+            set name [md_inline $name $opts(-scope)]
         }
         append doc "<tr><td class='ruff_defitem'>$name</td><td class='ruff_defitem'>$desc</td></tr>\n"
     }
@@ -613,7 +617,7 @@ proc ruff::formatter::html::fmtdeflist {listitems args} {
 proc ruff::formatter::html::fmtbulletlist {listitems {scope {}}} {
     append doc "<ul class='ruff'>\n"
     foreach item $listitems {
-        append doc "<li>[_parse_inline_markdown $item $scope]</li>\n"
+        append doc "<li>[md_inline $item $scope]</li>\n"
     }
     append doc "</ul>\n"
     return $doc
@@ -638,7 +642,7 @@ proc ruff::formatter::html::fmtprochead {name args} {
     dict set linkinfo label [namespace tail $name]
     dict set navlinks $anchor $linkinfo
     if {[string length $ns]} {
-        set ns_link [_parse_inline_markdown "\[${ns}\]"]
+        set ns_link [symbol_link $ns]
         set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape [namespace tail $name]]</a><span class='ns_scope'> \[${ns_link}\]</span></h$opts(-level)>\n"
     } else {
         set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape $name]</a></h$opts(-level)>\n"
@@ -679,7 +683,7 @@ proc ruff::formatter::html::fmthead {text level args} {
 }
 
 proc ruff::formatter::html::fmtpara {text {scope {}}} {
-    return "<p class='ruff'>[_parse_inline_markdown [string trim $text] $scope]</p>\n"
+    return "<p class='ruff'>[md_inline [string trim $text] $scope]</p>\n"
 }
 
 proc ruff::formatter::html::fmtparas {paras {scope {}}} {
@@ -766,7 +770,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
             }
         }
         if {[dict exists $param description]} {
-            lappend desc [_parse_inline_markdown [dict get $param description] $scope]
+            lappend desc [md_inline [dict get $param description] $scope]
         } elseif {$name eq "args"} {
             lappend desc "Additional options."
         }
@@ -897,20 +901,20 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     if {[llength $aclass(superclasses)]} {
         append doc [fmthead Superclasses $header_levels(nonav)]
         # NOTE: Don't sort - order matters! 
-        set class_links [make_md_refs_string [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)]]
+        set class_links [symbol_refs_string [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)]]
         append doc [fmtpara $class_links $scope]
     }
     if {[llength $aclass(mixins)]} {
         append doc [fmthead "Mixins" $header_levels(nonav)]
 
         # Don't sort - order matters!
-        set class_links [make_md_refs_string [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)]]
+        set class_links [symbol_refs_string [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)]]
         append doc [fmtpara $class_links $scope]
     }
 
     if {[llength $aclass(subclasses)]} {
         append doc [fmthead "Subclasses" $header_levels(nonav)]
-        set class_links [make_md_refs_string [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)]]
+        set class_links [symbol_refs_string [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)]]
         append doc [fmtpara $class_links $scope]
     }
 
@@ -924,16 +928,16 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
                 set imp_class [trim_namespace_multi $imp_class $opts(-hidenamespace)]
             }
             lappend external_methods($imp_class) ${imp_class}.$name
-            set method_summaries($name) [dict create label [escape $name] desc [_parse_inline_markdown "See \[${imp_class}.$name\]" $scope]]
+            set method_summaries($name) [dict create label [escape $name] desc [md_inline "See [symbol_ref ${imp_class}.$name]" $scope]]
         }
         append doc [fmthead "Inherited and mixed-in methods" $header_levels(nonav)]
         # Construct a sorted list based on inherit/mixin class name
         set ext_list {}
         foreach imp_class [lsort -dictionary [array names external_methods]] {
-            set refs [make_md_refs_string $external_methods($imp_class)]
+            set refs [symbol_refs_string $external_methods($imp_class)]
             lappend ext_list \
-                [_parse_inline_markdown [make_md_ref $imp_class] $scope] \
-                [_parse_inline_markdown $refs $imp_class]
+                [md_inline [symbol_ref $imp_class] $scope] \
+                [md_inline $refs $imp_class]
         }
         append doc [fmtdeflist $ext_list -preformatted both]
     }
@@ -945,7 +949,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     if {[info exists aclass(constructor)] && !$opts(-mergeconstructor)} {
         set method_summaries($aclass(name).constructor) \
             [dict create label \
-                 [_parse_inline_markdown "\[$aclass(name).constructor\]" $aclass(name)] \
+                 [symbol_link $aclass(name).constructor $aclass(name)] \
                  desc \
                  "Constructor for the class" ]
         append doc [generate_proc_or_method $aclass(constructor) \
@@ -954,7 +958,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
                        ]
     }
     if {[info exists aclass(destructor)]} {
-        set method_summaries($aclass(name).destructor) [dict create label [_parse_inline_markdown "\[$aclass(name).destructor\]" $aclass(name)] desc "Destructor for the class" ]
+        set method_summaries($aclass(name).destructor) [dict create label [symbol_link $aclass(name).destructor $aclass(name)] desc "Destructor for the class" ]
         append doc [generate_proc_or_method $aclass(destructor) \
                         -includesource $opts(-includesource) \
                         -hidenamespace $opts(-hidenamespace) \
@@ -988,7 +992,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
             }
             set method_summaries($aclass(name).$name) \
                 [dict create label \
-                     [_parse_inline_markdown "\[$aclass(name).$name\]" $aclass(name)] \
+                     [symbol_link $aclass(name).$name $aclass(name)] \
                      desc \
                      $summary]
         } else {
@@ -997,9 +1001,9 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
             append doc [fmtpara $forward_text $scope]
             set method_summaries($aclass(name).$name) \
                 [dict create label \
-                     [_parse_inline_markdown "\[$aclass(name).$name\]" $aclass(name)] \
+                     [symbol_link $aclass(name).$name $aclass(name)] \
                      desc \
-                     [_parse_inline_markdown $forward_text $scope]]
+                     [md_inline $forward_text $scope]]
         }
     }
 

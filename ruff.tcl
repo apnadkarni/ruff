@@ -425,14 +425,14 @@ proc ruff::private::trim_namespace_multi {namelist ns} {
     return $result
 }
 
-proc ruff::private::make_md_ref {word} {
+proc ruff::private::symbol_ref {word} {
     # Wraps $word with `[]` to mark it as a markdown reference.
     # word - the word to be marked as reference.
     # Returns the marked-up word.
     return "\[$word\]"
 }
 
-proc ruff::private::make_md_refs {words} {
+proc ruff::private::symbol_refs {words} {
     # Wraps elements of a list with `[]` to mark them as markdown references.
     # words - the list of words to be marked as references.
     # Returns the list of marked-up words.
@@ -441,12 +441,12 @@ proc ruff::private::make_md_refs {words} {
     }]
 }
 
-proc ruff::private::make_md_refs_string {words {separator {, }}} {
+proc ruff::private::symbol_refs_string {words {separator {, }}} {
     # Constructs a string from elements of a list with `[]` to mark them as markdown references
     # words - the list of words to be marked as references.
     # separator - string to use as separator between elements
     # Returns a string containing the marked-up words separated by $separator.
-    return [join [make_md_refs $words] $separator]
+    return [join [symbol_refs $words] $separator]
 }
 
 proc ruff::private::ensembles {pattern} {
