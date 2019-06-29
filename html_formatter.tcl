@@ -33,6 +33,13 @@ namespace eval ruff::formatter::html {
         nonav  6
     }
 
+    # Css header classes to use for class and proc headers
+    variable header_css
+    array set header_css {
+        class ruffclass
+        proc  ruffproc
+        method ruffmethod
+    }
 
     # Note the Yahoo stylesheet is under a BSD license and hence
     # redistributable for all purposes
@@ -226,14 +233,16 @@ h2.ruff {
     color: #006666;
 }
 
-h3.ruff, h4.ruff, h5.ruff {
+h3.ruff, h4.ruff, h5.ruff, h6.ruff {
+    color: #006666;
+}
+
+h3.ruffclass, h3.ruffproc, h3.ruffmethod,
+h4.ruffclass, h4.ruffproc, h4.ruffmethod,
+h5.ruffclass, h5.ruffproc, h5.ruffmethod {
     border-bottom: thin solid #006666;
     color: #006666;
     margin-bottom: 0em;
-}
-
-h6.ruff {
-    color: #666666;
 }
 
 pre.ruff {
@@ -665,11 +674,11 @@ proc ruff::formatter::html::fmthead {text level args} {
     variable navlinks
 
     set opts(-link) [expr {$level > 4 ? false : true}]
-    set opts(-namespace) "";    # -namespace allows context for headings
+    set opts(-scope) "";    # -scope allows context for headings
     array set opts $args
 
     if {$opts(-link)} {
-        set anchor [anchor $opts(-namespace) $text]
+        set anchor [anchor $opts(-scope) $text]
         set linkinfo [dict create tag h$level href "#$anchor"]
         if {[info exists opts(-tooltip)]} {
             dict set linkinfo tip [escape $opts(-tooltip)]
@@ -695,6 +704,10 @@ proc ruff::formatter::html::fmtparas {paras {scope {}}} {
     set doc ""
     foreach {type content} $paras {
         switch -exact -- $type {
+            header {
+                lassign $content level text
+                append doc [fmthead $text $level -scope $scope]
+            }
             paragraph {
                 append doc [fmtpara $content $scope]
             }
@@ -734,6 +747,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     # Returns the proc documentation as a HTML formatted string.
 
     variable header_levels
+    variable header_css
 
     array set opts {
         -includesource false
@@ -803,9 +817,9 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
         }
 
         if {[info exists summary]} {
-            append doc [fmtprochead $fqn -tooltip $summary -level $header_levels($aproc(proctype))]
+            append doc [fmtprochead $fqn -tooltip $summary -level $header_levels($aproc(proctype)) -cssclass $header_css($aproc(proctype))]
         } else {
-            append doc [fmtprochead $fqn -level $header_levels($aproc(proctype))]
+            append doc [fmtprochead $fqn -level $header_levels($aproc(proctype)) -cssclass $header_css($aproc(proctype))]
         }
     }
 
@@ -868,6 +882,8 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     # Returns the class documentation as a HTML formatted string.
 
     variable header_levels
+    variable header_css
+
     array set opts {
         -includesource false
         -hidenamespace ""
@@ -884,7 +900,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     # We want to put the class summary right after the header but cannot
     # generate it till the end so we put the header in a separate variable
     # to be merged at the end.
-    append dochdr [fmtprochead $aclass(name) -level $header_levels(class)]
+    append dochdr [fmtprochead $aclass(name) -level $header_levels(class) -cssclass $header_css(class)]
 
     set doc ""
     # Include constructor in main class definition
@@ -997,7 +1013,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
                      $summary]
         } else {
             set forward_text "Method forwarded to [dict get $info forward]"
-            append doc [fmtprochead $aclass(name)::$name -tooltip $forward_text -level $header_levels(method)]
+            append doc [fmtprochead $aclass(name)::$name -tooltip $forward_text -level $header_levels(method) -cssclass $header_css(method)]
             append doc [fmtpara $forward_text $scope]
             set method_summaries($aclass(name).$name) \
                 [dict create label \
@@ -1229,10 +1245,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     if {[info exists opts(-preamble)] &&
         [dict exists $opts(-preamble) ""]} {
         # Print the toplevel (global stuff)
-        foreach {sec paras} [dict get $opts(-preamble) ""] {
-            if {[string length $sec]} {
-                append doc [fmthead $sec 1]
-            }
+        foreach paras [dict get $opts(-preamble) ""] {
             append doc [fmtparas $paras]
         }
     } else {
@@ -1265,14 +1278,11 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         if {[info exists opts(-preamble)] &&
             [dict exists $opts(-preamble) $ns]} {
             # Print the preamble for this namespace
-            foreach {sec paras} [dict get $opts(-preamble) $ns] {
-                append doc [fmthead $sec 2]
-                append doc [fmtparas $paras $ns]
-            }
+            append doc [fmtparas [dict get $opts(-preamble) $ns] $ns]
         }
 
         if {[dict exists $info_by_ns $ns procs]} {
-            append doc [fmthead "Commands" 2 -namespace $ns]
+            append doc [fmthead "Commands" 2 -scope $ns]
             append doc [generate_procs [dict get $info_by_ns $ns procs] \
                             -includesource $opts(-includesource) \
                             -hidenamespace $opts(-hidenamespace) \
@@ -1280,7 +1290,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         }
 
         if {[dict exists $info_by_ns $ns classes]} {
-            append doc [fmthead "Classes" 2 -namespace $ns]
+            append doc [fmthead "Classes" 2 -scope $ns]
             append doc [generate_ooclasses [dict get $info_by_ns $ns classes] \
                             -includesource $opts(-includesource) \
                             -hidenamespace $opts(-hidenamespace) \
