@@ -1666,10 +1666,10 @@ proc ruff::document {formatter namespaces args} {
 
     load_formatter $formatter
     set docs [formatter::${formatter}::generate_document \
-                 $classprocinfodict \
-                 -preamble $preamble \
-                 -modulename $opts(-title) \
-                 {*}$args]
+                  $classprocinfodict \
+                  {*}$args \
+                  -preamble $preamble \
+                  -modulename $opts(-title)]
 
     if {$opts(-output) eq ""} {
         return $docs

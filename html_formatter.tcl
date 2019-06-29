@@ -1225,6 +1225,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     # it or generated separately.
     set doc $header
     append doc "<div id='yui-main'><div class='yui-b'><a name='_top'></a>"
+
     if {[info exists opts(-preamble)] &&
         [dict exists $opts(-preamble) ""]} {
         # Print the toplevel (global stuff)
@@ -1234,6 +1235,10 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             }
             append doc [fmtparas $paras]
         }
+    } else {
+        # If no preamble was given and we are in multipage mode
+        # display a generic message.
+        append doc [md_inline "Please follow the links on the left for documentation of individual modules."]
     }
 
     # If not single page, append links to namespace pages and close page
