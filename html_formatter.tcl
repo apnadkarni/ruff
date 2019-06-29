@@ -153,9 +153,13 @@ div.navbox {
     font-weight: normal;
 }
 
+.navbox hr {
+    color: #006666;
+}
+
 .navbox a:link, .navbox a:visited {
   text-decoration: none;
-  color: #006666;
+    color: #006666;
 }
 
 .navbox a:hover {
@@ -165,6 +169,7 @@ div.navbox {
 .navbox h1 a:link, .navbox h1 a:visited {
     color: white;
 }
+
 /* Easy CSS Tooltip - by Koller Juergen [www.kollermedia.at] */
 .navbox a:hover {background:#ffffff; text-decoration:none;} /*BG color is a must for IE6*/
 .navbox a.tooltip span {display:none; padding:2px 3px; margin-left:8px; width: 100%;}
@@ -891,20 +896,22 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
 
     if {[llength $aclass(superclasses)]} {
         append doc [fmthead Superclasses $header_levels(nonav)]
-        # Don't sort - order matters! 
-        append doc [fmtpara [join [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)] {, }] $scope]
+        # NOTE: Don't sort - order matters! 
+        set class_links [make_md_refs_string [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)]]
+        append doc [fmtpara $class_links $scope]
     }
     if {[llength $aclass(mixins)]} {
         append doc [fmthead "Mixins" $header_levels(nonav)]
 
         # Don't sort - order matters!
-        append doc [fmtpara [join [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)] {, }] $scope]
+        set class_links [make_md_refs_string [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)]]
+        append doc [fmtpara $class_links $scope]
     }
 
     if {[llength $aclass(subclasses)]} {
-        # Don't sort - order matters!
         append doc [fmthead "Subclasses" $header_levels(nonav)]
-        append doc [fmtpara [join [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)] {, }] $scope]
+        set class_links [make_md_refs_string [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)]]
+        append doc [fmtpara $class_links $scope]
     }
 
     # Inherited and derived methods are listed as such.
@@ -923,9 +930,10 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
         # Construct a sorted list based on inherit/mixin class name
         set ext_list {}
         foreach imp_class [lsort -dictionary [array names external_methods]] {
+            set refs [make_md_refs_string $external_methods($imp_class)]
             lappend ext_list \
-                [_parse_inline_markdown $imp_class $scope] \
-                [_parse_inline_markdown $external_methods($imp_class) $imp_class]
+                [_parse_inline_markdown [make_md_ref $imp_class] $scope] \
+                [_parse_inline_markdown $refs $imp_class]
         }
         append doc [fmtdeflist $ext_list -preformatted both]
     }
@@ -1274,7 +1282,8 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             # Add the navigation bits
             append doc "<div class='yui-b navbox'>"
             # First the toplevel links
-            #append doc $nav_common
+            append doc $nav_common
+            append doc "<hr>"
             # Then the navlinks for this namespace
             dict for {text link} $navlinks {
                 set label [escape [dict get $link label]]
