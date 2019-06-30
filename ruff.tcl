@@ -732,8 +732,21 @@ proc ruff::private::change_state {new v_name} {
             # store to output.
             if {$result(state) ne $new} {
                 # List type has changed or changing to non-list type
-                lappend result(output) $result(state) $result(listcollector)
-                set result(listcollector) {}
+                if {[lindex $result(output) end-1] eq "$result(state)"} {
+                    # If the previous output item was the same type, append
+                    # the new items to it rather than creating a new item.
+                    # This is a hack because I did not realize early enough
+                    # that markdown treats list elements separated by blank lines
+                    # as belonging to the same list.
+                    set last_list [lindex $result(output) end]
+                    lappend last_list {*}$result(listcollector)
+                    lset result(output) end $last_list
+                    set result(listcollector) {}
+                } else {
+                    # Previous item was not a list of the same type
+                    lappend result(output) $result(state) $result(listcollector)
+                    set result(listcollector) {}
+                }
             }
         }
         return  {
