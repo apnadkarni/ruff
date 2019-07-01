@@ -1,9 +1,15 @@
-# Copyright (c) 2009, Ashok P. Nadkarni
+# Copyright (c) 2009-2019, Ashok P. Nadkarni
 # All rights reserved.
 # See the file WOOF_LICENSE in the Woof! root directory for license
 
 
 # Ruff! formatter for doctools
+#
+# doctools command line:
+# ::ruff::document_namespace doctools ::ruff -output ruff.man
+#  exec tclsh86 c:/bin/tcl86/bin/dtplite.tcl -o ruff.html html ruff.man
+#
+
 
 namespace eval ruff::formatter::doctools {  
     namespace path [list \

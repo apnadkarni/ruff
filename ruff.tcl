@@ -701,8 +701,8 @@ proc ruff::private::parse {lines {mode proc}} {
     }
 
     #ruff
-    # Returns a list of key value pairs where key is one 'header'
-    # of 'parameter', 'option', 'bulletlist', 'deflist', 'parameter',
+    # Returns a list of key value pairs where key is one of 'header',
+    # 'parameter', 'option', 'bulletlist', 'deflist', 'parameter',
     # 'preformatted', 'paragraph' or 'return',
     # and the value
     # is the corresponding value.
@@ -1884,23 +1884,6 @@ proc ruff::app::log_error {msg} {
 }
 
 
-
-#
-# Robodoc command line:
-#  ruff::document_namespace robodoc ::ruff -output out.tcl -hidenamespace ::ruff
-#  exec robodoc --src out.tcl --doc out --singlefile --html --nopre --toc
-#
-# doctools command line:
-# ::ruff::document_namespace doctools ::ruff -output ruff.man
-#  exec tclsh86 c:/bin/tcl86/bin/dtplite.tcl -o ruff.html html ruff.man
-#
-# NaturalDocs command line:
-#  ::ruff::document_namespace naturaldocs ::ruff -output nd/nd.tcl -hidenamespace ::ruff
-#  exec perl {\bin\NaturalDocs\NaturalDocs} -i nd -o HTML out -p proj
-#  exec cmd /c start out\\index.html &
-#
-# or to document Ruff!
-#   ruff::document_self naturaldocs ndout {perl c:/bin/naturaldocs/naturaldocs}
 
 
 package provide ruff $::ruff::version

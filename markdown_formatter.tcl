@@ -1,14 +1,10 @@
-# Copyright (c) 2009-2019, Ashok P. Nadkarni
+# Copyright (c) 2019, Ashok P. Nadkarni
 # All rights reserved.
-# See the file WOOF_LICENSE in the Woof! root directory for license
+# See the file license.terms.
 
+# Ruff! formatter for Markdown.
 
-# Ruff! formatter for direct HTML
-
-# TBD - in class summary table, constructor, destructor and
-# forwarded methods are not getting linked properly.
-
-namespace eval ruff::formatter::html {
+namespace eval ruff::formatter::markdown {
     namespace path [list ::ruff ::ruff::private]
 
     # navlinks is used to build the navigation links that go on the
@@ -40,276 +36,23 @@ namespace eval ruff::formatter::html {
         proc  ruffproc
         method ruffmethod
     }
-
-    # Note the Yahoo stylesheet is under a BSD license and hence
-    # redistributable for all purposes
-    variable yui_style
-    set yui_style {
-/*
-Copyright (c) 2009, Yahoo! Inc. All rights reserved.
-Code licensed under the BSD License:
-http://developer.yahoo.net/yui/license.txt
-version: 2.7.0
-*/
-html{color:#000;background:#FFF;}body,div,dl,dt,dd,ul,ol,li,h1,h2,h3,h4,h5,h6,pre,code,form,fieldset,legend,input,button,textarea,p,blockquote,th,td{margin:0;padding:0;}table{border-collapse:collapse;border-spacing:0;}fieldset,img{border:0;}address,caption,cite,code,dfn,em,strong,th,var,optgroup{font-style:inherit;font-weight:inherit;}del,ins{text-decoration:none;}li{list-style:none;}caption,th{text-align:left;}h1,h2,h3,h4,h5,h6{font-size:100%;font-weight:normal;}q:before,q:after{content:'';}abbr,acronym{border:0;font-variant:normal;}sup{vertical-align:baseline;}sub{vertical-align:baseline;}legend{color:#000;}input,button,textarea,select,optgroup,option{font-family:inherit;font-size:inherit;font-style:inherit;font-weight:inherit;}input,button,textarea,select{*font-size:100%;}body{font:13px/1.231 arial,helvetica,clean,sans-serif;*font-size:small;*font:x-small;}select,input,button,textarea,button{font:99% arial,helvetica,clean,sans-serif;}table{font-size:inherit;font:100%;}pre,code,kbd,samp,tt{font-family:monospace;*font-size:108%;line-height:100%;}body{text-align:center;}#doc,#doc2,#doc3,#doc4,.yui-t1,.yui-t2,.yui-t3,.yui-t4,.yui-t5,.yui-t6,.yui-t7{margin:auto;text-align:left;width:57.69em;*width:56.25em;}#doc2{width:73.076em;*width:71.25em;}#doc3{margin:auto 10px;width:auto;}#doc4{width:74.923em;*width:73.05em;}.yui-b{position:relative;}.yui-b{_position:static;}#yui-main .yui-b{position:static;}#yui-main,.yui-g .yui-u .yui-g{width:100%;}.yui-t1 #yui-main,.yui-t2 #yui-main,.yui-t3 #yui-main{float:right;margin-left:-25em;}.yui-t4 #yui-main,.yui-t5 #yui-main,.yui-t6 #yui-main{float:left;margin-right:-25em;}.yui-t1 .yui-b{float:left;width:12.30769em;*width:12.00em;}.yui-t1 #yui-main .yui-b{margin-left:13.30769em;*margin-left:13.05em;}.yui-t2 .yui-b{float:left;width:13.8461em;*width:13.50em;}.yui-t2 #yui-main .yui-b{margin-left:14.8461em;*margin-left:14.55em;}.yui-t3 .yui-b{float:left;width:23.0769em;*width:22.50em;}.yui-t3 #yui-main .yui-b{margin-left:24.0769em;*margin-left:23.62em;}.yui-t4 .yui-b{float:right;width:13.8456em;*width:13.50em;}.yui-t4 #yui-main .yui-b{margin-right:14.8456em;*margin-right:14.55em;}.yui-t5 .yui-b{float:right;width:18.4615em;*width:18.00em;}.yui-t5 #yui-main .yui-b{margin-right:19.4615em;*margin-right:19.125em;}.yui-t6 .yui-b{float:right;width:23.0769em;*width:22.50em;}.yui-t6 #yui-main .yui-b{margin-right:24.0769em;*margin-right:23.62em;}.yui-t7 #yui-main .yui-b{display:block;margin:0 0 1em 0;}#yui-main .yui-b{float:none;width:auto;}.yui-gb .yui-u,.yui-g .yui-gb .yui-u,.yui-gb .yui-g,.yui-gb .yui-gb,.yui-gb .yui-gc,.yui-gb .yui-gd,.yui-gb .yui-ge,.yui-gb .yui-gf,.yui-gc .yui-u,.yui-gc .yui-g,.yui-gd .yui-u{float:left;}.yui-g .yui-u,.yui-g .yui-g,.yui-g .yui-gb,.yui-g .yui-gc,.yui-g .yui-gd,.yui-g .yui-ge,.yui-g .yui-gf,.yui-gc .yui-u,.yui-gd .yui-g,.yui-g .yui-gc .yui-u,.yui-ge .yui-u,.yui-ge .yui-g,.yui-gf .yui-g,.yui-gf .yui-u{float:right;}.yui-g div.first,.yui-gb div.first,.yui-gc div.first,.yui-gd div.first,.yui-ge div.first,.yui-gf div.first,.yui-g .yui-gc div.first,.yui-g .yui-ge div.first,.yui-gc div.first div.first{float:left;}.yui-g .yui-u,.yui-g .yui-g,.yui-g .yui-gb,.yui-g .yui-gc,.yui-g .yui-gd,.yui-g .yui-ge,.yui-g .yui-gf{width:49.1%;}.yui-gb .yui-u,.yui-g .yui-gb .yui-u,.yui-gb .yui-g,.yui-gb .yui-gb,.yui-gb .yui-gc,.yui-gb .yui-gd,.yui-gb .yui-ge,.yui-gb .yui-gf,.yui-gc .yui-u,.yui-gc .yui-g,.yui-gd .yui-u{width:32%;margin-left:1.99%;}.yui-gb .yui-u{*margin-left:1.9%;*width:31.9%;}.yui-gc div.first,.yui-gd .yui-u{width:66%;}.yui-gd div.first{width:32%;}.yui-ge div.first,.yui-gf .yui-u{width:74.2%;}.yui-ge .yui-u,.yui-gf div.first{width:24%;}.yui-g .yui-gb div.first,.yui-gb div.first,.yui-gc div.first,.yui-gd div.first{margin-left:0;}.yui-g .yui-g .yui-u,.yui-gb .yui-g .yui-u,.yui-gc .yui-g .yui-u,.yui-gd .yui-g .yui-u,.yui-ge .yui-g .yui-u,.yui-gf .yui-g .yui-u{width:49%;*width:48.1%;*margin-left:0;}.yui-g .yui-g .yui-u{width:48.1%;}.yui-g .yui-gb div.first,.yui-gb .yui-gb div.first{*margin-right:0;*width:32%;_width:31.7%;}.yui-g .yui-gc div.first,.yui-gd .yui-g{width:66%;}.yui-gb .yui-g div.first{*margin-right:4%;_margin-right:1.3%;}.yui-gb .yui-gc div.first,.yui-gb .yui-gd div.first{*margin-right:0;}.yui-gb .yui-gb .yui-u,.yui-gb .yui-gc .yui-u{*margin-left:1.8%;_margin-left:4%;}.yui-g .yui-gb .yui-u{_margin-left:1.0%;}.yui-gb .yui-gd .yui-u{*width:66%;_width:61.2%;}.yui-gb .yui-gd div.first{*width:31%;_width:29.5%;}.yui-g .yui-gc .yui-u,.yui-gb .yui-gc .yui-u{width:32%;_float:right;margin-right:0;_margin-left:0;}.yui-gb .yui-gc div.first{width:66%;*float:left;*margin-left:0;}.yui-gb .yui-ge .yui-u,.yui-gb .yui-gf .yui-u{margin:0;}.yui-gb .yui-gb .yui-u{_margin-left:.7%;}.yui-gb .yui-g div.first,.yui-gb .yui-gb div.first{*margin-left:0;}.yui-gc .yui-g .yui-u,.yui-gd .yui-g .yui-u{*width:48.1%;*margin-left:0;}.yui-gb .yui-gd div.first{width:32%;}.yui-g .yui-gd div.first{_width:29.9%;}.yui-ge .yui-g{width:24%;}.yui-gf .yui-g{width:74.2%;}.yui-gb .yui-ge div.yui-u,.yui-gb .yui-gf div.yui-u{float:right;}.yui-gb .yui-ge div.first,.yui-gb .yui-gf div.first{float:left;}.yui-gb .yui-ge .yui-u,.yui-gb .yui-gf div.first{*width:24%;_width:20%;}.yui-gb .yui-ge div.first,.yui-gb .yui-gf .yui-u{*width:73.5%;_width:65.5%;}.yui-ge div.first .yui-gd .yui-u{width:65%;}.yui-ge div.first .yui-gd div.first{width:32%;}#hd:after,#bd:after,#ft:after,.yui-g:after,.yui-gb:after,.yui-gc:after,.yui-gd:after,.yui-ge:after,.yui-gf:after{content:".";display:block;height:0;clear:both;visibility:hidden;}#hd,#bd,#ft,.yui-g,.yui-gb,.yui-gc,.yui-gd,.yui-ge,.yui-gf{zoom:1;}
-
-body{margin:10px;}h1{font-size:138.5%;}h2{font-size:123.1%;}h3{font-size:108%;}h1,h2,h3{margin:1em 0;}h1,h2,h3,h4,h5,h6,strong,dt{font-weight:bold;}optgroup{font-weight:normal;}abbr,acronym{border-bottom:1px dotted #000;cursor:help;}em{font-style:italic;}del{text-decoration:line-through;}blockquote,ul,ol,dl{margin:1em;}ol,ul,dl{margin-left:2em;}ol li{list-style:decimal outside;}ul li{list-style:disc outside;}dl dd{margin-left:1em;}th,td{border:1px solid #000;padding:.5em;}th{font-weight:bold;text-align:center;}caption{margin-bottom:.5em;text-align:center;}sup{vertical-align:super;}sub{vertical-align:sub;}p,fieldset,table,pre{margin-bottom:1em;}button,input[type="checkbox"],input[type="radio"],input[type="reset"],input[type="submit"]{padding:1px;}
-    }
-
-    variable ruff_style
-    set ruff_style {
-
-
-/* Ruff default CSS */
-
-h1,h2 {
-  color: #888888;
-  margin-bottom: 0.5em;
-}
-
-#ft {
-    text-align: left;
-    border-top: 1px solid #006666;
-    color: #888888;
-    margin-top: 10px;
-}
-
-.banner h2 {
-    color: #006666;
-}
-
-#hd.banner {
- font-family: Trebuchet MS, Helvetica, sans-serif;
- font-weight: bold;
- font-size: 200%;
- line-height: 64px;
- border-bottom: thin solid #006666;
- color: #006666;
-}
-
-
-p.linkline {
-    text-align: right;
-    font-size: smaller;
-/*    margin-top: -1em; */
-    margin-bottom: 0;
-}
-
-#bd {
-  font-family: Verdana;
-  font-size: 108%;
-}
-
-.linkbox h2 {
-  color: #177f75; /* #21b6a8; */
-  margin-bottom: 0.2em;
-  margin-top: 1.5em;
-  font-size: 93%;
-}
-
-.linkbox {
-  font-size: 93%;
-}
-
-.linkbox ul {
-  margin-top: 0em;
-  margin-left: 0.5em;
-}
-
-.linkbox ul li {
-  list-style: none;
-}
-
-.linkbox a {
-  color: #177f75;
-  text-decoration: none;
-}
-
-.linkbox li a:hover {
-  font-weight: bold;
-}
-
-div.navbox {
-    /* margin-top: 1em; */
-    color: #006666;
-}
-
-/* Note .navbox header css should be based on $header_levels */
-.navbox h1, .navbox h2, .navbox h3, .navbox h4, .navbox h5 {
-  font-size: 85%;
-  margin: 0px;
-}
-.navbox h1, .navbox h2, .navbox h3 {
-    font-weight: bold;
-}
-.navbox h1 {
-    background-color: #006666;
-}
-.navbox h2 {
-    margin-left: 1em;
-}
-.navbox h3 {
-    margin-left: 2em;
-}
-.navbox h4 {
-    margin-left: 2em;
-    font-weight: normal;
-}
-.navbox h5 {
-    margin-left: 3em;
-    font-weight: normal;
-}
-
-.navbox hr {
-    color: #006666;
-}
-
-.navbox a:link, .navbox a:visited {
-  text-decoration: none;
-    color: #006666;
-}
-
-.navbox a:hover {
-   font-weight: bold;
-}
-
-.navbox h1 a:link, .navbox h1 a:visited {
-    color: white;
-}
-
-/* Easy CSS Tooltip - by Koller Juergen [www.kollermedia.at] */
-.navbox a:hover {background:#ffffff; text-decoration:none;} /*BG color is a must for IE6*/
-.navbox a.tooltip span {display:none; padding:2px 3px; margin-left:8px; width: 100%;}
-/* .navbox a.tooltip span {display:none; padding:2px 3px; margin-left:8px; width:130px;} */
-.navbox a.tooltip:hover span{display:inline; position:absolute; border:1px solid #cccccc; background:#ffffff; color:#6c6c6c;}
-.navbox h1 a:hover {background: #006666;}
-
-span.ns_scope {
-    color: #aaaaaa;
-}
-
-span.ns_scope a:link, span.ns_scope a:visited {
-  text-decoration: none;
-  color: #aaaaaa;
-
-}
-
-span.ns_scope a:hover {
-  text-decoration: none;
-  color: #666666;
-}
-
-table {
-  margin: 1em;
-  border: thin solid;
-  border-collapse: collapse;
-  border-color: #808080;
-  padding: 4;
-}
-
-td {
-  border: thin solid;
-  border-color: #808080;
-  vertical-align: top;
-  font-size: 93%;
-}
-th {
-  border: thin solid;
-  border-color: #808080;
-  padding: 4px;
-  background-color: #CCCCCC;
-}
-
-dt, dd {
-   font-size: 93%;
-}
-
-h1.ruff {
-    background-color: #006666;
-    color: #ffffff;
-}
-h2.ruff {
-    font-variant: small-caps;
-    color: #006666;
-}
-
-h3.ruff, h4.ruff, h5.ruff, h6.ruff {
-    color: #006666;
-}
-
-h3.ruffclass, h3.ruffproc, h3.ruffmethod,
-h4.ruffclass, h4.ruffproc, h4.ruffmethod,
-h5.ruffclass, h5.ruffproc, h5.ruffmethod {
-    border-bottom: thin solid #006666;
-    color: #006666;
-    margin-bottom: 0em;
-}
-
-pre.ruff {
-    margin-top: 1em;
-}
-
-.ruff_synopsis {
-    border: thin solid #cccccc;
-    background: #eeeeee;
-    font-size: smaller;
-    font-family: "Courier New", Courier, monospace;
-    padding: 5px;
-    margin: 0px 50px 20px;
-}
-.ruff_const, .ruff_cmd, ruff_defitem {
-    font-weight: bold;
-    font-family: "Courier New", Courier, monospace;
-}
-.ruff_arg {
-    font-style: italic;
-    font-family: "Courier New", Courier, monospace;
-}
-
-.ruff_dyn_src {
-    background-color: #eeeeee;
-    padding: 5px;
-    display: none;
-}
-
-    }
-}
-
-set ::ruff::formatter::html::javascript {
-function toggleSource( id )
-    {
-        /* Copied from Rails */
-        var elem
-        var link
-
-        if( document.getElementById )
-        {
-            elem = document.getElementById( id )
-            link = document.getElementById( "l_" + id )
-        }
-        else if ( document.all )
-        {
-            elem = eval( "document.all." + id )
-            link = eval( "document.all.l_" + id )
-        }
-        else
-        return false;
-
-        if( elem.style.display == "block" )
-        {
-            elem.style.display = "none"
-            link.innerHTML = "Show source"
-        }
-        else
-        {
-            elem.style.display = "block"
-            link.innerHTML = "Hide source"
-        }
-    }
 }
 
 # Credits: tcllib/Caius markdown module
-proc ::ruff::formatter::html::md_inline {text {scope {}}} {
+proc ::ruff::formatter::markdown::md_inline {text {scope {}}} {
+    # Returns $text marked up in markdown syntax
+    #  text - Ruff! text with inline markup
+    #  scope - namespace scope to use for symbol lookup
+
+    # We cannot just pass through our marked-up text as is because
+    # it is not really markdown but rather with some extensions:
+    # - [xxx] treats xxx as potentially a link to documentation for
+    # some programming element.
+    # - _ is not treated as a special char
+    # - $var is marked as a variable name
+    # Moreover, we cannot use a simple regexp or subst because
+    # whether this special processing will depend on where inside
+    # the input these characters occur, whether a \ preceded etc.
 
     set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
 
@@ -328,56 +71,61 @@ proc ::ruff::formatter::html::md_inline {text {scope {}}} {
     while {[set chr [string index $text $index]] ne {}} {
         switch $chr {
             "\\" {
-                # ESCAPES
+                # If the next character is a special markdown character
+                # that we do not treat as special, it should be treated
+                # as a backslash-prefixed ordinary character.
+                # So double the backslash and prefix the character.
                 set next_chr [string index $text [expr $index + 1]]
-
-                if {[string first $next_chr {\`*_\{\}[]()#+-.!>|}] != -1} {
-                    set chr $next_chr
-                    incr index
+                if {$next_chr eq "_"} {
+                    append result "\\\\\\_"
+                    incr index; # Move past \_
+                    continue
                 }
+                # Other characters, special or not, are treated just
+                # like markdown would so pass through as is at bottom
+                # of loop.
             }
             {_} {
                 # Unlike Markdown, do not treat underscores as special char
+                append result \\; # Add an escape prefix
+                # $chr == _ will be added at bottom of loop
             }
             {*} {
                 # EMPHASIS
                 if {[regexp $re_whitespace [string index $result end]] &&
                     [regexp $re_whitespace [string index $text [expr $index + 1]]]} \
                     {
-                        #do nothing
+                        #do nothing (add character at bottom of loop)
                     } \
                     elseif {[regexp -start $index \
                                  "\\A(\\$chr{1,3})((?:\[^\\$chr\\\\]|\\\\\\$chr)*)\\1" \
                                  $text m del sub]} \
                     {
-                        switch [string length $del] {
-                            1 {
-                                append result "<em>[md_inline $sub $scope]</em>"
-                            }
-                            2 {
-                                append result "<strong>[md_inline $sub $scope]</strong>"
-                            }
-                            3 {
-                                append result "<strong><em>[md_inline $sub $scope]</em></strong>"
-                            }
-                        }
-
+                        append result "$del[md_inline $sub $scope]$del"
                         incr index [string length $m]
                         continue
                     }
             }
             {`} {
                 # CODE
-                regexp -start $index $re_backticks $text m
-                set start [expr $index + [string length $m]]
+                # Any marked code should not be escaped as above so
+                # look for it and pass it through as is.
 
-                if {[regexp -start $start -indices $m $text m]} {
-                    set stop [expr [lindex $m 0] - 1]
+                # Collect the leading backtick sequence
+                regexp -start $index $re_backticks $text backticks
+                set start [expr $index + [string length $backticks]]
 
-                    set sub [string trim [string range $text $start $stop]]
-
-                    append result "<code>[escape $sub]</code>"
-                    set index [expr [lindex $m 1] + 1]
+                # Look for the matching backticks. If not found,
+                # we will not treat this as code. Otherwise pass through
+                # the entire match unchanged.
+                if {[regexp -start $start -indices $backticks $text terminating_indices]} {
+                    set stop [lindex $terminating_indices 1]
+                    # Copy the entire substring including leading and trailing
+                    # backticks to output as is as we do not want those
+                    # characters to undergo the special processing above.
+                    set passthru [string range $text $index $stop]
+                    append result $passthru
+                    incr index [string length $passthru]
                     continue
                 }
             }
@@ -386,21 +134,17 @@ proc ::ruff::formatter::html::md_inline {text {scope {}}} {
                 # LINKS AND IMAGES
                 if {$chr eq {!}} {
                     set ref_type img
+                    set pre "!\["
                 } else {
                     set ref_type link
+                    set pre "\["
                 }
 
                 set match_found 0
-                set css ""
-
                 if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
                     # INLINE
-                    incr index [string length $m]
-
+                    append result $pre [md_inline $txt $scope] "\](" $url " " [md_inline $title $scope] ")"
                     set url [escape [string trim $url {<> }]]
-                    set txt [md_inline $txt $scope]
-                    set title [md_inline $title $scope]
-
                     set match_found 1
                 } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
                     if {$lbl eq {}} {
@@ -409,93 +153,54 @@ proc ::ruff::formatter::html::md_inline {text {scope {}}} {
 
                     set code_link [resolve_code_link $lbl $scope]
                     if {[llength $code_link]} {
-                        lassign $code_link url txt css
-                        set url [escape $url]
-                        set txt [escape $txt]
-                        set title $txt
-
                         # RUFF CODE REFERENCE
-                        incr index [string length $m]
+                        lassign $code_link url txt
+                        set txt [md_inline $txt $scope]
+                        append result $pre $txt "\](" $url " " $txt ")"
                         set match_found 1
                     } else {
-                        set lbl [string tolower $lbl]
-
-                        if {[info exists ::Markdown::_references($lbl)]} {
-                            lassign $::Markdown::_references($lbl) url title
-
-                            set url [escape [string trim $url {<> }]]
-                            set txt [md_inline $txt $scope]
-                            set title [md_inline $title $scope]
-
-                            # REFERENCED
-                            incr index [string length $m]
-                            set match_found 1
-                        }
+                        # Not a Ruff! code link. Pass through as is.
+                        # We do not pass text through md_inline as it is
+                        # treated as a markdown reference and will need
+                        # to match the reference entry.
+                        append result $m
+                        set match_found 1
                     }
                 }
                 # PRINT IMG, A TAG
                 if {$match_found} {
-                    if {$ref_type eq {link}} {
-                        if {$title ne {}} {
-                            append result "<a href=\"$url\" title=\"$title\" $css>$txt</a>"
-                        } else {
-                            append result "<a href=\"$url\" $css>$txt</a>"
-                        }
-                    } else {
-                        if {$title ne {}} {
-                            append result "<img src=\"$url\" alt=\"$txt\" title=\"$title\" $css/>"
-                        } else {
-                            append result "<img src=\"$url\" alt=\"$txt\" $css/>"
-                        }
-                    }
-
+                    incr index [string length $m]
                     continue
                 }
             }
             {<} {
                 # HTML TAGS, COMMENTS AND AUTOLINKS
-                if {[regexp -start $index $re_comment $text m]} {
-                    append result $m
-                    incr index [string length $m]
-                    continue
-                } elseif {[regexp -start $index $re_autolink $text m email link]} {
-                    if {$link ne {}} {
-                        set link [escape $link]
-                        append result "<a href=\"$link\">$link</a>"
-                    } else {
-                        set mailto_prefix "mailto:"
-                        if {![regexp "^${mailto_prefix}(.*)" $email mailto email]} {
-                            # $email does not contain the prefix "mailto:".
-                            set mailto "mailto:$email"
-                        }
-                        append result "<a href=\"$mailto\">$email</a>"
-                    }
-                    incr index [string length $m]
-                    continue
-                } elseif {[regexp -start $index $re_htmltag $text m]} {
+                # HTML tags, pass through as is without processing
+                if {[regexp -start $index $re_comment $text m] ||
+                    [regexp -start $index $re_autolink $text m email link] ||
+                    [regexp -start $index $re_htmltag $text m]} {
                     append result $m
                     incr index [string length $m]
                     continue
                 }
-
-                set chr [escape $chr]
+                # Else fall through to pass only the < character
             }
             {&} {
                 # ENTITIES
+                # Pass through entire entity without processing
                 if {[regexp -start $index $re_entity $text m]} {
                     append result $m
                     incr index [string length $m]
                     continue
                 }
-
-                set chr [escape $chr]
+                # Else fall through to processing this single &
             }
             {$} {
                 # Ruff extension - treat $var as variables name
                 # Note: no need to escape characters but do so
-                # if you change the regexp
+                # if you change the regexp below
                 if {[regexp -start $index {\$\w+} $text m]} {
-                    append result "<code>$m</code>"
+                    append result "`$m`"
                     incr index [string length $m]
                     continue
                 }
@@ -504,7 +209,7 @@ proc ::ruff::formatter::html::md_inline {text {scope {}}} {
             {'} -
             "\"" {
                 # OTHER SPECIAL CHARACTERS
-                set chr [escape $chr]
+                # Pass through
             }
             default {}
         }
@@ -516,40 +221,34 @@ proc ::ruff::formatter::html::md_inline {text {scope {}}} {
     return $result
 }
 
-proc ruff::formatter::html::escape {s} {
+proc ruff::formatter::markdown::escape {s} {
     # s - string to be escaped
     # Protects characters in $s against interpretation as
-    # HTML special characters.
+    # markdown special characters.
     #
     # Returns the escaped string
 
-    return [string map {
-        &    &amp;
-        \"   &quot;
-        <    &lt;
-        >    &gt;
-    } $s]
+    # TBD - fix this regexp
+    return [regsub -all {[\\`*_\{\}\[\]\(\)#\+\-\.!>|]} $s {\\\0}]
 }
 
-proc ruff::formatter::html::symbol_link {sym {scope {}}} {
+proc ruff::formatter::markdown::symbol_link {sym {scope {}}} {
     return [md_inline [symbol_ref $sym] $scope]
 }
 
-proc ::ruff::formatter::html::fmtpreformatted {content} {
-    return "<pre class='ruff'>\n[escape $content]\n</pre>\n"
+proc ::ruff::formatter::markdown::fmtpreformatted {content} {
+    return "\n```\n$content\n```\n"
 }
 
-proc ::ruff::formatter::html::resolve_code_link {link_label scope} {
+proc ::ruff::formatter::markdown::resolve_code_link {link_label scope} {
     # Locates the target of a link.
     # link_label - the potential link to be located, for example the name
     #  of a proc.
     # scope - the namespace path to search to locate a target
     #
-    # Returns a list consisting of the url, text and the CSS class to use.
+    # Returns a list consisting of the url and text label.
     # An empty list is returned if the link_label does not match a code element.
     variable link_targets
-
-    set css "class='ruff_cmd'"
 
     # If the label falls within the specified scope, we will hide the scope
     # in the displayed label. The label may fall within the scope either
@@ -557,7 +256,7 @@ proc ::ruff::formatter::html::resolve_code_link {link_label scope} {
 
     # First check if this link itself is directly present
     if {[info exists link_targets($link_label)]} {
-        return [list "$link_targets($link_label)" [trim_namespace $link_label $scope] $css]
+        return [list "$link_targets($link_label)" [trim_namespace $link_label $scope]]
     }
 
     # Only search scope if not fully qualified
@@ -567,7 +266,7 @@ proc ::ruff::formatter::html::resolve_code_link {link_label scope} {
             foreach sep {. ::} {
                 set qualified ${scope}${sep}$link_label
                 if {[info exists link_targets($qualified)]} {
-                    return [list "$link_targets($qualified)" [trim_namespace $link_label $scope] $css]
+                    return [list "$link_targets($qualified)" [trim_namespace $link_label $scope]]
                 }
             }
             set scope [namespace qualifiers $scope]
@@ -577,10 +276,9 @@ proc ::ruff::formatter::html::resolve_code_link {link_label scope} {
     return [list ]
 }
 
-proc ruff::formatter::html::anchor args {
+proc ruff::formatter::markdown::anchor args {
     # Given a list of strings, constructs an anchor from them
-    # and returns it. It is already HTML-escaped. Empty arguments
-    # are ignored
+    # and returns it. Empty arguments are ignored.
     set parts {}
     foreach arg $args {
         if {$arg ne ""} {
@@ -588,10 +286,11 @@ proc ruff::formatter::html::anchor args {
         }
     }
 
-    return [regsub -all {[^-:\w_.]} [join $parts -] _]
+    # _ is a special char in markdown so use - as separator
+    return [regsub -all {[^-:\w_.]} [join $parts -] -]
 }
 
-proc ruff::formatter::html::ns_link {ns name} {
+proc ruff::formatter::markdown::ns_link {ns name} {
     if {$ns eq "::" && $name eq ""} {
         return [ns_file_base $ns]
     } else {
@@ -599,7 +298,7 @@ proc ruff::formatter::html::ns_link {ns name} {
     }
 }
 
-proc ruff::formatter::html::fmtdeflist {listitems args} {
+proc ruff::formatter::markdown::fmtdeflist {listitems args} {
 
     # -preformatted is one of both, none, itemname or itemdef
     array set opts {
@@ -608,7 +307,7 @@ proc ruff::formatter::html::fmtdeflist {listitems args} {
     }
     array set opts $args
 
-    append doc "<table class='ruff_deflist'>\n"
+    set doc "\n"
     foreach {name desc} $listitems {
         if {$opts(-preformatted) in {none itemname}} {
             set desc [md_inline $desc $opts(-scope)]
@@ -616,24 +315,24 @@ proc ruff::formatter::html::fmtdeflist {listitems args} {
         if {$opts(-preformatted) in {none itemdef}} {
             set name [md_inline $name $opts(-scope)]
         }
-        append doc "<tr><td class='ruff_defitem'>$name</td><td class='ruff_defitem'>$desc</td></tr>\n"
+        append doc "|$name|$desc|\n"
     }
-    append doc "</table>\n"
+    append doc "\n"
     
     return $doc
 }
 
-proc ruff::formatter::html::fmtbulletlist {listitems {scope {}}} {
-    append doc "<ul class='ruff'>\n"
+proc ruff::formatter::markdown::fmtbulletlist {listitems {scope {}}} {
+    append doc \n
     foreach item $listitems {
-        append doc "<li>[md_inline $item $scope]</li>\n"
+        append doc "- [md_inline $item $scope]\n"
     }
-    append doc "</ul>\n"
+    append doc "\n"
     return $doc
 }
 
 
-proc ruff::formatter::html::fmtprochead {name args} {
+proc ruff::formatter::markdown::fmtprochead {name args} {
     # Procedure for formatting proc, class and method headings
     variable navlinks
     variable link_targets
@@ -641,6 +340,8 @@ proc ruff::formatter::html::fmtprochead {name args} {
     set opts(-level) 3
     set opts(-cssclass) "ruff"
     array set opts $args
+
+    set atx [string repeat # $opts(-level)]
 
     set ns [namespace qualifiers $name]
     set anchor [anchor $name]
@@ -650,32 +351,40 @@ proc ruff::formatter::html::fmtprochead {name args} {
     }
     dict set linkinfo label [namespace tail $name]
     dict set navlinks $anchor $linkinfo
+    set doc "\n$atx <a name='$anchor'></a>"
     if {[string length $ns]} {
         set ns_link [symbol_link $ns]
-        set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape [namespace tail $name]]</a><span class='ns_scope'> \[${ns_link}\]</span></h$opts(-level)>\n"
+        append doc "[escape [namespace tail $name]]<span class='ns_scope'> \[${ns_link}\]</span>\n"
     } else {
-        set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape $name]</a></h$opts(-level)>\n"
+        append doc "[escape $name]\n"
     }
 
-    # Include a link to top of class/namespace if possible.
+    if {0} {
+        Commented out because not clear how well this will work
+        # Include a link to top of class/namespace if possible.
 
-    if {[info exists link_targets($ns)]} {
-        set linkline "<a href='$link_targets($ns)'>[namespace tail $ns]</a>, "
+        if {[info exists link_targets($ns)]} {
+            set linkline "<a href='$link_targets($ns)'>[namespace tail $ns]</a>, "
+        }
+        if {[program_option -singlepage]} {
+            append linkline "<a href='#_top'>Top</a>"
+        } else {
+            append linkline "<a href='[ns_link :: {}]'>Top</a>"
+        }
+        append doc "\n<p class='linkline'>$linkline</p>"
     }
-    if {[program_option -singlepage]} {
-        append linkline "<a href='#_top'>Top</a>"
-    } else {
-        append linkline "<a href='[ns_link :: {}]'>Top</a>"
-    }
-    return "${doc}\n<p class='linkline'>$linkline</p>"
+
+    return $doc
 }
 
-proc ruff::formatter::html::fmthead {text level args} {
+proc ruff::formatter::markdown::fmthead {text level args} {
     variable navlinks
 
     set opts(-link) [expr {$level > 4 ? false : true}]
     set opts(-scope) "";    # -scope allows context for headings
     array set opts $args
+
+    set atx [string repeat # $level]
 
     if {$opts(-link)} {
         set anchor [anchor $opts(-scope) $text]
@@ -685,17 +394,17 @@ proc ruff::formatter::html::fmthead {text level args} {
         }
         dict set linkinfo label $text
         dict set navlinks $anchor $linkinfo
-        return "<h$level class='ruff'><a name='$anchor'>[md_inline $text $opts(-scope)]</a></h$level>\n"
+        return "\n$atx <a name='$anchor'></a>[md_inline $text $opts(-scope)]\n"
     } else {
-        return "<h$level class='ruff'>[md_inline $text $opts(-scope)]</h$level>\n"
+        return "\n$atx [md_inline $text $opts(-scope)]\n"
     }
 }
 
-proc ruff::formatter::html::fmtpara {text {scope {}}} {
-    return "<p class='ruff'>[md_inline [string trim $text] $scope]</p>\n"
+proc ruff::formatter::markdown::fmtpara {text {scope {}}} {
+    return "\n[md_inline [string trim $text] $scope]\n"
 }
 
-proc ruff::formatter::html::fmtparas {paras {scope {}}} {
+proc ruff::formatter::markdown::fmtparas {paras {scope {}}} {
     # Given a list of paragraph elements, returns
     # them appropriately formatted for html output.
     # paras - a flat list of pairs with the first element
@@ -728,8 +437,8 @@ proc ruff::formatter::html::fmtparas {paras {scope {}}} {
     return $doc
 }
 
-proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
-    # Formats the documentation for a proc in HTML format
+proc ruff::formatter::markdown::generate_proc_or_method {procinfo args} {
+    # Formats the documentation for a proc in Markdown format
     # procinfo - proc or method information in the format returned
     #   by extract_proc or extract_ooclass
     #
@@ -744,7 +453,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     #    if the return value is to be included as part of a larger
     #    section (e.g. constructor within a class)
     #
-    # Returns the proc documentation as a HTML formatted string.
+    # Returns the proc documentation as a Markdown formatted string.
 
     variable header_levels
     variable header_css
@@ -770,7 +479,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     set proc_name [trim_namespace $aproc(name) $opts(-hidenamespace)]
 
     # Construct the synopsis and simultaneously the parameter descriptions
-    # These are constructed as HTML (ie. already escaped) since we want
+    # These are constructed as already formatted since we want
     # to format parameters etc.
     set desclist {};            # For the parameter descriptions
     set arglist {};             # Used later for synopsis
@@ -827,7 +536,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
         append doc [fmtpara $summary $scope]
     }
 
-    append doc "<p><div class='ruff_synopsis'>$synopsis</div></p>\n"
+    append doc "\n$synopsis\n"
 
     if {[llength $desclist]} {
         append doc [fmthead Parameters $header_levels(nonav)]
@@ -849,7 +558,8 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     }
 
     # Do we include the source code in the documentation?
-    if {$opts(-includesource)} {
+    if {0 && $opts(-includesource)} {
+        # TBD - -includesource not implemented for markdown
         set src_id [_new_srcid]
         if {[info exists aproc(ensemble)]} {
             set note "<em style='font-size:small;'># NOTE: showing source of procedure implementing ensemble subcommand.</em>"
@@ -864,11 +574,10 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
         append doc "</div>";    # class='ruff_source'
     }
 
-
     return "${doc}\n"
 }
 
-proc ruff::formatter::html::generate_ooclass {classinfo args} {
+proc ruff::formatter::markdown::generate_ooclass {classinfo args} {
 
     # Formats the documentation for a class in HTML format
     # classinfo - class information in the format returned
@@ -1032,12 +741,12 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
         append dochdr [fmtdeflist $summary_list -preformatted both]
     }
 
-    return "$dochdr\n$doc"
+    return "$dochdr\n$doc\n"
 }
 
-proc ::ruff::formatter::html::generate_ooclasses {classinfodict args} {
+proc ::ruff::formatter::markdown::generate_ooclasses {classinfodict args} {
     # Given a list of class information elements returns as string
-    # containing class documentation formatted for NaturalDocs
+    # containing class documentation formatted as Markdown.
     # classinfodict - dictionary keyed by class name and each element
     #   of which is in the format returned by extract_ooclass
     #
@@ -1053,9 +762,9 @@ proc ::ruff::formatter::html::generate_ooclasses {classinfodict args} {
     return $doc
 }
     
-proc ::ruff::formatter::html::generate_procs {procinfodict args} {
+proc ::ruff::formatter::markdown::generate_procs {procinfodict args} {
     # Given a dictionary of proc information elements returns a string
-    # containing HTML format documentation.
+    # containing markdown format documentation.
     # procinfodict - dictionary keyed by name of the proc with the associated
     #   value being in the format returned by extract_proc
     #
@@ -1078,8 +787,8 @@ proc ::ruff::formatter::html::generate_procs {procinfodict args} {
 }
     
 
-proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
-    # Produces documentation in HTML format from the passed in
+proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
+    # Produces documentation in Markdown format from the passed in
     # class and proc metainformation.
     #   classprocinfodict - dictionary containing meta information about the 
     #    classes and procs
@@ -1104,9 +813,6 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     #    are used instead of the built-in styles. Note the built-in YUI is always
     #    included.
 
-    variable yui_style;         # Contains default YUI based layout
-    variable ruff_style;        # Contains default Ruff style sheet
-    variable javascript;        # Javascript used by the page
     variable navlinks;          # Links generated for navigation menu
     variable link_targets;    # Links for cross-reference purposes
 
@@ -1159,72 +865,54 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         set link_targets(${proc_name}) [ns_link [namespace qualifiers $proc_name] $proc_name]
     }
 
+    set header ""
     if {0} {
-        Was used for autolinking. Not used any more.
-        # Build a regexp that can be used to convert references to classes, methods
-        # and procedures to links. 
-        set methods {}
-        foreach {class_name class_info} [dict get $classprocinfodict classes] {
-            # Note we add both forms of method qualification - using :: and . -
-            # since comments might be use both forms.
-            foreach name {constructor destructor} {
-                if {[dict exists $class_info $name]} {
-                    lappend methods ${class_name}.$name ${class_name}::$name
-                }
+        TBD - Markdown header for title etc.?
+        # Generate the header used by all files
+        set header {<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">}
+        append header "<html><head><title>$opts(-titledesc)</title>\n"
+        if {[info exists opts(-stylesheets)]} {
+            append header "<style>\n$yui_style\n</style>\n"
+            foreach url $opts(-stylesheets) {
+                append header "<link rel='stylesheet' type='text/css' href='$url' />"
             }
-            foreach method_info [dict get $class_info methods] {
-                lappend methods ${class_name}.[dict get $method_info name] ${class_name}::[dict get $method_info name]
-            }
-            foreach method_info [dict get $class_info forwards] {
-                lappend methods ${class_name}.[dict get $method_info name] ${class_name}::[dict get $method_info name]
-            }
+        } else {
+            # Use built-in styles
+            append header "<style>\n$yui_style\n$ruff_style\n</style>\n"
         }
-        set ref_regexp [build_symbol_regexp \
-                            [concat \
-                                [dict keys [dict get $classprocinfodict procs]] \
-                                [dict keys [dict get $classprocinfodict classes]] \
-                                $methods
-                                ]
-                      ]
-    }
+        append header "<script>$javascript</script>"
+        append header "</head>\n<body>"
 
-    # Generate the header used by all files
-    set header {<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">}
-    append header "<html><head><title>$opts(-titledesc)</title>\n"
-    if {[info exists opts(-stylesheets)]} {
-        append header "<style>\n$yui_style\n</style>\n"
-        foreach url $opts(-stylesheets) {
-            append header "<link rel='stylesheet' type='text/css' href='$url' />"
+        # YUI stylesheet templates
+        append header "<div id='doc3' class='yui-t2'>"
+        if {$opts(-titledesc) ne ""} {
+            append header "<div id='hd' class='banner'>\n<a style='text-decoration:none;' href='[ns_link :: {}]'>$opts(-titledesc)</a>\n</div>\n"
         }
-    } else {
-        # Use built-in styles
-        append header "<style>\n$yui_style\n$ruff_style\n</style>\n"
+        append header "<div id='bd'>"
+    
     }
-    append header "<script>$javascript</script>"
-    append header "</head>\n<body>"
-
-    # YUI stylesheet templates
-    append header "<div id='doc3' class='yui-t2'>"
-    if {$opts(-titledesc) ne ""} {
-        append header "<div id='hd' class='banner'>\n<a style='text-decoration:none;' href='[ns_link :: {}]'>$opts(-titledesc)</a>\n</div>\n"
-    }
-    append header "<div id='bd'>"
 
     if {$opts(-modulename) ne ""} {
         append header [fmthead $opts(-modulename) 1 -link 0]
     }
 
     # Generate the footer used by all files
-    append footer "</div>";        # <div id='bd'>
-    append footer "<div id='ft'>"
-    append footer "<div style='float: right;'>Document generated by Ruff!</div>"
-    if {[info exists opts(-copyright)]} {
-        append footer "<div>&copy; [escape $opts(-copyright)]</div>"
+    set footer ""
+    if {1} {
+        if {[info exists opts(-copyright)]} {
+            append footer "\n\n (c) [escape $opts(-copyright)]"
+        }
+    } else {
+        append footer "</div>";        # <div id='bd'>
+        append footer "<div id='ft'>"
+        append footer "<div style='float: right;'>Document generated by Ruff!</div>"
+        if {[info exists opts(-copyright)]} {
+            append footer "<div>&copy; [escape $opts(-copyright)]</div>"
+        }
+        append footer "</div>\n"
+        append footer "</div>";        # <div id='doc3' ...>
+        append footer "</body></html>"
     }
-    append footer "</div>\n"
-    append footer "</div>";        # <div id='doc3' ...>
-    append footer "</body></html>"
-
 
     # Arrange procs and classes by namespace
     set info_by_ns [sift_classprocinfo $classprocinfodict]
@@ -1240,7 +928,6 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     # Generate the main page. Further sections will be either appended to
     # it or generated separately.
     set doc $header
-    append doc "<div id='yui-main'><div class='yui-b'><a name='_top'></a>"
 
     if {[info exists opts(-preamble)] &&
         [dict exists $opts(-preamble) ""]} {
@@ -1258,13 +945,11 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
 
     # If not single page, append links to namespace pages and close page
     if {!$opts(-singlepage)} {
-        append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
         # Add the navigation bits
         set nav_common ""
         foreach ns [lsort [dict keys $info_by_ns]] {
-            append nav_common "<h1><a href='[ns_file_base $ns]'>$ns</a></h1>"
+            append nav_common "\n* <a href='[ns_file_base $ns]'>$ns</a>\n"
         }
-        append doc "<div class='yui-b navbox'>$nav_common</div>"
         append doc $footer
         lappend docs "::" $doc
     }
@@ -1272,7 +957,6 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     foreach ns [lsort [dict keys $info_by_ns]] {
         if {!$opts(-singlepage)} {
             set doc $header
-            append doc "<div id='yui-main'><div class='yui-b'><a name='_top'></a>"
         }
 
         append doc [fmthead $ns 1]
@@ -1299,67 +983,37 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
                            ]
         }
         if {! $opts(-singlepage)} {
-            append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
-            # Add the navigation bits
-            append doc "<div class='yui-b navbox'>"
-            # First the toplevel links
+            # Add the navigation bits for other pages
+            append doc "## See also"
             append doc $nav_common
-            append doc "<hr>"
-            # Then the navlinks for this namespace
-            dict for {text link} $navlinks {
-                set label [escape [dict get $link label]]
-                set tag  [dict get $link tag]
-                set href [dict get $link href]
-                if {[dict exists $link tip]} {
-                    append doc "<$tag><a class='tooltip' href='$href'>$label<span>[dict get $link tip]</span></a></$tag>"
-                } else {
-                    append doc "<$tag><a href='$href'>$label</a></$tag>"
-                }
-            }
-            append doc "</div>";        # <div class='yui-b navbox'>
             append doc $footer
             lappend docs $ns $doc
 
-            # Reset navigation links for nxt page
+            # Reset navigation links for next page
             set navlinks [dict create]
         }
     }
     if {$opts(-singlepage)} {
-        append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
-
-        # Add the navigation bits
-        append doc "<div class='yui-b navbox'>"
-        dict for {text link} $navlinks {
-            set label [escape [dict get $link label]]
-            set tag  [dict get $link tag]
-            set href [dict get $link href]
-            if {[dict exists $link tip]} {
-                append doc "<$tag><a class='tooltip' href='$href'>$label<span>[dict get $link tip]</span></a></$tag>"
-            } else {
-                append doc "<$tag><a href='$href'>$label</a></$tag>"
-            }
-        }
-        append doc "</div>";        # <div class='yui-b navbox'>
         append doc $footer
         lappend docs "::" $doc
     }
-        
+
     return $docs
 }
 
-proc ::ruff::formatter::html::_const {text} {
-    return "<span class='ruff_const'>[escape $text]</span>"
+proc ::ruff::formatter::markdown::_const {text} {
+    return "`$text`"
 }
 
-proc ::ruff::formatter::html::_cmd {text} {
-    return "<span class='ruff_cmd'>[escape $text]</span>"
+proc ::ruff::formatter::markdown::_cmd {text} {
+    return "`$text`"
 }
 
-proc ::ruff::formatter::html::_arg {text} {
-    return "<span class='ruff_arg'>[escape $text]</span>"
+proc ::ruff::formatter::markdown::_arg {text} {
+    return "*`$text`*"
 }
 
-proc ::ruff::formatter::html::_new_srcid {} {
+proc ::ruff::formatter::markdown::_new_srcid {} {
     variable src_id_ctr
     if {![info exists src_id_ctr]} {
         set src_id_ctr 0
