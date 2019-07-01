@@ -25,8 +25,8 @@ namespace eval ruff::formatter::markdown {
     array set header_levels {
         class  3
         proc   4
-        method 5
-        nonav  6
+        method 4
+        nonav  5
     }
 
     # Css header classes to use for class and proc headers
