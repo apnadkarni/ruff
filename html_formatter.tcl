@@ -407,7 +407,7 @@ proc ::ruff::formatter::html::md_inline {text {scope {}}} {
                         set lbl [regsub -all {\s+} $txt { }]
                     }
 
-                    set code_link [_resolve_code_link $lbl $scope]
+                    set code_link [resolve_code_link $lbl $scope]
                     if {[llength $code_link]} {
                         lassign $code_link url txt css
                         set url [escape $url]
@@ -539,7 +539,7 @@ proc ::ruff::formatter::html::fmtpreformatted {content} {
     return "<pre class='ruff'>\n[escape $content]\n</pre>\n"
 }
 
-proc ::ruff::formatter::html::_resolve_code_link {link_label scope} {
+proc ::ruff::formatter::html::resolve_code_link {link_label scope} {
     # Locates the target of a link.
     # link_label - the potential link to be located, for example the name
     #  of a proc.
@@ -685,9 +685,9 @@ proc ruff::formatter::html::fmthead {text level args} {
         }
         dict set linkinfo label $text
         dict set navlinks $anchor $linkinfo
-        return "<h$level class='ruff'><a name='$anchor'>[escape $text]</a></h$level>\n"
+        return "<h$level class='ruff'><a name='$anchor'>[md_inline $text $opts(-scope)]</a></h$level>\n"
     } else {
-        return "<h$level class='ruff'>[escape $text]</h$level>\n"
+        return "<h$level class='ruff'>[md_inline $text $opts(-scope)]</h$level>\n"
     }
 }
 
