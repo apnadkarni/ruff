@@ -29,8 +29,8 @@ namespace eval ruff::formatter::html {
     array set header_levels {
         class  3
         proc   4
-        method 5
-        nonav  6
+        method 4
+        nonav  5
     }
 
     # Css header classes to use for class and proc headers
@@ -236,6 +236,11 @@ h2.ruff {
 h3.ruff, h4.ruff, h5.ruff, h6.ruff {
     color: #006666;
 }
+h5.ruff, h6.ruff {
+    font-style: italic;
+    font-weight: normal;
+}
+
 
 h3.ruffclass, h3.ruffproc, h3.ruffmethod,
 h4.ruffclass, h4.ruffproc, h4.ruffmethod,
@@ -244,6 +249,8 @@ h5.ruffclass, h5.ruffproc, h5.ruffmethod {
     color: #006666;
     margin-bottom: 0em;
 }
+
+
 
 pre.ruff {
     margin-top: 1em;
