@@ -143,9 +143,15 @@ proc ::ruff::formatter::markdown::md_inline {text {scope {}}} {
                 set match_found 0
                 if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
                     # INLINE
-                    append result $pre [md_inline $txt $scope] "\](" $url " " [md_inline $title $scope] ")"
-                    set url [escape [string trim $url {<> }]]
-                    set match_found 1
+                    if {1} {
+                        append result $m
+                        set match_found 1
+                    } else {
+                        # Note: Do quotes inside $title need to be escaped?
+                        append result $pre [md_inline $txt $scope] "\](" $url " " "\"[md_inline $title $scope]\"" ")"
+                        set url [escape [string trim $url {<> }]]
+                        set match_found 1
+                    }
                 } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
                     if {$lbl eq {}} {
                         set lbl [regsub -all {\s+} $txt { }]
@@ -156,7 +162,12 @@ proc ::ruff::formatter::markdown::md_inline {text {scope {}}} {
                         # RUFF CODE REFERENCE
                         lassign $code_link url txt
                         set txt [md_inline $txt $scope]
-                        append result $pre $txt "\](" $url " " $txt ")"
+                        if {1} {
+                            append result $pre $txt "\](" $url ")"
+                        } else {
+                            # Note: Do quotes inside $txt (SECOND occurence) need to be escaped?
+                            append result $pre $txt "\](" $url " " "\"$txt\"" ")"
+                        }
                         set match_found 1
                     } else {
                         # Not a Ruff! code link. Pass through as is.
@@ -291,10 +302,15 @@ proc ruff::formatter::markdown::anchor args {
 }
 
 proc ruff::formatter::markdown::ns_link {ns name} {
+    # Return a link for the specified name within the namespace
+
+    # Output file has a markdown extension. Link
+    # needs an html extension.
+    set fn [file rootname [ns_file_base $ns]].html
     if {$ns eq "::" && $name eq ""} {
-        return [ns_file_base $ns]
+        return $fn
     } else {
-        return "[ns_file_base $ns]#[anchor $name]"
+        return "$fn#[anchor $name]"
     }
 }
 
@@ -304,22 +320,46 @@ proc ruff::formatter::markdown::fmtdeflist {listitems args} {
     array set opts {
         -preformatted itemname
         -scope {}
+        -headings {}
     }
     array set opts $args
 
-    set doc "\n"
-    foreach {name desc} $listitems {
-        if {$opts(-preformatted) in {none itemname}} {
-            set desc [md_inline $desc $opts(-scope)]
+    # TBD - for now use html tables. Later change as per
+    # markdown dialect
+
+    # Note: CommonMark does not recognize tables without a heading line
+    if {1} {
+        set doc "\n<table><tbody>\n"
+        foreach {name desc} $listitems {
+            if {$opts(-preformatted) in {none itemname}} {
+                set desc [md_inline $desc $opts(-scope)]
+            }
+            if {$opts(-preformatted) in {none itemdef}} {
+                set name [md_inline $name $opts(-scope)]
+            }
+            append doc "<tr><td>$name</td><td>$desc</td></tr>\n"
         }
-        if {$opts(-preformatted) in {none itemdef}} {
-            set name [md_inline $name $opts(-scope)]
+        append doc "</tbody></table>\n"
+    } else {
+        set doc "\n|[lindex $opts(-headings) 0]|[lindex $opts(-headings) 1]|\n"
+        append doc "|----|----|\n"
+        foreach {name desc} $listitems {
+            if {$opts(-preformatted) in {none itemname}} {
+                set desc [md_inline $desc $opts(-scope)]
+            }
+            if {$opts(-preformatted) in {none itemdef}} {
+                set name [md_inline $name $opts(-scope)]
+            }
+            append doc "|$name|$desc|\n"
         }
-        append doc "|$name|$desc|\n"
+        append doc "\n"
     }
-    append doc "\n"
-    
+
     return $doc
+}
+
+proc ruff::formatter::markdown::fmtparamlist {listitems args} {
+    return [fmtdeflist $listitems {*}$args -headings {Parameter Description}]
 }
 
 proc ruff::formatter::markdown::fmtbulletlist {listitems {scope {}}} {
@@ -539,9 +579,12 @@ proc ruff::formatter::markdown::generate_proc_or_method {procinfo args} {
     append doc "\n$synopsis\n"
 
     if {[llength $desclist]} {
-        append doc [fmthead Parameters $header_levels(nonav)]
+        if {0} {
+            # In Markdown, the parameter table already has headings
+            append doc [fmthead Parameters $header_levels(nonav)]
+        }
         # Parameters are output as a list.
-        append doc [fmtdeflist $desclist -preformatted both]
+        append doc [fmtparamlist $desclist -preformatted both]
     }
 
     if {[info exists aproc(return)] && $aproc(return) ne ""} {
@@ -664,7 +707,7 @@ proc ruff::formatter::markdown::generate_ooclass {classinfo args} {
                 [md_inline [symbol_ref $imp_class] $scope] \
                 [md_inline $refs $imp_class]
         }
-        append doc [fmtdeflist $ext_list -preformatted both]
+        append doc [fmtparamlist $ext_list -preformatted both]
     }
     if {[llength $aclass(filters)]} {
         append doc [fmthead "Filters" $header_levels(nonav)]
@@ -738,7 +781,7 @@ proc ruff::formatter::markdown::generate_ooclass {classinfo args} {
     }
     if {[llength $summary_list]} {
         # append dochdr [fmthead "Method summary" $header_levels(nonav)]
-        append dochdr [fmtdeflist $summary_list -preformatted both]
+        append dochdr [fmtdeflist $summary_list -preformatted both -headings {Method Summary}]
     }
 
     return "$dochdr\n$doc\n"

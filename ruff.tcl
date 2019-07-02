@@ -695,7 +695,7 @@ proc ruff::private::parse {lines {mode proc}} {
     # Special case where the Returns is also the summary
     if {! $result(return_added)} {
         # If the summary matches a Returns statement, use that.
-        if {[string match -nocase "returns *" $result(summary)]} {
+        if {[string match -nocase "returns *" [lindex $result(summary) 0]]} {
                 lappend result(output) return $result(summary)
         }
     }
