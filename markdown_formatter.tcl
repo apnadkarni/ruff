@@ -240,7 +240,7 @@ proc ruff::formatter::markdown::escape {s} {
     # Returns the escaped string
 
     # TBD - fix this regexp
-    return [regsub -all {[\\`*_\{\}\[\]\(\)#\+\-\.!>|]} $s {\\\0}]
+    return [regsub -all {[\\`*_\{\}\[\]\(\)#\+\-\.!<>|]} $s {\\\0}]
 }
 
 proc ruff::formatter::markdown::symbol_link {sym {scope {}}} {
@@ -395,6 +395,7 @@ proc ruff::formatter::markdown::fmtprochead {name args} {
     if {[string length $ns]} {
         set ns_link [symbol_link $ns]
         append doc "[escape [namespace tail $name]]<span class='ns_scope'> \[${ns_link}\]</span>\n"
+        #append doc [md_inline "[escape [namespace tail $name]]\\\[\[$ns\]\\\]" $ns]
     } else {
         append doc "[escape $name]\n"
     }
