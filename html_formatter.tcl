@@ -87,6 +87,18 @@ h1,h2 {
  color: #006666;
 }
 
+p.linkline {
+    text-align: right;
+    font-size: smaller;
+    /*    margin-top: -1em; */
+    margin-bottom: 0;
+}
+
+#bd {
+font-family: Verdana;
+font-size: 108%;
+}
+
 div.navbox {
     /* margin-top: 1em; */
     color: #006666;
