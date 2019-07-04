@@ -87,48 +87,6 @@ h1,h2 {
  color: #006666;
 }
 
-
-p.linkline {
-    text-align: right;
-    font-size: smaller;
-/*    margin-top: -1em; */
-    margin-bottom: 0;
-}
-
-#bd {
-  font-family: Verdana;
-  font-size: 108%;
-}
-
-.linkbox h2 {
-  color: #177f75; /* #21b6a8; */
-  margin-bottom: 0.2em;
-  margin-top: 1.5em;
-  font-size: 93%;
-}
-
-.linkbox {
-  font-size: 93%;
-}
-
-.linkbox ul {
-  margin-top: 0em;
-  margin-left: 0.5em;
-}
-
-.linkbox ul li {
-  list-style: none;
-}
-
-.linkbox a {
-  color: #177f75;
-  text-decoration: none;
-}
-
-.linkbox li a:hover {
-  font-weight: bold;
-}
-
 div.navbox {
     /* margin-top: 1em; */
     color: #006666;
@@ -249,8 +207,6 @@ h5.ruffclass, h5.ruffproc, h5.ruffmethod {
     color: #006666;
     margin-bottom: 0em;
 }
-
-
 
 pre.ruff {
     margin-top: 1em;
