@@ -316,21 +316,28 @@ proc ruff::private::program_option {opt} {
     return $ProgramOptions($opt)
 }
 
-proc ruff::private::ns_file_base {ns} {
+proc ruff::private::ns_file_base {ns {ext {}}} {
     # Returns the file name to use for documenting namespace $ns.
+    # ns - the namespace for the file
+    # ext - if non-empty, this is used as the file extension.
+    #  It should include the initial period.
     variable output_file_base
     variable output_file_ext
     variable ns_file_base_cache
     variable ProgramOptions
-    if {[info exists ns_file_base_cache($ns)]} {
+    if {![info exists ns_file_base_cache($ns)]} {
+        if {$ProgramOptions(-singlepage) || $ns eq "::"} {
+            set fn "$output_file_base$output_file_ext"
+        } else {
+            set fn "${output_file_base}_[regsub -all {[^-\w_.]} $ns _]$output_file_ext"
+        }
+        set ns_file_base_cache($ns) $fn
+    }
+    if {$ext eq ""} {
         return $ns_file_base_cache($ns)
-    }
-    if {$ProgramOptions(-singlepage) || $ns eq "::"} {
-        set fn "$output_file_base$output_file_ext"
     } else {
-        set fn "${output_file_base}_[regsub -all {[^-\w_.]} $ns _]$output_file_ext"
+        return "[file rootname $ns_file_base_cache($ns)]$ext"
     }
-    set ns_file_base_cache($ns) $fn
 }
 
 proc ruff::private::regexp_escape {s} {

@@ -306,8 +306,8 @@ proc ruff::formatter::markdown::ns_link {ns name} {
 
     # Output file has a markdown extension. Link
     # needs an html extension.
-    set fn [file rootname [ns_file_base $ns]].html
-    if {$ns eq "::" && $name eq ""} {
+    set fn [ns_file_base $ns .html]
+    if {$ns eq "::" || $name eq ""} {
         return $fn
     } else {
         return "$fn#[anchor $name]"
@@ -982,7 +982,7 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
         # If no preamble was given and we are in multipage mode
         # display a generic message.
         if {!$opts(-singlepage)} {
-            append doc [md_inline "Please follow the links on the left for documentation of individual modules."]
+            append doc [md_inline "Please follow the links below for documentation of individual modules."]
         }
     }
 
@@ -991,8 +991,10 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
         # Add the navigation bits
         set nav_common ""
         foreach ns [lsort [dict keys $info_by_ns]] {
-            append nav_common "\n* <a href='[ns_file_base $ns]'>$ns</a>\n"
+            set link [ns_link $ns ""]
+            append nav_common "\n* \[$ns\]($link)"
         }
+        append doc "\n$nav_common\n"
         append doc $footer
         lappend docs "::" $doc
     }
