@@ -378,7 +378,6 @@ proc ruff::formatter::markdown::fmtprochead {name args} {
     variable link_targets
 
     set opts(-level) 3
-    set opts(-cssclass) "ruff"
     array set opts $args
 
     set atx [string repeat # $opts(-level)]
@@ -394,7 +393,7 @@ proc ruff::formatter::markdown::fmtprochead {name args} {
     set doc "\n$atx <a name='$anchor'></a>"
     if {[string length $ns]} {
         set ns_link [symbol_link $ns]
-        append doc "[escape [namespace tail $name]]<span class='ns_scope'> \[${ns_link}\]</span>\n"
+        append doc "[escape [namespace tail $name]] \[${ns_link}\]\n"
         #append doc [md_inline "[escape [namespace tail $name]]\\\[\[$ns\]\\\]" $ns]
     } else {
         append doc "[escape $name]\n"
@@ -567,9 +566,9 @@ proc ruff::formatter::markdown::generate_proc_or_method {procinfo args} {
         }
 
         if {[info exists summary]} {
-            append doc [fmtprochead $fqn -tooltip $summary -level $header_levels($aproc(proctype)) -cssclass $header_css($aproc(proctype))]
+            append doc [fmtprochead $fqn -tooltip $summary -level $header_levels($aproc(proctype))]
         } else {
-            append doc [fmtprochead $fqn -level $header_levels($aproc(proctype)) -cssclass $header_css($aproc(proctype))]
+            append doc [fmtprochead $fqn -level $header_levels($aproc(proctype))]
         }
     }
 
@@ -649,7 +648,7 @@ proc ruff::formatter::markdown::generate_ooclass {classinfo args} {
     # We want to put the class summary right after the header but cannot
     # generate it till the end so we put the header in a separate variable
     # to be merged at the end.
-    append dochdr [fmtprochead $aclass(name) -level $header_levels(class) -cssclass $header_css(class)]
+    append dochdr [fmtprochead $aclass(name) -level $header_levels(class)]
 
     set doc ""
     # Include constructor in main class definition
@@ -762,7 +761,7 @@ proc ruff::formatter::markdown::generate_ooclass {classinfo args} {
                      $summary]
         } else {
             set forward_text "Method forwarded to [dict get $info forward]"
-            append doc [fmtprochead $aclass(name)::$name -tooltip $forward_text -level $header_levels(method) -cssclass $header_css(method)]
+            append doc [fmtprochead $aclass(name)::$name -tooltip $forward_text -level $header_levels(method)]
             append doc [fmtpara $forward_text $scope]
             set method_summaries($aclass(name).$name) \
                 [dict create label \
