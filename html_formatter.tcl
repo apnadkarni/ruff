@@ -221,7 +221,10 @@ h5.ruffclass, h5.ruffproc, h5.ruffmethod {
 }
 
 pre.ruff {
+    background-color: #eeeeee;
     margin-top: 1em;
+    margin-left: 1em;
+    padding: 5px;
 }
 
 .ruff_synopsis {

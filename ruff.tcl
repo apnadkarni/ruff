@@ -66,10 +66,10 @@ namespace eval ruff {
 
         The following command will create the file 'NS.html' using the
         built-in HTML formatter.
-
-            package require ruff
-            ::ruff::document html [list ::NS] -output NS.html -recurse true
-
+        ````
+        package require ruff
+        ::ruff::document html [list ::NS] -output NS.html -recurse true
+        ````
         Refer to [document] for various options that control the
         content included in the documentation.
 
@@ -81,48 +81,49 @@ namespace eval ruff {
 
         The general form of a procedure is as follows:
 
-            proc myapp::myproc {arg {optarg AVALUE} args} {
-                # This first line is the summary line for documentation.
-                # arg - first parameter
-                # optarg - an optional parameter
-                # -switch VALUE - an optional switch
-                #
-                # This is the general description of the procedure
-                # composed of multiple paragraphs. It is separated from
-                # the parameter list above by one or more empty comments.
-                #
-                # This is the second paragraph. The next paragraph
-                # starts with the word Returns and hence will be treated
-                # by Ruff! as describing the return value.
-                #
-                # Returns a value.
-                #
-                # The above Return paragraph may appear anywhere, not
-                # necessarily as the last paragraph.
-                #
-                # A definition list has a similar form to the argument
-                # list. For example, optarg may take the following values:
-                #  AVALUE - one possible value
-                #  BVALUE - another possible value
-                #
-                # Bullet lists are indicated by a starting `-` or `*` character.
-                # - This is a bullet list iterm
-                # * This is also a bullet list item
+        ````
+        proc myapp::myproc {arg {optarg AVALUE} args} {
+            # This first line is the summary line for documentation.
+            # arg - first parameter
+            # optarg - an optional parameter
+            # -switch VALUE - an optional switch
 
-                # This paragraph will be ignored by Ruff! as it is not part
-                # of the initial block of comments.
+            # This is the general description of the procedure
+            # composed of multiple paragraphs. It is separated from
+            # the parameter list above by one or more empty comments.
 
-                some code
+            # This is the second paragraph. The next paragraph
+            # starts with the word Returns and hence will be treated
+            # by Ruff! as describing the return value.
 
-                #ruff
-                # Thanks to the #ruff marker above, this paragraph will be
-                # included by Ruff! even though it is not in the initial block
-                # of comments. This is useful for putting documentation for
-                # a feature right next to the code implementing it.
+            # Returns a value.
 
-                some more code.
-            }
+            # The above Return paragraph may appear anywhere, not
+            # necessarily as the last paragraph.
 
+            # A definition list has a similar form to the argument
+            # list. For example, optarg may take the following values:
+            #  AVALUE - one possible value
+            #  BVALUE - another possible value
+
+            # Bullet lists are indicated by a starting `-` or `*` character.
+            # - This is a bullet list iterm
+            # * This is also a bullet list item
+
+            # This paragraph will be ignored by Ruff! as it is not part
+            # of the initial block of comments.
+
+            some code
+
+            #ruff
+            # Thanks to the #ruff marker above, this paragraph will be
+            # included by Ruff! even though it is not in the initial block
+            # of comments. This is useful for putting documentation for
+            # a feature right next to the code implementing it.
+
+            some more code.
+        }
+        ````
         Of course, any of the comment sections may be missing. For example,
         the following suffices for a simple procedure.
 
@@ -167,10 +168,14 @@ namespace eval ruff {
         * All processed lines are stripped of the leading `#` character and a
         single following space if there is one.
 
+        * A line containing 3 or more consecutive backquote (\`) characters
+        with only surrounding whitespace on the line starts a preformatted
+        block. The block is terminated by another such sequence and
+        all intervening lines are passed through to the output unchanged.
+
         * If the line is indented 4 or more spaces, it is treated a
-        preformatted line and passed through to the output as is without any
-        of the processing described above. This takes priority over all
-        other types.
+        preformatted line and passed through to the output with the
+        the first 4 spaces stripped. No other processing is done on the line.
 
         * Lines starting with a `-` or a `*` character followed by at least
         one space are treated as a bulleted list item.
@@ -254,10 +259,10 @@ namespace eval ruff {
         the text is not a fully qualified name, it is treated relative to
         namespace or class within whose documentation the link appears. If
         it is fully qualified, it is displayed relative to the namespace of
-        the link location. See example below.
+        the link location. For example,
 
-        `[document]` - [document]
-        `[::ruff::formatters]` - [::ruff::formatters]
+        * `[document]` is displayed as [document]
+        * `[::ruff::formatters]` is displayed as [::ruff::formatters]
 
         If the text does not match a program element name, it is
         treated as a normal Markdown reference. 
@@ -525,6 +530,15 @@ proc ruff::private::parse {lines {mode proc}} {
     # mode - parsing mode, must be one of `proc`, `method`, `docstring`
     #
 
+    # A fence is 3 or more consecutive backticks surrounded by whitespace
+    set re_fence {^\s*`{3,}\s*$}
+    set re_blankline {^\s*$}
+    set re_preformatted {^\s{4,}}
+    set re_bullet {^(\s*)[-\*]\s+(.*)$}
+    set re_header {^\s*(=+)\s*(\S.*)}
+    set re_deflist {^(\s*)(\S.*?)\s+-\s+(.*)$}
+    set re_return {^(\s*)Returns($|\s.*$)}
+
     if {$mode ni {proc method docstring}} {
         error "Argument \"mode\" must be one of \"proc\", \"method\" or \"docstring\""
     }
@@ -539,8 +553,25 @@ proc ruff::private::parse {lines {mode proc}} {
     set result(header_level) 1
 
     foreach line $lines {
-        switch -regexp -matchvar matches -- $line {
-            {^\s*$} {
+        # The fenced state is treated differently in that
+        # it is terminated only by a fence so it's easier to
+        # handle that separately here rather than within each
+        # line pattern below.
+        if {$result(state) eq "fenced"} {
+            if {[regexp $re_fence $line]} {
+                # End of fence block
+                # Should we change to the preceding state instead? TBD
+                change_state blank result
+            } else {
+                lappend result(fragment) $line
+            }
+            continue
+        }
+        switch -regexp -matchvar matches -- $line \
+            $re_fence {
+                # Start of a fence block
+                change_state fenced result
+            } $re_blankline {
                 #ruff
                 # Empty lines or lines with only whitespace
                 # terminate the preceding
@@ -557,28 +588,31 @@ proc ruff::private::parse {lines {mode proc}} {
                         change_state blank result
                     }
                 }
-            }
-            {^\s{4,}} {
+            } $re_preformatted {
                 #ruff
                 # Lines beginning with at least 4 spaces
                 # are treated as preformatted text unless they are part
                 # of a list item. Preformatted text is returned as a list
                 # of lines.
                 switch -exact -- $result(state) {
-                    preformatted -
                     bulletlist -
                     deflist -
                     parameter -
                     option {
                         # No change. Keep adding to existing block
                     }
+                    preformatted {
+                        # Add line with initial 4 spaces stripped
+                        set line [string range $line 4 end]
+                    }
                     default {
                         change_state preformatted result
+                        # Add line with initial 4 spaces stripped
+                        set line [string range $line 4 end]
                     }
                 }
                 lappend result(fragment) $line
-            }
-            {^(\s*)[-\*]\s+(.*)$} {
+            } $re_bullet {
                 #ruff
                 # A bulleted list item starts with a '-' or '*' character
                 # and is not a preformatted line.
@@ -587,8 +621,7 @@ proc ruff::private::parse {lines {mode proc}} {
                 # items, each of which is a list of lines.
                 change_state bulletlist result
                 lappend result(fragment) [lindex $matches 2]
-            }
-            {^\s*(=+)\s*(\S.*)} {
+            } $re_header {
                 #ruff
                 # A markdown style header line
                 if {$mode ne "docstring"} {
@@ -597,8 +630,7 @@ proc ruff::private::parse {lines {mode proc}} {
                 change_state header result
                 set result(header_level) [string length [lindex $matches 1]]
                 lappend result(fragment) [lindex $matches 2]
-            }
-            {^(\s*)(\S.*?)\s+-\s+(.*)$} {
+            } $re_deflist {
                 #ruff
                 # A definition list or parameter list element that is not
                 # preformatted and contains a `-` character surrounded by
@@ -633,8 +665,7 @@ proc ruff::private::parse {lines {mode proc}} {
                 }
                 set result(name) [lindex $matches 2]
                 lappend result(fragment) [lindex $matches 3]
-            }
-            {^(\s*)Returns($|\s.*$)} {
+            } $re_return {
                 #ruff
                 # If $mode is not `docstring`,
                 # any paragraph that begins with the word 'Returns' is treated
@@ -649,8 +680,7 @@ proc ruff::private::parse {lines {mode proc}} {
                     change_state return result
                 }
                 lappend result(fragment) [string trimleft $line]
-            }
-            default {
+            } default {
                 #ruff
                 # All other lines either continue an existing paragrapsh
                 # or list element, or begin a new paragraph.
@@ -694,9 +724,9 @@ proc ruff::private::parse {lines {mode proc}} {
                     }
                 }
                 lappend result(fragment) $line
-            }
+            } 
         }
-    }
+
     change_state finish result; # To process any leftovers in result(fragment)
 
     # Special case where the Returns is also the summary
@@ -772,6 +802,7 @@ proc ruff::private::change_state {new v_name} {
         paragraph {
             lappend result(output) paragraph $result(fragment)
         }
+        fenced -
         preformatted {
             lappend result(output) preformatted $result(fragment)
         }

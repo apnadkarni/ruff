@@ -155,10 +155,11 @@ caption{
 
 pre{
   background: #eeeeee;
-  border: thin solid #cccccc;
+  /* border: thin solid #cccccc; */
   font-family: "Courier New", Courier, monospace;
-  font-size: smaller;
-  margin: 0px 50px 20px;
+  /* font-size: smaller; */
+  margin-top: 1em;
+  margin-left: 1em;
   padding: 5px;
 }
 
