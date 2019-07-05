@@ -1853,9 +1853,15 @@ proc ruff::private::document_self {formatter output_dir args} {
                 -keywords [list "documentation generation"] \
                 -modulename ::ruff
         }
+        markdown -
         html {
-            document html [list ::ruff] {*}$common_args \
-                -output [file join $output_dir ruff.html] \
+            if {$formatter eq "html"} {
+                set ext .html
+            } else {
+                set ext .md
+            }
+            document $formatter [list ::ruff] {*}$common_args \
+                -output [file join $output_dir ruff$ext] \
                 -titledesc $title \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
                 -includesource $opts(-includesource)
