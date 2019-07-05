@@ -577,14 +577,10 @@ proc ruff::formatter::markdown::generate_proc_or_method {procinfo args} {
         append doc [fmtpara $summary $scope]
     }
 
-    append doc "\n$synopsis\n"
+    append doc "\n> $synopsis\n"
 
     if {[llength $desclist]} {
-        if {0} {
-            # In Markdown, the parameter table already has headings
-            append doc [fmthead Parameters $header_levels(nonav)]
-        }
-        # Parameters are output as a list.
+        append doc [fmthead Parameters $header_levels(nonav)]
         append doc [fmtparamlist $desclist -preformatted both]
     }
 
