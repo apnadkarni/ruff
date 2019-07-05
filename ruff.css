@@ -1,0 +1,295 @@
+/* Default style file to use for Ruff output */
+
+
+/* The CSS reset below is from Eric Meyer */
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video{
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section{
+	display: block;
+}
+body{
+	line-height: 1;
+}
+ol, ul{
+	list-style: none;
+}
+blockquote, q{
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after{
+	content: '';
+	content: none;
+}
+table{
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+/* Ruff! formatting */
+body{
+  margin:    1em;
+  font:  14px arial,helvetica,clean,sans-serif;
+}
+h1{
+  background-color: #006666;
+  color: #ffffff;
+  font-size: 138.5%;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+
+h2{
+  color: #006666;
+  font-size: 123.1%;
+  font-variant: small-caps;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+
+h3, h4{
+  border-bottom: thin solid #006666;
+  color: #006666;
+  font-size: 108%;
+  font-weight: bold;
+  margin-bottom: 0.5em;
+}
+
+h5, h6{
+  color: #006666;
+  font-weight: bold;
+  font-style: italic;
+  font-weight: normal;
+  margin-bottom: 0.5em;
+}
+
+p{
+  margin-bottom: 1em;
+  font-family: Verdana;
+}
+
+blockquote{
+  background: #eeeeee;
+  border: thin solid #cccccc;
+  font-size: smaller;
+  margin: 1em;
+  padding: 5px;
+}
+
+blockquote p{
+  margin: 0px;
+}
+
+ul,ol,dl{
+  margin:1em;
+  margin-left: 2em;
+}
+ol li{
+  list-style:decimal outside;
+}
+ul li{
+  list-style:disc outside;
+}
+dl dd{
+  margin-left:1em;
+}
+dt, dd{
+  font-size: 93%;
+}
+
+table{
+  margin: 1em;
+  border: thin solid;
+  border-collapse: collapse;
+  border-color: #808080;
+  padding: 4;
+}
+/*
+th{
+}
+*/
+td{
+  border: thin solid;
+  border-color: #808080;
+  font-size: 93%;
+  padding: .5em;
+  vertical-align: top;
+}
+th{
+  background-color: #CCCCCC;
+  border: thin solid;
+  border-color: #808080;
+  font-weight:bold;
+  padding: 4px;
+  text-align:center;
+}
+
+caption{
+  margin-bottom:.5em;text-align:center;
+}
+
+pre{
+  background: #eeeeee;
+  border: thin solid #cccccc;
+  font-family: "Courier New", Courier, monospace;
+  font-size: smaller;
+  margin: 0px 50px 20px;
+  padding: 5px;
+}
+
+em{
+  font-style: italic;
+}
+
+code{
+  font-family: monospace;
+}
+
+div.navbox{
+    /* margin-top: 1em; */
+    color: #006666;
+}
+
+/* Note .navbox header css should be based on $header_levels */
+.navbox h1, .navbox h2, .navbox h3, .navbox h4, .navbox h5{
+  font-size: 85%;
+  margin: 0px;
+}
+.navbox h1, .navbox h2, .navbox h3{
+    font-weight: bold;
+}
+.navbox h1{
+    background-color: #006666;
+}
+.navbox h2{
+    margin-left: 1em;
+}
+.navbox h3{
+    margin-left: 2em;
+}
+.navbox h4{
+    margin-left: 2em;
+    font-weight: normal;
+}
+.navbox h5{
+    margin-left: 3em;
+    font-weight: normal;
+}
+
+.navbox hr{
+    color: #006666;
+}
+
+.navbox a:link, .navbox a:visited{
+  text-decoration: none;
+    color: #006666;
+}
+
+.navbox a:hover{
+   font-weight: bold;
+}
+
+.navbox h1 a:link, .navbox h1 a:visited{
+    color: white;
+}
+
+/* Easy CSS Tooltip - by Koller Juergen [www.kollermedia.at] */
+.navbox a:hover{background:#ffffff; text-decoration:none;} /*BG color is a must for IE6*/
+.navbox a.tooltip span{display:none; padding:2px 3px; margin-left:8px; width: 100%;}
+/* .navbox a.tooltip span{display:none; padding:2px 3px; margin-left:8px; width:130px;} */
+.navbox a.tooltip:hover span{display:inline; position:absolute; border:1px solid #cccccc; background:#ffffff; color:#6c6c6c;}
+.navbox h1 a:hover{background: #006666;}
+
+span.ns_scope{
+    color: #aaaaaa;
+}
+
+span.ns_scope a:link, span.ns_scope a:visited{
+  text-decoration: none;
+  color: #aaaaaa;
+
+}
+
+span.ns_scope a:hover{
+  text-decoration: none;
+  color: #666666;
+}
+
+h1.ruff{
+    background-color: #006666;
+    color: #ffffff;
+}
+h2.ruff{
+    font-variant: small-caps;
+    color: #006666;
+}
+
+h3.ruff, h4.ruff, h5.ruff, h6.ruff{
+    color: #006666;
+}
+h5.ruff, h6.ruff{
+    font-style: italic;
+    font-weight: normal;
+}
+
+
+h3.ruffclass, h3.ruffproc, h3.ruffmethod,
+h4.ruffclass, h4.ruffproc, h4.ruffmethod,
+h5.ruffclass, h5.ruffproc, h5.ruffmethod{
+    border-bottom: thin solid #006666;
+    color: #006666;
+    margin-bottom: 0em;
+}
+
+pre.ruff{
+    margin-top: 1em;
+}
+
+.ruff_synopsis{
+    border: thin solid #cccccc;
+    background: #eeeeee;
+    font-size: smaller;
+    font-family: "Courier New", Courier, monospace;
+    padding: 5px;
+    margin: 0px 50px 20px;
+}
+.ruff_const, .ruff_cmd, ruff_defitem{
+    font-weight: bold;
+    font-family: "Courier New", Courier, monospace;
+}
+.ruff_arg{
+    font-style: italic;
+    font-family: "Courier New", Courier, monospace;
+}
+
+.ruff_dyn_src{
+    background-color: #eeeeee;
+    padding: 5px;
+    display: none;
+}
+
