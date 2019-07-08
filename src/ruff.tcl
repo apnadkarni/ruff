@@ -253,20 +253,26 @@ namespace eval ruff {
         The default HTML formatter supports other Markdown inline elements
         but other formatters might not.
 
-        Text enclosed in `[]` is checked whether it references another
-        program element name (namespaces, classes, methods, procedures). If so,
-        it is replaced by a link to the documentation of that element. If
-        the text is not a fully qualified name, it is treated relative to
-        namespace or class within whose documentation the link appears. If
-        it is fully qualified, it is displayed relative to the namespace of
-        the link location. For example,
+        Text enclosed in `[]` is checked whether it references a section heading
+        or a program element name (namespaces, classes, methods, procedures). If
+        so, it is replaced by a link to the section or documentation of that
+        element. If the text is not a fully qualified name, it is treated
+        relative to namespace or class within whose documentation the link
+        appears. If it is fully qualified, it is displayed relative to the
+        namespace of the link location. For example,
 
         * `[document]` is displayed as [document]
         * `[::ruff::formatters]` is displayed as [::ruff::formatters]
 
-        If the text does not match a program element name, it is
-        treated as a normal Markdown reference. 
+        If the text does not match a section heading or program element name, it
+        is treated as a normal Markdown reference but a warning is emitted.
 
+        = Single and multipage output
+
+        The generated documentation may be either in a single output file or
+        spread across multiple files, one per namespace. This is controlled
+        by the `-singlepage` option to the [document] command. Some formatters
+        may not support both capabilities.
 
         = Output formats
 
@@ -274,9 +280,44 @@ namespace eval ruff {
         pluggable formatters. The command [formatters] returns a list of
         supported formatters.
 
-        Currently however, only a single formatter is implemented,
-        the internal `html` formatter which supports
-        cross-referencing, automatic link generation and navigation.
+        Currently formatters for producing HTML and Markdown are implemented.
+
+        == HTML output
+
+        The internal HTML formatter offers (in the author's humble opinion) the
+        best cross-linking and navigation support with a table of contents in
+        addition to cosmetic enhancements such as tooltips and optional
+        hiding/display of source code. It is also the simplest to use as no
+        other external tools are required.
+
+        The following is a simple example of generating the documentation for
+        Ruff! itself:
+
+        ```
+        ruff::document html ::ruff -output ruff.html -title "Ruff! reference"
+        ```
+
+        == Markdown output
+
+        The Markdown formatter generates output in generic Markdown syntax.
+        It includes cross-linking but does not include a table of contents,
+        tooltips or source code display. On the other hand, it allows conversion
+        to other formats using external tools.
+
+        The following generates Ruff! documentation in Markdown format and
+        then uses `pandoc` to convert it to HTML.
+        ```
+        ruff::document markdown ::ruff -output ruff.md -title "Ruff! reference"
+        ```
+        Then from the shell command line,
+        ```
+        pandoc -s -o ruff.html -c ruff.css ruff.md
+        ```
+
+        When generating HTML from Markdown, it is generally desirable to specify
+        a CSS style file. The `ruff.css` file provides some minimal CSS that
+        resembles the output of the internal HTML formatter.
+
     }
 
     namespace eval private {
@@ -1851,15 +1892,11 @@ proc ruff::private::document_self {formatter output_dir args} {
     # output_dir - the output directory where files will be stored. Note
     #  files in this directory with the same name as the output files
     #  will be overwritten!
-    # -formatterpath PATH - path to the formatter. If unspecified, the
-    #  the input files for the formatter are generated but the formatter
-    #  is not run. This option is ignore for the built-in HTML formatter.
     # -includesource BOOLEAN - if true, include source code in documentation.
 
     variable names
 
     array set opts {
-        -formatterpath ""
         -includesource false
         -singlepage true
         -includeprivate false
@@ -1878,6 +1915,8 @@ proc ruff::private::document_self {formatter output_dir args} {
 
     switch -exact -- $formatter {
         doctools {
+            error "Formatter '$formatter' not implemented for generating Ruff! documentation."
+            # Not implemented yet
             document doctools [list ::ruff] {*}$common_args \
                 -output [file join $output_dir ruff.man] \
                 -hidenamespace ::ruff \
