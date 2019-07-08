@@ -396,6 +396,7 @@ proc ::ruff::formatter::html::md_inline {text {scope {}}} {
                         incr index [string length $m]
                         set match_found 1
                     } else {
+                        app::log_error "Warning: no target found for link \"$lbl\". Assuming markdown reference."
                         set lbl [string tolower $lbl]
 
                         if {[info exists ::Markdown::_references($lbl)]} {

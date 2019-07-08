@@ -4,6 +4,9 @@
 
 # Ruff! formatter for Markdown.
 
+# For compiling generated markdown to html using pandoc:
+# pandoc -s -o ruff.html -c ../ruff.css --metadata pagetitle="My package" ruff.md
+
 namespace eval ruff::formatter::markdown {
     namespace path [list ::ruff ::ruff::private]
 
@@ -174,6 +177,7 @@ proc ::ruff::formatter::markdown::md_inline {text {scope {}}} {
                         # We do not pass text through md_inline as it is
                         # treated as a markdown reference and will need
                         # to match the reference entry.
+                        app::log_error "Warning: no target found for link \"$lbl\". Assuming markdown reference."
                         append result $m
                         set match_found 1
                     }
