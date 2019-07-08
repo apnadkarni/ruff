@@ -305,17 +305,24 @@ proc ruff::formatter::markdown::anchor args {
     return [regsub -all {[^-:\w_.]} [join $parts -] -]
 }
 
-proc ruff::formatter::markdown::ns_link {ns name} {
-    # Return a link for the specified name within the namespace
+proc ruff::formatter::markdown::ns_link_symbol {ns name} {
+    # Return a HTML link for the specified name within the namespace
 
     # Output file has a markdown extension. Link
     # needs an html extension.
     set fn [ns_file_base $ns .html]
+    # TBD - what's the $ns eq :: there for?
     if {$ns eq "::" || $name eq ""} {
         return $fn
     } else {
         return "$fn#[anchor $name]"
     }
+}
+
+proc ruff::formatter::markdown::ns_link_heading {ns heading} {
+    # Returns a HTML link to a section heading
+    set fn [ns_file_base $ns .html]
+    return "$fn#[anchor $ns $heading]"
 }
 
 proc ruff::formatter::markdown::fmtdeflist {listitems args} {
@@ -413,7 +420,7 @@ proc ruff::formatter::markdown::fmtprochead {name args} {
         if {[program_option -singlepage]} {
             append linkline "<a href='#_top'>Top</a>"
         } else {
-            append linkline "<a href='[ns_link :: {}]'>Top</a>"
+            append linkline "<a href='[ns_link_symbol :: {}]'>Top</a>"
         }
         append doc "\n<p class='linkline'>$linkline</p>"
     }
@@ -881,11 +888,23 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
     # also to generate links correctly in the case of
     # duplicate names in different namespaces or classes.
     #
+
+    # First collect section links
+    foreach {ns ns_content} $opts(-preamble) {
+        foreach {type content} $ns_content {
+            if {$type eq "header"} {
+                lassign $content level heading
+                set link_targets($heading) [ns_link_heading $ns $heading]
+                set link_targets(${ns}::$heading) $link_targets($heading)
+            }
+        } 
+    }
+
     # A class name is also treated as a namespace component
     # although that is not strictly true.
     foreach {class_name class_info} [dict get $classprocinfodict classes] {
         set ns [namespace qualifiers $class_name]
-        set link_targets($class_name) [ns_link $ns $class_name]
+        set link_targets($class_name) [ns_link_symbol $ns $class_name]
         set method_info_list [concat [dict get $class_info methods] [dict get $class_info forwards]]
         foreach name {constructor destructor} {
             if {[dict exists $class_info $name]} {
@@ -899,13 +918,13 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
             # store it a second time using the "." separator as that
             # is how they are sometimes referenced.
             set method_name [dict get $method_info name]
-            set link_targets(${class_name}::${method_name}) [ns_link $ns ${class_name}::${method_name}]
+            set link_targets(${class_name}::${method_name}) [ns_link_symbol $ns ${class_name}::${method_name}]
             set link_targets(${class_name}.${method_name}) $link_targets(${class_name}::${method_name}) 
         }
     }
     foreach proc_name [dict keys [dict get $classprocinfodict procs]] {
         fqn! $proc_name
-        set link_targets(${proc_name}) [ns_link [namespace qualifiers $proc_name] $proc_name]
+        set link_targets(${proc_name}) [ns_link_symbol [namespace qualifiers $proc_name] $proc_name]
     }
 
     set header ""
@@ -929,7 +948,7 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
         # YUI stylesheet templates
         append header "<div id='doc3' class='yui-t2'>"
         if {$opts(-titledesc) ne ""} {
-            append header "<div id='hd' class='banner'>\n<a style='text-decoration:none;' href='[ns_link :: {}]'>$opts(-titledesc)</a>\n</div>\n"
+            append header "<div id='hd' class='banner'>\n<a style='text-decoration:none;' href='[ns_link_symbol :: {}]'>$opts(-titledesc)</a>\n</div>\n"
         }
         append header "<div id='bd'>"
     
@@ -962,7 +981,7 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
 
     # Collect links to namespaces. Need to do this before generating preamble
     foreach ns [dict keys $info_by_ns] {
-        set link_targets($ns) [ns_link $ns $ns]
+        set link_targets($ns) [ns_link_symbol $ns $ns]
     }
 
     # Now generate documentation in one of two modes: single page or separate.
@@ -991,7 +1010,7 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
         # Add the navigation bits
         set nav_common ""
         foreach ns [lsort [dict keys $info_by_ns]] {
-            set link [ns_link $ns ""]
+            set link [ns_link_symbol $ns ""]
             append nav_common "\n* \[$ns\]($link)"
         }
         append doc "\n$nav_common\n"
