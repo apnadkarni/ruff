@@ -62,20 +62,25 @@ body{margin:10px;}h1{font-size:138.5%;}h2{font-size:123.1%;}h3{font-size:108%;}h
 
 /* Ruff default CSS */
 
+body {
+  max-width: 70em;
+  margin: auto;
+}
+
 h1,h2 {
   color: #888888;
   margin-bottom: 0.5em;
 }
 
 #ft {
-    text-align: left;
-    border-top: 1px solid #006666;
-    color: #888888;
-    margin-top: 10px;
+  text-align: left;
+  border-top: 1px solid #006666;
+  color: #888888;
+  margin-top: 10px;
 }
 
 .banner h2 {
-    color: #006666;
+  color: #006666;
 }
 
 #hd.banner {
@@ -100,8 +105,10 @@ font-size: 108%;
 }
 
 div.navbox {
-    /* margin-top: 1em; */
-    color: #006666;
+  /* margin-top: 1em; */
+    background-color: #006666;
+    color: white;
+    padding-left: 4px;
 }
 
 /* Note .navbox header css should be based on $header_levels */
@@ -110,49 +117,40 @@ div.navbox {
   margin: 0px;
 }
 .navbox h1, .navbox h2, .navbox h3 {
-    font-weight: bold;
-}
-.navbox h1 {
-    background-color: #006666;
+  font-weight: bold;
 }
 .navbox h2 {
-    margin-left: 1em;
+  padding-left: 1em;
 }
 .navbox h3 {
-    margin-left: 2em;
+  padding-left: 2em;
 }
 .navbox h4 {
-    margin-left: 2em;
-    font-weight: normal;
+  padding-left: 2.5em;
+  font-weight: normal;
 }
 .navbox h5 {
-    margin-left: 3em;
-    font-weight: normal;
+  padding-left: 3em;
+  font-weight: normal;
 }
 
 .navbox hr {
-    color: #006666;
+  color: white;
 }
 
-.navbox a:link, .navbox a:visited {
+.navbox a:link, .navbox a:visited, .navbox a:hover {
   text-decoration: none;
-    color: #006666;
+  color: white;
+  background-color: #006666;
 }
 
 .navbox a:hover {
    font-weight: bold;
 }
 
-.navbox h1 a:link, .navbox h1 a:visited {
-    color: white;
-}
-
 /* Easy CSS Tooltip - by Koller Juergen [www.kollermedia.at] */
-.navbox a:hover {background:#ffffff; text-decoration:none;} /*BG color is a must for IE6*/
 .navbox a.tooltip span {display:none; padding:2px 3px; margin-left:8px; width: 100%;}
-/* .navbox a.tooltip span {display:none; padding:2px 3px; margin-left:8px; width:130px;} */
 .navbox a.tooltip:hover span{display:inline; position:absolute; border:1px solid #cccccc; background:#ffffff; color:#6c6c6c;}
-.navbox h1 a:hover {background: #006666;}
 
 span.ns_scope {
     color: #aaaaaa;
@@ -197,6 +195,7 @@ dt, dd {
 h1.ruff {
     background-color: #006666;
     color: #ffffff;
+    padding-left: 0.2em;
 }
 h2.ruff {
     font-variant: small-caps;

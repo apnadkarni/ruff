@@ -276,7 +276,7 @@ namespace eval ruff {
 
         When generating multipage output, the toplevel generated page contains
         links to the other pages which contain per-namespace documentation.
-        The preamble (passed as the `-preamble` option to the [document command]) 
+        The preamble (passed as the `-preamble` option to the [document] command) 
         is also placed in this page.
 
         = Output formats
