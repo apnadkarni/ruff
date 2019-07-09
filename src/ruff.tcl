@@ -150,7 +150,7 @@ namespace eval ruff {
         The lead comment block begins with a summary line that will be used
         anywhere the document output inserts a procedure summary, for
         example, in the Table of Contents. It also appears as the first
-        paragraph in the **Description** section of procedure The summary
+        paragraph in the **Description** section of procedure. The summary
         line is terminated with a blank comment or by the parameter block.
 
         The parameter block is a definition list (see below) and follows its

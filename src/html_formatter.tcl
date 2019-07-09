@@ -59,7 +59,6 @@ body{margin:10px;}h1{font-size:138.5%;}h2{font-size:123.1%;}h3{font-size:108%;}h
     variable ruff_style
     set ruff_style {
 
-
 /* Ruff default CSS */
 
 body {
@@ -172,7 +171,7 @@ table {
   border: thin solid;
   border-collapse: collapse;
   border-color: #808080;
-  padding: 4;
+  padding: 4px;
 }
 
 td {
@@ -219,29 +218,32 @@ h5.ruffclass, h5.ruffproc, h5.ruffmethod {
     margin-bottom: 0em;
 }
 
-pre.ruff {
+pre {
     background-color: #eeeeee;
     margin-top: 1em;
     margin-left: 1em;
     padding: 5px;
+    font-family: "Droid Sans Mono","DejaVu Sans Mono",monospace;
     width: max-content;
+    font-size: smaller;
+    line-height: 1.2em;
 }
 
 .ruff_synopsis {
     border: thin solid #cccccc;
     background: #eeeeee;
     font-size: smaller;
-    font-family: "Courier New", Courier, monospace;
+    font-family: "Droid Sans Mono","DejaVu Sans Mono",monospace;
     padding: 5px;
     margin: 0px 50px 20px;
 }
 .ruff_const, .ruff_cmd, ruff_defitem {
     font-weight: bold;
-    font-family: "Courier New", Courier, monospace;
+    font-family: "Droid Sans Mono","DejaVu Sans Mono",monospace;
 }
 .ruff_arg {
     font-style: italic;
-    font-family: "Courier New", Courier, monospace;
+    font-family: "Droid Sans Mono","DejaVu Sans Mono",monospace;
 }
 
 .ruff_dyn_src {
@@ -1198,7 +1200,9 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
 
     # Generate the header used by all files
     set header {<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">}
-    append header "<html><head><title>$opts(-titledesc)</title>\n"
+    append header "<html><head>\n"
+    append header "<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans|Noto+Serif|Droid+Sans+Mono'>"
+    append header "<title>$opts(-titledesc)</title>\n"
     if {[info exists opts(-stylesheets)]} {
         append header "<style>\n$yui_style\n</style>\n"
         foreach url $opts(-stylesheets) {
