@@ -1279,7 +1279,7 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names param_
         if {[info exists params($name)]} {
             set paramdata [dict create name $name description $params($name) type parameter]
         } else {
-            set paramdata [dict create name $name type parameter]
+            set paramdata [dict create name $name description "Not documented." type parameter]
         }
 
         # Check if there is a default

@@ -246,12 +246,6 @@ pre {
     font-family: "Droid Sans Mono","DejaVu Sans Mono",monospace;
 }
 
-.ruff_dyn_src {
-    background-color: #eeeeee;
-    padding: 5px;
-    display: none;
-}
-
     }
 }
 
@@ -858,7 +852,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
         append doc "<p class='ruff_source_link'>"
         append doc "<a id='l_$src_id' href=\"javascript:toggleSource('$src_id')\">Show source</a>"
         append doc "</p>\n"
-        append doc "<div id='$src_id' class='ruff_dyn_src'>$note\n<pre>\n[escape $aproc(source)]\n</pre></div>\n"
+        append doc "<div id='$src_id'>$note\n<pre>\n[escape $aproc(source)]\n</pre></div>\n"
         append doc "</div>";    # class='ruff_source'
     }
 
