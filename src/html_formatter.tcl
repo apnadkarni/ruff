@@ -83,8 +83,7 @@ h1,h2 {
 }
 
 #hd.banner {
- font-family: Trebuchet MS, Helvetica, sans-serif;
- font-weight: bold;
+ font-family: Helvetica, sans-serif;
  font-size: 200%;
  line-height: 64px;
  border-bottom: thin solid #006666;
@@ -115,9 +114,10 @@ div.navbox {
 .navbox h1, .navbox h2, .navbox h3, .navbox h4, .navbox h5 {
   font-size: 85%;
   margin: 0px;
+  font-weight: normal;
 }
-.navbox h1, .navbox h2, .navbox h3 {
-  font-weight: bold;
+.navbox h1 {
+    font-weight: bold; /* Override */
 }
 .navbox h2 {
   padding-left: 1em;
