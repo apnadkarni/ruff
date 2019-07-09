@@ -658,7 +658,7 @@ proc ruff::formatter::html::fmtprochead {name args} {
         set linkline "<a href='$link_targets($ns)'>[namespace tail $ns]</a>, "
     }
     if {[program_option -singlepage]} {
-        append linkline "<a href='#_top'>Top</a>"
+        append linkline "<a href='#top'>Top</a>"
     } else {
         append linkline "<a href='[ns_link_symbol :: {}]'>Top</a>"
     }
@@ -1247,7 +1247,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     # Generate the main page. Further sections will be either appended to
     # it or generated separately.
     set doc $header
-    append doc "<div id='yui-main'><div class='yui-b'><a name='_top'></a>"
+    append doc "<div id='yui-main'><div class='yui-b'>"
 
     if {[info exists opts(-preamble)] &&
         [dict exists $opts(-preamble) ""]} {
