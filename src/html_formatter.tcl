@@ -99,7 +99,7 @@ p.linkline {
 }
 
 #bd {
-font-family: Verdana;
+font-family: "Noto Serif","DejaVu Serif",serif;
 font-size: 108%;
 }
 
@@ -108,6 +108,7 @@ div.navbox {
     background-color: #006666;
     color: white;
     padding-left: 4px;
+    font-family: Verdana, "sans serif"
 }
 
 /* Note .navbox header css should be based on $header_levels */
