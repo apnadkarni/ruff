@@ -1688,9 +1688,9 @@ proc ruff::private::locate_ooclass_method {class_name method_name} {
 }
 
 
-proc ruff::private::load_all_formatters {} {
+proc ruff::private::load_formatters {} {
     # Loads all available formatter implementations
-    foreach formatter [formatters] {
+    foreach formatter {html markdown} {
         load_formatter $formatter
     }
 }
@@ -1827,13 +1827,9 @@ proc ruff::formatters {} {
     # document.
     #
     # Returns a list of available formatters.
-    namespace upvar private ruff_dir ruff_dir
-    set formatters {}
-    set suffix "_formatter.tcl"
-    foreach file [glob [file join $ruff_dir *$suffix]] {
-        lappend formatters [string range [file tail $file] 0 end-[string length $suffix]]
-    } 
-    return $formatters
+    return [lsort [lmap ns [namespace children formatter] {
+        namespace tail $ns
+    }]]
 }
 
 # TBD - where is this used
@@ -1909,7 +1905,7 @@ proc ruff::private::document_self {formatter output_dir args} {
     }
     array set opts $args
 
-    load_all_formatters;       # So all will be documented!
+    load_formatters
 
     file mkdir $output_dir
     set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"
@@ -1951,6 +1947,7 @@ proc ruff::private::document_self {formatter output_dir args} {
     return
 }
 
+ruff::private::load_formatters
 
 ################################################################
 #### Application overrides
