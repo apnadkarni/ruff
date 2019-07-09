@@ -64,7 +64,7 @@ body{margin:10px;}h1{font-size:138.5%;}h2{font-size:123.1%;}h3{font-size:108%;}h
 
 body {
   max-width: 70em;
-  margin: auto;
+  margin: 0;
 }
 
 h1,h2 {
@@ -224,6 +224,7 @@ pre.ruff {
     margin-top: 1em;
     margin-left: 1em;
     padding: 5px;
+    width: max-content;
 }
 
 .ruff_synopsis {
