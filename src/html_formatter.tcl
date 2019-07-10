@@ -99,6 +99,7 @@ p.linkline {
 
 .tinylink {
     font-size: x-small;
+    font-variant: normal;
     float: right;
 }
 
@@ -630,6 +631,35 @@ proc ruff::formatter::html::fmtbulletlist {listitems {scope {}}} {
     return $doc
 }
 
+proc ruff::formatter::html::heading_with_uplink {level heading scope {cssclass ruff}} {
+    # Returns the HTML fragment wrapping the given heading.
+    # level - heading level
+    # heading - bare HTML fragment to use for heading
+    # scope - the namespace scope to be used for uplinks
+    #
+    # If the heading level is less than 5, links to the namespace
+    # and documentation top are inserted into the heading.
+
+    set hlevel "h$level"
+    if {$level >= 5} {
+        # Plain header
+        return "<$hlevel class='$cssclass'>$heading</$hlevel>"
+    }
+
+    variable link_targets
+
+    if {$scope ne "" && [info exists link_targets($scope)]} {
+        set links "<a href='$link_targets($scope)'>[namespace tail $scope]</a>, "
+    }
+    if {[program_option -singlepage]} {
+        append links "<a href='#top'>Top</a>"
+    } else {
+        append links "<a href='[ns_link_symbol :: {}]'>Top</a>"
+    }
+    set links "<span class='tinylink'>$links</span>"
+    # NOTE: the div needed to reset the float from links
+    return "<$hlevel class='$cssclass'>$heading$links</$hlevel>\n<div style='clear:both;'></div>\n"
+}
 
 proc ruff::formatter::html::fmtprochead {name args} {
     # Procedure for formatting proc, class and method headings
@@ -650,22 +680,12 @@ proc ruff::formatter::html::fmtprochead {name args} {
     dict set navlinks $anchor $linkinfo
     if {[string length $ns]} {
         set ns_link [symbol_link $ns]
-        set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape [namespace tail $name]]</a><span class='ns_scope'> \[${ns_link}\]</span></h$opts(-level)>\n"
+        set heading "<a name='$anchor'>[escape [namespace tail $name]]</a><span class='ns_scope'> \[${ns_link}\]</span>"
     } else {
-        set doc "<h$opts(-level) class='$opts(-cssclass)'><a name='$anchor'>[escape $name]</a></h$opts(-level)>\n"
+        set heading "<a name='$anchor'>[escape $name]</a>"
     }
 
-    # Include a link to top of class/namespace if possible.
-
-    if {[info exists link_targets($ns)]} {
-        set linkline "<a href='$link_targets($ns)'>[namespace tail $ns]</a>, "
-    }
-    if {[program_option -singlepage]} {
-        append linkline "<a href='#top'>Top</a>"
-    } else {
-        append linkline "<a href='[ns_link_symbol :: {}]'>Top</a>"
-    }
-    return "${doc}\n<p class='linkline'>$linkline</p>"
+    return [heading_with_uplink $opts(-level) $heading $ns $opts(-cssclass)]
 }
 
 proc ruff::formatter::html::fmthead {text level args} {
@@ -687,21 +707,9 @@ proc ruff::formatter::html::fmthead {text level args} {
     } else {
         set heading [md_inline $text $opts(-scope)]
     }
-
-    if {$opts(-scope) ne "" && [info exists link_targets($opts(-scope))]} {
-        set links "<a href='$link_targets($opts(-scope))'>[namespace tail $opts(-scope)]</a>, "
-    }
-    if {[program_option -singlepage]} {
-        append links "<a href='#top'>Top</a>"
-    } else {
-        append links "<a href='[ns_link_symbol :: {}]'>Top</a>"
-    }
-    #return "${doc}\n<p class='linkline'>$linkline</p>"
-    set links "<span class='tinylink'>$links</span>"
-    set doc "<h$level class='ruff'>$heading$links</h$level>\n"
-    # Need to reset the float from links
-    return "$doc<div style='clear:both;'></div>\n"
+    return [heading_with_uplink $level $heading $opts(-scope)]
 }
+
 
 proc ruff::formatter::html::fmtpara {text {scope {}}} {
     return "<p class='ruff'>[md_inline [string trim $text] $scope]</p>\n"
