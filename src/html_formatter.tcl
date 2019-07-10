@@ -97,6 +97,11 @@ p.linkline {
     margin-bottom: 0;
 }
 
+.tinylink {
+    font-size: x-small;
+    float: right;
+}
+
 #bd {
 font-family: "Noto Serif","DejaVu Serif",serif;
 font-size: 108%;
@@ -678,10 +683,24 @@ proc ruff::formatter::html::fmthead {text level args} {
         }
         dict set linkinfo label $text
         dict set navlinks $anchor $linkinfo
-        return "<h$level class='ruff'><a name='$anchor'>[md_inline $text $opts(-scope)]</a></h$level>\n"
+        set heading "<a name='$anchor'>[md_inline $text $opts(-scope)]</a>"
     } else {
-        return "<h$level class='ruff'>[md_inline $text $opts(-scope)]</h$level>\n"
+        set heading [md_inline $text $opts(-scope)]
     }
+
+    if {$opts(-scope) ne "" && [info exists link_targets($opts(-scope))]} {
+        set links "<a href='$link_targets($opts(-scope))'>[namespace tail $opts(-scope)]</a>, "
+    }
+    if {[program_option -singlepage]} {
+        append links "<a href='#top'>Top</a>"
+    } else {
+        append links "<a href='[ns_link_symbol :: {}]'>Top</a>"
+    }
+    #return "${doc}\n<p class='linkline'>$linkline</p>"
+    set links "<span class='tinylink'>$links</span>"
+    set doc "<h$level class='ruff'>$heading$links</h$level>\n"
+    # Need to reset the float from links
+    return "$doc<div style='clear:both;'></div>\n"
 }
 
 proc ruff::formatter::html::fmtpara {text {scope {}}} {
