@@ -114,6 +114,7 @@ div.navbox {
     background-color: #006666;
     color: white;
     padding-left: 4px;
+    padding-right: 4px;
     font-family: Arial, sans-serif;
 }
 

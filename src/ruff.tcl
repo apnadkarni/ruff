@@ -1906,7 +1906,10 @@ proc ruff::private::document_self {formatter output_dir args} {
     }
     array set opts $args
 
-    uplevel #0 source sample.tcl
+    if {![namespace exists ::ruff::sample]} {
+        uplevel #0 source sample.tcl
+    }
+ 
     load_formatters
 
     file mkdir $output_dir
