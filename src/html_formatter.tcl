@@ -83,7 +83,7 @@ h1,h2 {
 }
 
 #hd.banner {
- font-family: Helvetica, sans-serif;
+ font-family: "Times New Roman", serif;
  font-size: 200%;
  line-height: 64px;
  border-bottom: thin solid #006666;
@@ -100,11 +100,12 @@ p.linkline {
 .tinylink {
     font-size: x-small;
     font-variant: normal;
+    font-family: Arial, sans-serif;
     float: right;
 }
 
 #bd {
-font-family: "Noto Serif","DejaVu Serif",serif;
+font-family: Arial, sans-serif;
 font-size: 108%;
 }
 
@@ -113,7 +114,7 @@ div.navbox {
     background-color: #006666;
     color: white;
     padding-left: 4px;
-    font-family: Verdana, "sans serif"
+    font-family: Arial, sans-serif;
 }
 
 /* Note .navbox header css should be based on $header_levels */
@@ -202,10 +203,12 @@ h1.ruff {
     background-color: #006666;
     color: #ffffff;
     padding-left: 0.2em;
+    font-family: "Times New Roman", serif;
 }
 h2.ruff {
     font-variant: small-caps;
     color: #006666;
+    font-family: "Times New Roman", serif;
 }
 
 h3.ruff, h4.ruff, h5.ruff, h6.ruff {
@@ -230,7 +233,7 @@ pre {
     margin-top: 1em;
     margin-left: 1em;
     padding: 5px;
-    font-family: "Droid Sans Mono","DejaVu Sans Mono",monospace;
+    font-family: Consolas, "Courier New", monospace;
     width: max-content;
     font-size: smaller;
     line-height: 1.2em;
@@ -240,17 +243,17 @@ pre {
     border: thin solid #cccccc;
     background: #eeeeee;
     font-size: smaller;
-    font-family: "Droid Sans Mono","DejaVu Sans Mono",monospace;
+    font-family: Consolas, "Courier New", monospace;
     padding: 5px;
     margin: 0px 50px 20px;
 }
 .ruff_const, .ruff_cmd, ruff_defitem {
     font-weight: bold;
-    font-family: "Droid Sans Mono","DejaVu Sans Mono",monospace;
+    font-family: Consolas, "Courier New", monospace;
 }
 .ruff_arg {
     font-style: italic;
-    font-family: "Droid Sans Mono","DejaVu Sans Mono",monospace;
+    font-family: Consolas, "Courier New", monospace;
 }
 
     }
@@ -1223,7 +1226,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     # Generate the header used by all files
     set header {<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">}
     append header "<html><head>\n"
-    append header "<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans|Noto+Serif|Droid+Sans+Mono'>"
+    # append header "<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans|Noto+Serif|Droid+Sans+Mono'>"
     append header "<title>$opts(-titledesc)</title>\n"
     if {[info exists opts(-stylesheets)]} {
         append header "<style>\n$yui_style\n</style>\n"

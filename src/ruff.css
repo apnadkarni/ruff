@@ -54,11 +54,12 @@ table{
 /* Ruff! formatting */
 body{
   margin:    1em;
-  font:  14px Verdana,arial,helvetica,clean,sans-serif;
+  font:  14px Arial,sans-serif;
 }
 h1{
   background-color: #006666;
   color: #ffffff;
+  font-family: "Times New Roman", serif;
   font-size: 138.5%;
   font-weight: bold;
   margin-bottom: 0.5em;
@@ -66,6 +67,7 @@ h1{
 
 h2{
   color: #006666;
+  font-family: "Times New Roman", serif;
   font-size: 123.1%;
   font-variant: small-caps;
   font-weight: bold;
@@ -129,10 +131,6 @@ table{
   border-color: #808080;
   padding: 4;
 }
-/*
-th{
-}
-*/
 td{
   border: thin solid;
   border-color: #808080;
@@ -156,7 +154,7 @@ caption{
 pre{
   background: #eeeeee;
   /* border: thin solid #cccccc; */
-  font-family: "Courier New", Courier, monospace;
+  font-family: "Courier New", monospace;
   /* font-size: smaller; */
   margin: 1em;
   padding: 5px;
