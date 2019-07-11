@@ -1896,6 +1896,7 @@ proc ruff::private::document_self {formatter output_dir args} {
     #  will be overwritten!
     # -includesource BOOLEAN - if true, include source code in documentation.
 
+    variable ruff_dir
     variable names
 
     array set opts {
@@ -1905,9 +1906,11 @@ proc ruff::private::document_self {formatter output_dir args} {
     }
     array set opts $args
 
+    uplevel #0 source sample.tcl
     load_formatters
 
     file mkdir $output_dir
+    set namespaces [list ::ruff ::ruff::sample]
     set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"
     set common_args [list \
                          -recurse $opts(-includeprivate) \
@@ -1919,7 +1922,7 @@ proc ruff::private::document_self {formatter output_dir args} {
         doctools {
             error "Formatter '$formatter' not implemented for generating Ruff! documentation."
             # Not implemented yet
-            document doctools [list ::ruff] {*}$common_args \
+            document doctools $namespaces {*}$common_args \
                 -output [file join $output_dir ruff.man] \
                 -hidenamespace ::ruff \
                 -keywords [list "documentation generation"] \
@@ -1932,7 +1935,7 @@ proc ruff::private::document_self {formatter output_dir args} {
             } else {
                 set ext .md
             }
-            document $formatter [list ::ruff] {*}$common_args \
+            document $formatter $namespaces {*}$common_args \
                 -output [file join $output_dir ruff$ext] \
                 -titledesc $title \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
