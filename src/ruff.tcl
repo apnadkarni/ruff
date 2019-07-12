@@ -344,7 +344,7 @@ proc ruff::private::ns_file_base {ns {ext {}}} {
         if {$ProgramOptions(-singlepage) || $ns eq "::"} {
             set fn "$output_file_base$output_file_ext"
         } else {
-            set fn "${output_file_base}_[regsub -all {[^-\w_.]} $ns _]$output_file_ext"
+            set fn "${output_file_base}[regsub -all {:+|[^-\w_.]} $ns _]$output_file_ext"
         }
         set ns_file_base_cache($ns) $fn
     }
@@ -1851,23 +1851,25 @@ proc ruff::private::wrap_text {text args} {
     return [string replace $text 0 [expr {[string length $prefix]-1}] $prefix1]
 }
 
-proc ruff::private::document_self {formatter output_dir args} {
+proc ruff::private::document_self {args} {
     # Generates documentation for Ruff!
-    # formatter - the formatter to use
-    # output_dir - the output directory where files will be stored. Note
+    # -formatter FORMATTER - the formatter to use (default html)
+    # -outdir DIRPATH - the output directory where files will be stored. Note
     #  files in this directory with the same name as the output files
-    #  will be overwritten!
+    #  will be overwritten! (default sibling `doc` directory)
     # -includesource BOOLEAN - if `true`, include source code in documentation.
     #  Default is `false`.
 
     variable ruff_dir
     variable names
 
-    array set opts {
-        -includesource true
-        -singlepage true
-        -includeprivate false
-    }
+    array set opts [list \
+                        -formatter html \
+                        -includesource true \
+                        -singlepage false \
+                        -includeprivate false \
+                        -outdir [file join $ruff_dir .. doc] \
+                       ]
     array set opts $args
 
     if {![namespace exists ::ruff::sample]} {
@@ -1876,7 +1878,7 @@ proc ruff::private::document_self {formatter output_dir args} {
  
     load_formatters
 
-    file mkdir $output_dir
+    file mkdir $opts(-outdir)
     set namespaces [list ::ruff ::ruff::sample]
     set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"
     set preamble {
@@ -1891,25 +1893,25 @@ proc ruff::private::document_self {formatter output_dir args} {
     if {! $opts(-singlepage)} {
         lappend common_args -preamble $preamble
     }
-    switch -exact -- $formatter {
+    switch -exact -- $opts(-formatter) {
         doctools {
-            error "Formatter '$formatter' not implemented for generating Ruff! documentation."
+            error "Formatter '$opts(-formatter)' not implemented for generating Ruff! documentation."
             # Not implemented yet
             document doctools $namespaces {*}$common_args \
-                -output [file join $output_dir ruff.man] \
+                -output [file join $opts(-outdir) ruff.man] \
                 -hidenamespace ::ruff \
                 -keywords [list "documentation generation"] \
                 -modulename ::ruff
         }
         markdown -
         html {
-            if {$formatter eq "html"} {
+            if {$opts(-formatter) eq "html"} {
                 set ext .html
             } else {
                 set ext .md
             }
-            document $formatter $namespaces {*}$common_args \
-                -output [file join $output_dir ruff$ext] \
+            document $opts(-formatter) $namespaces {*}$common_args \
+                -output [file join $opts(-outdir) ruff$ext] \
                 -titledesc $title \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
                 -includesource $opts(-includesource)
@@ -1917,7 +1919,7 @@ proc ruff::private::document_self {formatter output_dir args} {
         default {
             # The formatter may exist but we do not support it for
             # out documentation.
-            error "Formatter '$formatter' not implemented for generating Ruff! documentation."
+            error "Formatter '$opts(-formatter)' not implemented for generating Ruff! documentation."
         }
     }
     return
