@@ -240,6 +240,10 @@ pre {
     line-height: 1.2em;
 }
 
+.ruff_dyn_src {
+    display: none; /* Displayed via JS */
+}
+
 .ruff_synopsis {
     border: thin solid #cccccc;
     background: #eeeeee;
@@ -884,7 +888,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
         append doc "<p class='ruff_source_link'>"
         append doc "<a id='l_$src_id' href=\"javascript:toggleSource('$src_id')\">Show source</a>"
         append doc "</p>\n"
-        append doc "<div id='$src_id'>$note\n<pre>\n[escape $aproc(source)]\n</pre></div>\n"
+        append doc "<div id='$src_id' class='ruff_dyn_src'>$note\n<pre>\n[escape $aproc(source)]\n</pre></div>\n"
         append doc "</div>";    # class='ruff_source'
     }
 
