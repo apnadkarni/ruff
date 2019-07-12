@@ -994,9 +994,7 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
     if {[info exists opts(-preamble)] &&
         [dict exists $opts(-preamble) ""]} {
         # Print the toplevel (global stuff)
-        foreach paras [dict get $opts(-preamble) ""] {
-            append doc [fmtparas $paras]
-        }
+        append doc [fmtparas [dict get $opts(-preamble) ""] ""]
     } else {
         # If no preamble was given and we are in multipage mode
         # display a generic message.
