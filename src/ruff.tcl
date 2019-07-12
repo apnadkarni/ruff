@@ -16,11 +16,10 @@ namespace eval ruff {
     set _ruffdoc {
         == Introduction
 
-        Ruff! (Runtime function formatter) is a documentation generation
-        system for programs written in the Tcl programming language. Ruff! is
-        included with Woof! but can be used independently of it. Ruff! uses
-        runtime introspection in conjunction with comment analysis to generate
-        reference manuals for Tcl programs.
+        Ruff! (Runtime function formatter) is a documentation generation system
+        for programs written in the Tcl programming language. Ruff! uses runtime
+        introspection in conjunction with comment analysis to generate reference
+        manuals for Tcl programs.
 
         Ruff! is covered by a liberal BSD open-source license that permits use
         for any purpose.
@@ -40,17 +39,32 @@ namespace eval ruff {
         * Ruff! requires minimal
         markup in the comments making it very lightweight.
         * Program elements
-        like command arguments and defaults, are automatically derived.
-        * In object oriented code, class relationships are extracted
-        and the full API for a class, with inherited and mixed-in methods,
-        is easily seen.
-        * Hyperlinking between program elements, and optionally, source code
-        makes navigation of documentation easy and efficient.
+        like command arguments and defaults and relatonships like
+        inheritance are automatically derived.
 
         Further, maintaining documentation in sync with the code is much
         easier. For example, changing the defaults for arguments, or adding
         a mix-in to a class, is taken care of with no additional
-        documentation effort.
+        effort needed to document the changes.
+
+        On the output side,
+
+        * Ruff! supports multiple formats (currently HTML and Markdown).
+
+        * Generated documentation can be within a single page or across multiple
+          pages, one per namespace.
+
+        * Hyperlinks between program elements, and optionally source code,
+        making navigation easy and efficient.
+
+        * In object oriented code, class relationships are extracted
+        and the full API for a class, with inherited and mixed-in methods, is
+        easily seen.
+
+        The Ruff! documentation itself, along with the associated [sample],
+        is produced with Ruff!. For larger examples (though with older versions)
+        are the reference pages for [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
+        and [CAWT](http://www.posoft.de/download/extensions/Cawt/CawtReference-1.2.0.html).
 
         == Usage
 
@@ -79,62 +93,11 @@ namespace eval ruff {
         proc definitions. Comments in procedure bodies are further parsed to
         extract the documentation for the procedure.
 
-        The general form of a procedure is as follows:
-
-        ````
-        proc myapp::myproc {arg {optarg AVALUE} args} {
-            # This first line is the summary line for documentation.
-            # arg - first parameter
-            # optarg - an optional parameter
-            # -switch VALUE - an optional switch
-
-            # This is the general description of the procedure
-            # composed of multiple paragraphs. It is separated from
-            # the parameter list above by one or more empty comments.
-
-            # This is the second paragraph. The next paragraph
-            # starts with the word Returns and hence will be treated
-            # by Ruff! as describing the return value.
-
-            # Returns a value.
-
-            # The above Return paragraph may appear anywhere, not
-            # necessarily as the last paragraph.
-
-            # A definition list has a similar form to the argument
-            # list. For example, optarg may take the following values:
-            #  AVALUE - one possible value
-            #  BVALUE - another possible value
-
-            # Bullet lists are indicated by a starting `-` or `*` character.
-            # - This is a bullet list iterm
-            # * This is also a bullet list item
-
-            # This paragraph will be ignored by Ruff! as it is not part
-            # of the initial block of comments.
-
-            some code
-
-            #ruff
-            # Thanks to the #ruff marker above, this paragraph will be
-            # included by Ruff! even though it is not in the initial block
-            # of comments. This is useful for putting documentation for
-            # a feature right next to the code implementing it.
-
-            some more code.
-        }
-        ````
-        Of course, any of the comment sections may be missing. For example,
-        the following suffices for a simple procedure.
-
-            proc answer {} {
-                # Returns the Answer to the Ultimate Question of Life
-                return 42
-            }
-
         The structure Ruff! expects is described below. In practice,
         the structure is simple and intuitive though the description may be
-        a bit long winded.
+        a bit long winded. You can simply look at the documentation
+        of the [sample] namespace instead, and click on the `Show source`
+        links for each procedure or class there to see the formatting.
 
         The first block of comments within a procedure that appear before
         the first line of code are always processed by Ruff!. Note preceding
@@ -1894,13 +1857,14 @@ proc ruff::private::document_self {formatter output_dir args} {
     # output_dir - the output directory where files will be stored. Note
     #  files in this directory with the same name as the output files
     #  will be overwritten!
-    # -includesource BOOLEAN - if true, include source code in documentation.
+    # -includesource BOOLEAN - if `true`, include source code in documentation.
+    #  Default is `false`.
 
     variable ruff_dir
     variable names
 
     array set opts {
-        -includesource false
+        -includesource true
         -singlepage true
         -includeprivate false
     }
@@ -1915,12 +1879,18 @@ proc ruff::private::document_self {formatter output_dir args} {
     file mkdir $output_dir
     set namespaces [list ::ruff ::ruff::sample]
     set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"
+    set preamble {
+        Ruff! is a documentation generator for Tcl. Follow the links on the
+        left for reference pages or sample output.
+    }
     set common_args [list \
                          -recurse $opts(-includeprivate) \
                          -titledesc $title \
                          -singlepage $opts(-singlepage) \
                          -version $::ruff::version]
-
+    if {! $opts(-singlepage)} {
+        lappend common_args -preamble $preamble
+    }
     switch -exact -- $formatter {
         doctools {
             error "Formatter '$formatter' not implemented for generating Ruff! documentation."

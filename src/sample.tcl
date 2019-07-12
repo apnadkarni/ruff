@@ -6,7 +6,10 @@ namespace eval ruff::sample {
         == Introduction
 
         The code in this namespace illustrates the various documentation
-        features in [Ruff!](ruff.html).
+        features in [Ruff!](ruff.html). The corresponding source is
+        [here](sample.tcl) or click the _Show source_ link below each procedure
+        or method description to see the source from which the
+        documentation was generated.
 
         The documentation (if any) not specific to a *procedure* or *method* is
         placed in the variable `_ruffdoc` within each namespace.
@@ -44,19 +47,27 @@ namespace eval ruff::sample {
 
         ````
         Lines consisting of *3* or more backquotes can be used
-        to bracket unformatted content.
+        to bracket unformatted content
+        like
+        this paragraph.
         ````
+    }
+
+    namespace eval ensemble_proc {
+        proc cmdA {} {
+            # Implements cmdA for an ensemble procedure
+        }
+    
+        proc cmdB {} {
+            # Implements cmdB for an ensemble procedure
+
+        }
+        namespace export *
+        namespace ensemble create
     }
 }
 
 proc ruff::sample::proc_without_docs {first_arg second_arg} {
-}
-
-proc ruff::sample::proc_without_args {} {
-    # This proc takes no arguments.
-    #
-    # Returns 0.
-    return 0
 }
 
 proc ruff::sample::proc_full {arg {optarg AVALUE} args} {
@@ -123,7 +134,7 @@ oo::class create ruff::sample::Base {
         # Calls [base_method]
     }
     method <tag> {} {
-        # Exported method with angle brackets in name
+        # An explicitly exported method 
     }
     export <tag>
 }
