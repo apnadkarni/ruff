@@ -1883,7 +1883,11 @@ proc ruff::private::document_self {args} {
     set namespaces [list ::ruff ::ruff::sample]
     set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"
     set preamble {
-        Ruff! is a documentation generator for Tcl. Follow the links on the
+        == About Ruff!
+
+        Ruff! is a documentation generator for Tcl.
+
+        Follow the links on the
         left for reference pages or sample output.
     }
     set common_args [list \

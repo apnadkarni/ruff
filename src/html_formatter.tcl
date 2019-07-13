@@ -1311,8 +1311,11 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
 
     foreach ns [lsort [dict keys $info_by_ns]] {
         if {!$opts(-singlepage)} {
+            # Start new document
             set doc $header
             append doc "<div id='yui-main'><div class='yui-b'><a name='_top'></a>"
+            # Reset navigation links for next page
+            set navlinks [dict create]
         }
 
         append doc [fmthead $ns 1]
@@ -1360,8 +1363,6 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             append doc $footer
             lappend docs $ns $doc
 
-            # Reset navigation links for nxt page
-            set navlinks [dict create]
         }
     }
     if {$opts(-singlepage)} {
