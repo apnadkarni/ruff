@@ -69,6 +69,7 @@ body {
 h1,h2 {
   color: #888888;
   margin-bottom: 0.5em;
+  margin-top: 0em;
 }
 
 #ft {
@@ -1302,7 +1303,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         # Add the navigation bits
         set nav_common ""
         foreach ns [lsort [dict keys $info_by_ns]] {
-            append nav_common "<h1><a href='[ns_file_base $ns]'>$ns</a></h1>"
+            append nav_common "<h1><a href='[ns_file_base $ns]'>[string trimleft $ns :]</a></h1>"
         }
         append doc "<div class='yui-b navbox'>$nav_common</div>"
         append doc $footer
@@ -1350,7 +1351,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             append doc "<hr>"
             # Then the navlinks for this namespace
             dict for {text link} $navlinks {
-                set label [escape [dict get $link label]]
+                set label [escape [string trimleft [dict get $link label] :]]
                 set tag  [dict get $link tag]
                 set href [dict get $link href]
                 if {[dict exists $link tip]} {
