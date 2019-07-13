@@ -8,11 +8,12 @@ namespace eval ruff::sample {
         The code in this namespace illustrates the various documentation
         features in [Ruff!](ruff.html). The corresponding source is
         [here](sample.tcl) or click the *Show source* link below each procedure
-        or method description to see the source from which the
-        documentation was generated.
+        or method documentation to see the source from which the
+        documentation was generated. See the main [::ruff] documentation
+        for a full description.
 
-        The documentation (if any) not specific to a *procedure* or *method* is
-        placed in the variable `_ruffdoc` within each namespace.
+        The documentation (such as this section) not specific to a *procedure*
+        or *method* is placed in the variable `_ruffdoc` within each namespace.
 
         == Formatting
 

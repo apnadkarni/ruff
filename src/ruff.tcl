@@ -1,4 +1,4 @@
-# Copyright (c) 2009, Ashok P. Nadkarni
+# Copyright (c) 2009-2019, Ashok P. Nadkarni
 # All rights reserved.
 # See the file WOOF_LICENSE in the Woof! root directory for license
 
@@ -78,7 +78,7 @@ namespace eval ruff {
         Once loaded, you can use the [document] command to document
         classes and commands within one or more namespaces.
 
-        The following command will create the file 'NS.html' using the
+        The following command will create the file `NS.html` using the
         built-in HTML formatter.
         ````
         package require ruff
@@ -202,10 +202,10 @@ namespace eval ruff {
 
         In particular, the following inline markup is supported:
 
-        \`   - `Text surrounded by backquotes is formatted as inline code`
-        `*`    - *Text surrounded by single asterisks is emphasize*
-        `**`   - **Text surrounded by double asterisks is bolded**
-        `***`  - ***Text surrounded by triple asterisks is bold emphasized***
+        \`   - `Text surrounded by backquotes is formatted as inline code`.
+        `*`    - *Text surrounded by single asterisks is emphasized*.
+        `**`   - **Text surrounded by double asterisks is bolded**.
+        `***`  - ***Text surrounded by triple asterisks is bold emphasized***.
         `[]`   - Text surrounded by square brackets is treated as a link
         (more below).
         `<>`   - Text in angle brackets are treated as HTML tags and
@@ -225,7 +225,8 @@ namespace eval ruff {
         namespace of the link location. For example,
 
         * `[document]` is displayed as [document]
-        * `[::ruff::formatters]` is displayed as [::ruff::formatters]
+        * `[::ruff::formatters]` is displayed as [::ruff::formatters] if
+        referenced from within a section documenting the `::ruff` namespace.
 
         If the text does not match a section heading or program element name, it
         is treated as a normal Markdown reference but a warning is emitted.
@@ -236,7 +237,7 @@ namespace eval ruff {
         formatters. The command [formatters] returns a list of supported
         formatters. Currently formatters for producing HTML and Markdown are
         implemented.
-        
+
         In addition, the output may be produced in single or multipage format.
 
         === Multipage output
