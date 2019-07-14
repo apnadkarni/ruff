@@ -417,7 +417,7 @@ proc ruff::formatter::markdown::fmtprochead {name args} {
         if {[info exists link_targets($ns)]} {
             set linkline "<a href='$link_targets($ns)'>[namespace tail $ns]</a>, "
         }
-        if {[program_option -singlepage]} {
+        if {[program_option -pagesplit] eq "none"} {
             append linkline "<a href='#_top'>Top</a>"
         } else {
             append linkline "<a href='[ns_link_symbol :: {}]'>Top</a>"
@@ -854,8 +854,8 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
     #   -hidenamespace NAMESPACE - if specified as non-empty,
     #    program element names beginning with NAMESPACE are shown
     #    with that namespace component removed.
-    #   -singlepage BOOLEAN - if `true` (default) files are written
-    #    as a single page. Else each namespace is written to a separate file.
+    #   -pagesplit SPLIT - if `none`, a single documentation file is produced.
+    #    If `namespace`, a separate file is output for every namespace.
     #   -titledesc STRING - the title for the documentation.
     #    Used as the title for the document.
     #    If undefined, the string "Reference" is used.
@@ -876,7 +876,7 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
              -includesource false \
              -hidenamespace "" \
              -outdir "." \
-             -singlepage true \
+             -pagesplit none \
              -titledesc "" \
              -modulename "Reference" \
              ]
@@ -998,13 +998,13 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
     } else {
         # If no preamble was given and we are in multipage mode
         # display a generic message.
-        if {!$opts(-singlepage)} {
+        if {[program]} {
             append doc [md_inline "Please follow the links below for documentation of individual modules."]
         }
     }
 
     # If not single page, append links to namespace pages and close page
-    if {!$opts(-singlepage)} {
+    if {$opts(-pagesplit) ne "none"} {
         # Add the navigation bits
         set nav_common ""
         foreach ns [lsort [dict keys $info_by_ns]] {
@@ -1017,7 +1017,7 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
     }
 
     foreach ns [lsort [dict keys $info_by_ns]] {
-        if {!$opts(-singlepage)} {
+        if {$opts(-pagesplit) ne "none"} {
             set doc $header
         }
 
@@ -1044,7 +1044,7 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
                             -hidenamespace $opts(-hidenamespace) \
                            ]
         }
-        if {! $opts(-singlepage)} {
+        if {$opts(-pagesplit) ne "none"} {
             # Add the navigation bits for other pages
             append doc "## See also"
             append doc $nav_common
@@ -1055,7 +1055,7 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
             set navlinks [dict create]
         }
     }
-    if {$opts(-singlepage)} {
+    if {$opts(-pagesplit) eq "none"} {
         append doc $footer
         lappend docs "::" $doc
     }

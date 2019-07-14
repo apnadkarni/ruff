@@ -243,9 +243,9 @@ namespace eval ruff {
         === Multipage output
 
         The generated documentation may be either in a single output file or
-        spread across multiple files, one per namespace. This is controlled
-        by the `-singlepage` option to the [document] command. Some formatters
-        may not support both capabilities.
+        spread across multiple files. This is controlled
+        by the `-pagesplit` option to the [document] command. Some formatters
+        may not support this feature.
 
         When generating multipage output, the toplevel generated page contains
         links to the other pages which contain per-namespace documentation.
@@ -342,7 +342,7 @@ proc ruff::private::ns_file_base {ns {ext {}}} {
     variable ns_file_base_cache
     variable ProgramOptions
     if {![info exists ns_file_base_cache($ns)]} {
-        if {$ProgramOptions(-singlepage) || $ns eq "::"} {
+        if {$ProgramOptions(-pagesplit) eq "none" || $ns eq "::"} {
             set fn "$output_file_base$output_file_ext"
         } else {
             set fn "${output_file_base}[regsub -all {:+|[^-\w_.]} $ns _]$output_file_ext"
@@ -1688,8 +1688,8 @@ proc ruff::document {formatter namespaces args} {
     # -title STRING - specifies the title to use for the page
     # -recurse BOOLEAN - if true, child namespaces are recursively
     #  documented.
-    # -singlepage BOOLEAN - if `true` (default) files are written
-    #  as a single page. Else each namespace is written to a separate file.
+    # -pagesplit SPLIT - if `none`, a single documentation file is produced.
+    #  If `namespace`, a separate file is output for every namespace.
     #
     # Any additional arguments are passed through to the document command.
     #
@@ -1707,20 +1707,23 @@ proc ruff::document {formatter namespaces args} {
         -output ""
         -preamble ""
         -recurse false
-        -singlepage true
+        -pagesplit none
         -title ""
     }
 
     array set opts $args
     namespace upvar private ProgramOptions ProgramOptions
     set ProgramOptions(-hidesourcecomments) $opts(-hidesourcecomments)
-    set ProgramOptions(-singlepage) $opts(-singlepage)
+    if {$opts(-pagesplit) ni {none namespace}} {
+        error "Option -pagesplit must be \"none\" or \"namespace\" "
+    }
+    set ProgramOptions(-pagesplit) $opts(-pagesplit)
 
     array unset private::ns_file_base_cache
     if {$opts(-output) eq ""} {
-        if {! $opts(-singlepage)} {
+        if {$opts(-pagesplit) ne "none"} {
             # Need to link across files so output must be specified.
-            error "Output file must be specified with -output if -singlepage is false."
+            error "Output file must be specified with -output if -pagesplit option is not \"none\"."
         }
     } else {
         set private::output_file_base [file root [file tail $opts(-output)]]
@@ -1867,7 +1870,7 @@ proc ruff::private::document_self {args} {
     array set opts [list \
                         -formatter html \
                         -includesource true \
-                        -singlepage false \
+                        -pagesplit namespace \
                         -includeprivate false \
                         -outdir [file join $ruff_dir .. doc] \
                        ]
@@ -1893,9 +1896,9 @@ proc ruff::private::document_self {args} {
     set common_args [list \
                          -recurse $opts(-includeprivate) \
                          -titledesc $title \
-                         -singlepage $opts(-singlepage) \
+                         -pagesplit $opts(-pagesplit) \
                          -version $::ruff::version]
-    if {! $opts(-singlepage)} {
+    if {$opts(-pagesplit) ne "none"} {
         lappend common_args -preamble $preamble
     }
     switch -exact -- $opts(-formatter) {

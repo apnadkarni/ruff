@@ -145,6 +145,8 @@ div.navbox {
 
 .navbox hr {
   color: white;
+  margin-top:0.1em;
+  margin-bottom:0.1em;
 }
 
 .navbox a:link, .navbox a:visited, .navbox a:hover {
@@ -660,7 +662,7 @@ proc ruff::formatter::html::heading_with_uplink {level heading scope {cssclass r
     if {$scope ne "" && [info exists link_targets($scope)]} {
         set links "<a href='$link_targets($scope)'>[namespace tail $scope]</a>, "
     }
-    if {[program_option -singlepage]} {
+    if {[program_option -pagesplit] eq "none"} {
         append links "<a href='#top'>Top</a>"
     } else {
         append links "<a href='[ns_link_symbol :: {}]'>Top</a>"
@@ -1124,8 +1126,8 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     #   -hidenamespace NAMESPACE - if specified as non-empty,
     #    program element names beginning with NAMESPACE are shown
     #    with that namespace component removed.
-    #   -singlepage BOOLEAN - if `true` (default) files are written
-    #    as a single page. Else each namespace is written to a separate file.
+    #   -pagesplit SPLIT - if `none`, a single documentation file is produced.
+    #    If `namespace`, a separate file is output for every namespace.
     #   -titledesc STRING - the title for the documentation.
     #    Used as the title for the document.
     #    If undefined, the string "Reference" is used.
@@ -1149,7 +1151,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
              -includesource false \
              -hidenamespace "" \
              -outdir "." \
-             -singlepage true \
+             -pagesplit none \
              -titledesc "" \
              -modulename "Reference" \
              ]
@@ -1292,26 +1294,29 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     } else {
         # If no preamble was given and we are in multipage mode
         # display a generic message.
-        if {!$opts(-singlepage)} {
+        if {$opts(-pagesplit) ne "none"} {
             append doc [md_inline "Please follow the links on the left for documentation of individual modules."]
         }
     }
 
     # If not single page, append links to namespace pages and close page
-    if {!$opts(-singlepage)} {
+    if {$opts(-pagesplit) ne "none"} {
         append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
         # Add the navigation bits
-        set nav_common ""
         foreach ns [lsort [dict keys $info_by_ns]] {
             append nav_common "<h1><a href='[ns_file_base $ns]'>[string trimleft $ns :]</a></h1>"
         }
         append doc "<div class='yui-b navbox'>$nav_common</div>"
         append doc $footer
         lappend docs "::" $doc
+
+        # Link to the main page is placed on every page (except main)
+        set toplink "<h1><a href='[ns_file_base ""]'>Main page</a></h1>\n<hr>"
+
     }
 
     foreach ns [lsort [dict keys $info_by_ns]] {
-        if {!$opts(-singlepage)} {
+        if {$opts(-pagesplit) ne "none"} {
             # Start new document
             set doc $header
             append doc "<div id='yui-main'><div class='yui-b'><a name='_top'></a>"
@@ -1342,11 +1347,12 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
                             -hidenamespace $opts(-hidenamespace) \
                            ]
         }
-        if {! $opts(-singlepage)} {
+        if {$opts(-pagesplit) ne "none"} {
             append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
             # Add the navigation bits
             append doc "<div class='yui-b navbox'>"
             # First the toplevel links
+            append doc $toplink
             append doc $nav_common
             append doc "<hr>"
             # Then the navlinks for this namespace
@@ -1366,7 +1372,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
 
         }
     }
-    if {$opts(-singlepage)} {
+    if {$opts(-pagesplit) eq "none"} {
         append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
 
         # Add the navigation bits
