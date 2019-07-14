@@ -777,8 +777,8 @@ proc ruff::private::change_state {new v_name} {
         summary {
             lappend result(output) summary $result(fragment)
 
-            # Summary is also included in the paragraphs
-            lappend result(output) paragraph $result(fragment)
+            # Disabled - Summary is also included in the paragraphs
+            # lappend result(output) paragraph $result(fragment)
 
             # Save in case used for Returns statement
             set result(summary) $result(fragment)
