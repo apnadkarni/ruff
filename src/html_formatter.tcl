@@ -114,8 +114,7 @@ div.navbox {
   /* margin-top: 1em; */
     background-color: #006666;
     color: white;
-    padding-left: 4px;
-    padding-right: 4px;
+    padding: 3px 4px 2px 4px;
     font-family: Arial, sans-serif;
 }
 
@@ -142,7 +141,6 @@ div.navbox {
   padding-left: 3em;
   font-weight: normal;
 }
-
 .navbox hr {
   color: white;
   margin-top:0.1em;
@@ -665,7 +663,7 @@ proc ruff::formatter::html::heading_with_uplink {level heading scope {cssclass r
     if {[program_option -pagesplit] eq "none"} {
         append links "<a href='#top'>Top</a>"
     } else {
-        append links "<a href='[ns_link_symbol :: {}]'>Top</a>"
+        append links "<a href='[ns_link_symbol :: {}]'>Main</a>"
     }
     set links "<span class='tinylink'>$links</span>"
     # NOTE: the div needed to reset the float from links
@@ -1107,7 +1105,28 @@ proc ::ruff::formatter::html::generate_procs {procinfodict args} {
 
     return $doc
 }
-    
+
+proc ::ruff::formatter::html::section_navigation {namespaces {highlight_ns {}}} {
+    # Returns the HTML for the section navigation menu in split page output
+    # namespaces - the section names for the menu
+    # highlight_ns - the name of the namespace to be highlighted
+    set highlight_style "color: #006666;background-color: white; margin-left:-4px; padding-left:3px;padding-right:2px;"
+    # If highlight_ns is empty, assume main page. Hack hack hack
+    set main_title "Main page"
+    if {$highlight_ns eq ""} {
+        append nav "<h1><a style='padding-top:2px;$highlight_style' href='[ns_file_base {}]'>$main_title</a></h1>\n<hr>\n"
+    } else {
+        set nav "<h1><a style='padding-top:2px;' href='[ns_file_base {}]'>$main_title</a></h1>\n<hr>\n"
+    }
+    foreach ns $namespaces {
+        if {$ns eq $highlight_ns} {
+            append nav "<h1><a style='$highlight_style' href='[ns_file_base $ns]'>[string trimleft $ns :]</a></h1>\n"
+        } else {
+            append nav "<h1><a href='[ns_file_base $ns]'>[string trimleft $ns :]</a></h1>\n"
+        }
+    }
+    return $nav
+}
 
 proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     # Produces documentation in HTML format from the passed in
@@ -1299,23 +1318,18 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         }
     }
 
+    set sorted_ns [lsort [dict keys $info_by_ns]]
+
     # If not single page, append links to namespace pages and close page
     if {$opts(-pagesplit) ne "none"} {
         append doc "</div></div>";        # <div class='yui-b'><div id=yui-main>
         # Add the navigation bits
-        foreach ns [lsort [dict keys $info_by_ns]] {
-            append nav_common "<h1><a href='[ns_file_base $ns]'>[string trimleft $ns :]</a></h1>"
-        }
-        append doc "<div class='yui-b navbox'>$nav_common</div>"
+        append doc "<div class='yui-b navbox'>[section_navigation $sorted_ns]</div>"
         append doc $footer
         lappend docs "::" $doc
-
-        # Link to the main page is placed on every page (except main)
-        set toplink "<h1><a href='[ns_file_base ""]'>Main page</a></h1>\n<hr>"
-
     }
 
-    foreach ns [lsort [dict keys $info_by_ns]] {
+    foreach ns $sorted_ns {
         if {$opts(-pagesplit) ne "none"} {
             # Start new document
             set doc $header
@@ -1352,8 +1366,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
             # Add the navigation bits
             append doc "<div class='yui-b navbox'>"
             # First the toplevel links
-            append doc $toplink
-            append doc $nav_common
+            append doc [section_navigation $sorted_ns $ns]
             append doc "<hr>"
             # Then the navlinks for this namespace
             dict for {text link} $navlinks {
