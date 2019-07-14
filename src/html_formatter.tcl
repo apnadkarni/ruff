@@ -749,8 +749,9 @@ proc ruff::formatter::html::fmtparas {paras {scope {}}} {
             preformatted {
                 append doc [fmtpreformatted $content]
             }
+            seealso -
             default {
-                error "Unknown paragraph element type '$type'."
+                error "Unknown or unexpected paragraph element type '$type'."
             }
         }
     }
@@ -759,12 +760,10 @@ proc ruff::formatter::html::fmtparas {paras {scope {}}} {
 
 proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     # Formats the documentation for a proc in HTML format
-    # procinfo - proc or method information in the format returned
-    #   by extract_proc or extract_ooclass
-    #
-    # The following options may be specified:
+    #   procinfo - proc or method information in the format returned
+    #    by extract_proc or extract_ooclass
     #   -includesource BOOLEAN - if true, the source code of the
-    #     procedure is also included. Default value is false.
+    #    procedure is also included. Default value is false.
     #   -hidenamespace NAMESPACE - if specified as non-empty,
     #    program element names beginning with NAMESPACE are shown
     #    with that namespace component removed.
@@ -872,6 +871,16 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     if {[llength $aproc(description)]} {
         append doc [fmthead "Description" $header_levels(nonav)]
         append doc [fmtparas $aproc(description) $scope]
+    }
+
+    if {[info exists aproc(seealso)] && [llength $aproc(seealso)]} {
+        append doc [fmthead "See also" $header_levels(nonav)]
+        # aa bb -> "[aa], [bb]" -> HTML
+        # NOTE: the , in the join is not purely cosmetic. It is also a
+        # workaround for Markdown syntax which treats [x] [y] with
+        # only intervening whitespace as one text/linkref pair.
+        # This is different from the CommonMark Markdown spec.
+        append doc [fmtpara [join [lmap ref $aproc(seealso) {set wrap "\[$ref\]"}] ", "] $scope]
     }
 
     # Do we include the source code in the documentation?

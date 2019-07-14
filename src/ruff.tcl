@@ -153,6 +153,11 @@ namespace eval ruff {
         * Any line beginning with the word `Returns` is treated as
         description of the return value.
 
+        * A line beginning with `See also:` (note the colon) is
+        assumed to be a list of program element names. These are then
+        automatically linked and listed in the *See also* section of
+        a procedure documentation.
+
         * All other lines are treated as part of the previous block of
         lines. In the case of list elements, including parameter blocks and
         definition lists, the line is only treated as a continuation if its
@@ -515,6 +520,7 @@ proc ruff::private::parse {lines {mode proc}} {
     #
 
     # A fence is 3 or more consecutive backticks surrounded by whitespace
+    # TBD - are parens around \s in re_return, deflist, bullet necessary?
     set re_fence {^\s*`{3,}\s*$}
     set re_blankline {^\s*$}
     set re_preformatted {^\s{4,}}
@@ -522,6 +528,7 @@ proc ruff::private::parse {lines {mode proc}} {
     set re_header {^\s*(=+)\s*(\S.*)}
     set re_deflist {^(\s*)(\S.*?)\s+-\s+(.*)$}
     set re_return {^(\s*)Returns($|\s.*$)}
+    set re_seealso {^\s*See also\s*:\s*(.*)$}
 
     if {$mode ni {proc method docstring}} {
         error "Argument \"mode\" must be one of \"proc\", \"method\" or \"docstring\""
@@ -664,6 +671,13 @@ proc ruff::private::parse {lines {mode proc}} {
                     change_state return result
                 }
                 lappend result(fragment) [string trimleft $line]
+            } $re_seealso {
+                #ruff
+                # A block beginning with `See also` is treated as
+                # cross references. There may be multiple such blocks.
+                # Their contents are accumulated.
+                change_state seealso result
+                lappend result(fragment) [lindex $matches 1]
             } default {
                 #ruff
                 # All other lines either continue an existing paragrapsh
@@ -719,6 +733,10 @@ proc ruff::private::parse {lines {mode proc}} {
         if {[string match -nocase "returns *" [lindex $result(summary) 0]]} {
                 lappend result(output) return $result(summary)
         }
+    }
+
+    if {[info exists result(seealso)]} {
+        lappend result(output) seealso $result(seealso)
     }
 
     #ruff
@@ -792,6 +810,9 @@ proc ruff::private::change_state {new v_name} {
         }
         header {
             lappend result(output) header [list $result(header_level) $result(fragment)]
+        }
+        seealso {
+            lappend result(output) seealso $result(fragment)
         }
         postsummary -
         init -
@@ -939,7 +960,8 @@ proc ruff::private::extract_docstring {text} {
     #   the paragraph.
     # preformatted - the corresponding value is a string comprising
     #   preformatted text.
-
+    # seealso - the corresponding value is a list. Only one seealso
+    #   element will be present in the returned list.
 
     set paragraphs {}
 
@@ -963,9 +985,8 @@ proc ruff::private::extract_docstring {text} {
                 lappend paragraphs bulletlist $bulletlist
             }
             summary {
-                # Do nothing. Summaries are same as the first
-                # paragraph. For docstrings, we do not show
-                # them separately like we do for procs
+                # Do nothing. Summaries are first line in description.
+                set paragraphs [linsert $paragraphs 0 paragraph [join $content " "]]
             }
             header {
                 # Content is a pair {header_level, list of lines}
@@ -977,10 +998,18 @@ proc ruff::private::extract_docstring {text} {
             preformatted {
                 lappend paragraphs preformatted [join $content \n]
             }
+            seealso {
+                # For See Also, all entries need to be collected
+                # $content will be a list of lists
+                lappend seealso {*}[concat {*}$content]
+            }
             default {
                 error "Text fragments of type '$type' not supported in docstrings"
             }
         }
+    }
+    if {[info exists seealso]} {
+        lappend paragraphs seealso $seealso
     }
     return $paragraphs
 }
@@ -1120,19 +1149,21 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names param_
     # and parse commands and then constructs the metainformation for
     # the proc or method using this along with the other passed arguments.
     # The metainformation is returned as a dictionary with the following keys:
-    #   name - name of the proc or method
-    #   parameters - a list of parameters. Each element of the
-    #     list is a pair or a triple, consisting of the parameter name,
-    #     the description and possibly the default value if there is one.
-    #   options - a list of options. Each element is a pair consisting
-    #     of the name and its description.
-    #   description - a list of paragraphs describing the command. The
-    #     list contains preformatted, paragraph, bulletlist and deflist
-    #     elements as described for the extract_docstring command.
-    #   return - a description of the return value of the command
-    #   summary - a copy of the first paragraph if it was present
-    #     before the parameter descriptions.
-    #   source - the source code of the command
+    #  name - name of the proc or method
+    #  parameters - a list of parameters. Each element of the
+    #   list is a pair or a triple, consisting of the parameter name,
+    #   the description and possibly the default value if there is one.
+    #  options - a list of options. Each element is a pair consisting
+    #   of the name and its description.
+    #  description - a list of paragraphs describing the command. The
+    #   list contains preformatted, paragraph, bulletlist and deflist
+    #   elements as described for the extract_docstring command.
+    #  return - a description of the return value of the command
+    #  summary - a copy of the first paragraph if it was present
+    #   before the parameter descriptions.
+    #  source - the source code of the command
+    #  seealso - the corresponding value is a list. Only one seealso
+    #   element will be present in the returned list.
     #
 
     variable ProgramOptions
@@ -1196,6 +1227,11 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names param_
             }
             preformatted {
                 lappend paragraphs preformatted [join $content \n]
+            }
+            seealso {
+                # For See Also, all entries need to be collected
+                # $content will be a list of lists
+                lappend doc(seealso) {*}[concat {*}$content]
             }
             default {
                 error "Unknown text fragment type '$type'."
@@ -1411,7 +1447,7 @@ proc ruff::private::extract {pattern args} {
 
     set classes [dict create]
     if {$opts(-includeclasses)} {
-        # We do a catch in case this Tcl version does not support objects
+        # TBD - We do a catch in case this Tcl version does not support objects
         set class_names {}
         catch {set class_names [info class instances ::oo::class $pattern]}
         foreach class_name $class_names {

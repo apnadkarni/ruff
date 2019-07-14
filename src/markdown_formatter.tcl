@@ -480,8 +480,9 @@ proc ruff::formatter::markdown::fmtparas {paras {scope {}}} {
             preformatted {
                 append doc [fmtpreformatted $content]
             }
+            seealso -
             default {
-                error "Unknown paragraph element type '$type'."
+                error "Unknown or unexpected paragraph element type '$type'."
             }
         }
     }
@@ -604,6 +605,15 @@ proc ruff::formatter::markdown::generate_proc_or_method {procinfo args} {
         append doc [fmtparas $aproc(description) $scope]
     }
 
+    if {[info exists aproc(seealso)] && [llength $aproc(seealso)]} {
+        append doc [fmthead "See also" $header_levels(nonav)]
+        # aa bb -> "[aa], [bb]" -> HTML
+        # NOTE: the , in the join is not purely cosmetic. It is also a
+        # workaround for Markdown syntax which treats [x] [y] with
+        # only intervening whitespace as one text/linkref pair.
+        # This is different from the CommonMark Markdown spec.
+        append doc [fmtpara [join [lmap ref $aproc(seealso) {set wrap "\[$ref\]"}] ", "] $scope]
+    }
     # Do we include the source code in the documentation?
     if {0 && $opts(-includesource)} {
         # TBD - -includesource not implemented for markdown

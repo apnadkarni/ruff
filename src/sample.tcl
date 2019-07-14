@@ -97,6 +97,8 @@ proc ruff::sample::proc_full {arg {optarg AVALUE} args} {
     # Bullet lists are indicated by a starting `-` or `*` character.
     # - This is a bullet list iterm
     # * This is also a bullet list item
+    # See also: proc_without_docs Base
+
 
     # This paragraph will be ignored by Ruff! as it is not part
     # of the initial block of comments.
