@@ -599,9 +599,6 @@ proc ruff::formatter::markdown::generate_proc_or_method {procinfo args} {
         append doc [fmtpara $aproc(return) $scope]
     }
 
-    # Loop through all the paragraphs. Note the first para is also 
-    # the summary (already output) but we will show that in the general
-    # description as well.
     if {[llength $aproc(description)]} {
         append doc [fmthead "Description" $header_levels(nonav)]
         append doc [fmtparas $aproc(description) $scope]
