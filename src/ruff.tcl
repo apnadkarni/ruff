@@ -360,33 +360,6 @@ proc ruff::private::regexp_escape {s} {
     return [string map {\\ \\\\ $ \\$ ^ \\^ . \\. ? \\? + \\+ * \\* | \\| ( \\( ) \\) [ \\[ ] \\] \{ \\\{ \} \\\} } $s]
 }
 
-# TBD - is this needed
-proc ruff::private::build_symbol_regexp {symlist} {
-    # Builds a regular expression that matches any of the specified
-    # symbols or names
-    # symlist - list of symbols or names
-    #
-    # Returns a regular expression that 
-    # will match any of the name or the namespace tail component of
-    # any of the names in symlist.
-
-    # First collect all names and tail components and then join
-    # them as alternatives. Note do NOT enclose them using regexp ()
-    # groups since the formatting code then loses track of the
-    # position of its own () groups.
-    set alternatives {}
-    foreach sym $symlist {
-        lappend alternatives "[regexp_escape $sym]"
-        # Add the tail component
-        set tail [namespace tail $sym]
-        if {$tail ne "$sym"} {
-            lappend alternatives "[regexp_escape $tail]"
-        }
-    }
-
-    return [join $alternatives "|"]
-}
-
 proc ruff::private::namespace_tree {nslist} {
     # Return list of namespaces under the specified namespaces
     array set done {}
