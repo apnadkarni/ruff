@@ -1886,7 +1886,11 @@ proc ruff::private::document_self {args} {
     array set opts $args
 
     if {![namespace exists ::ruff::sample]} {
-        uplevel #0 source sample.tcl
+        if {[file exists [file join $ruff_dir sample.tcl]]} {
+            uplevel #0 [list source [file join $ruff_dir sample.tcl]]
+        } else {
+            uplevel #0 [list source [file join $ruff_dir .. doc sample.tcl]]
+        }
     }
  
     load_formatters
