@@ -882,7 +882,6 @@ proc ::ruff::formatter::markdown::generate_document {classprocinfodict args} {
         [list \
              -includesource false \
              -hidenamespace "" \
-             -outdir "." \
              -pagesplit none \
              -titledesc "" \
              -modulename "Reference" \

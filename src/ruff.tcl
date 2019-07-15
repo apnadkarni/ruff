@@ -8,6 +8,7 @@
 
 package require Tcl 8.6
 package require textutil::adjust
+package require textutil::tabify
 
 namespace eval ruff {
     variable version 0.6.0
@@ -168,6 +169,14 @@ namespace eval ruff {
 
         Refer to those commands for the syntax and comment structure expected
         by Ruff!.
+
+        ### Differences from Markdown
+
+        * no nested blocks
+        * no numbered lists or multi-paragraph list elements
+        * no blockquotes
+
+        * definition lists
 
         ## Documenting classes
 
@@ -335,6 +344,12 @@ proc ruff::private::fqn! {name} {
     }
 }
 
+proc ruff::private::ns_member! {fqns name} {
+    if {[namespace qualifiers $name] ne $fqns} {
+        error "Name \"$name\" does not belong to the \"$fqns\" namespace."
+    }
+}
+
 proc ruff::private::program_option {opt} {
     variable ProgramOptions
     return $ProgramOptions($opt)
@@ -365,7 +380,10 @@ proc ruff::private::ns_file_base {ns {ext {}}} {
 }
 
 proc ruff::private::regexp_escape {s} {
-    return [string map {\\ \\\\ $ \\$ ^ \\^ . \\. ? \\? + \\+ * \\* | \\| ( \\( ) \\) [ \\[ ] \\] \{ \\\{ \} \\\} } $s]
+    return [string map {
+        \\ \\\\ $ \\$ ^ \\^ . \\. ? \\? + \\+ * \\*
+        | \\| ( \\( ) \\) [ \\[ ] \\] \{ \\\{ \} \\\}
+    } $s]
 }
 
 proc ruff::private::namespace_tree {nslist} {
@@ -486,14 +504,14 @@ proc ruff::private::sift_names {names} {
     return $namespaces
 }
 
-proc ruff::private::sift_classprocinfo {classprocinfodict} {
+proc ruff::private::TBDNEEDED?sift_classprocinfo {classprocinfodict} {
     # Sifts through class and proc meta information based
     # on namespace
     #
     # Returns a dictionary with keys namespaces and values
     # being dictionaries with keys "classes" and "procs"
     # containing metainformation.
-    
+
     set result [dict create]
     dict for {name procinfo} [dict get $classprocinfodict procs] {
         set ns [namespace qualifiers $name]
@@ -514,7 +532,568 @@ proc ruff::private::sift_classprocinfo {classprocinfodict} {
     return $result
 }
 
-proc ruff::private::parse {lines {mode proc}} {
+proc ruff::private::parse_line {line mode current_indent}  {
+    # Parses a documentation line and returns its meta information.
+    # line - line to be parsed
+    # mode - parsing mode, must be one of `proc`, `method`, `docstring`
+    # current_indent   - the indent of the containing block
+
+    if {![regexp -indices {^\s*(\S.*)$} $line -> indices]} {
+        return [list Type blank Indent $current_indent Text ""]
+    }
+    # indices contains the indices of text after leading whitespace
+
+    set indent [lindex $indices 0]
+    set text   [string trimright [string range $line $indent end]]
+
+    # Indent exceeds more than 4 beyond current indent plus the
+    # continuation indent if any, it is preformatted.
+    set preformatted_min_indent [expr {$current_indent+4}]
+    if {$indent >= $preformatted_min_indent} {
+        # Note we use $line here, not $text as we want to preserve trailing
+        # and leading spaces except for the 4 spaces that mark it as preformatted.
+        return [list Type preformatted \
+                    Indent $indent \
+                    Text [string range $line $preformatted_min_indent end]]
+    }
+
+    # Note that $text starts AND ends with a non-whitespace character.
+    # Also note order of match cases in switch is importent.
+    switch -regexp -matchvar matches -indexvar indices -- $text {
+        {^(#+)\s*(\S.*)} {
+            # = A Header
+            return [list Type heading \
+                        Indent $indent \
+                        Level [string length [lindex $matches 1]] \
+                        Text [lindex $matches 2]]
+        }
+        {^[-\*]\s+(.*)$} {
+            # - a bullet list element
+            # Return: bullet lineindent relativetextindent marker text
+            return [list Type bullet \
+                        Indent $indent \
+                        RelativeIndent [lindex $indices 1 0] \
+                        Marker [string index $text 0] \
+                        Text [lindex $matches 1]]
+        }
+        {^(\S+)(\s+\S+)?\s+-\s+(.*)$} {
+            # term ?term2? - description
+            return [list Type definition \
+                        Indent $indent \
+                        RelativeIndent [lindex $indices 2 0] \
+                        Term "[lindex $matches 1][lindex $matches 2]" \
+                        Text [lindex $matches 3]]
+        }
+        {^(`{3,})$} {
+            # ```` Fenced code block
+            return [list Type fence Indent $indent Text $text]
+        }
+        default {
+            # Normal text line
+            if {$mode ne "docstring"} {
+                # Within procs and methods, look for special
+                # proc-specific keywords
+                if {[regexp {^See also\s*:\s*(.*)$} $line -> match]} {
+                    return [list Type seealso Indent $indent Text $match]
+                }
+                if {[regexp {^Returns($|\s.*$)} $line]} {
+                    return [list Type returns Indent $indent Text $text]
+                }
+            }
+            if {$indent > $current_indent} {
+                return [list Type continuation \
+                            Indent $indent \
+                            Text $text]
+            } else {
+                return [list Type normal\
+                            Indent $indent \
+                            Text $text]
+            }
+        }
+    }
+}
+
+proc ruff::private::parse_preformatted_state {statevar} {
+    upvar 1 $statevar state
+
+    # Gobble up all lines that are indented starting
+    # with the current line. Blank lines are included
+    # even if they have fewer than the required indent.
+    # However, leading blank lines and trailing blank
+    # lines are not included even if they start
+    # with leading 4 spaces.
+
+    # Note the Text dictionary element already has
+    # the leading 4 spaces stripped.
+
+    set text [dict get $state(parsed) Text]
+    unset state(parsed);    # Since we do not maintain this for further lines
+
+    # If a blank line, do not treat as start of
+    # preformatted section (Markdown compatibility).
+    if {[regexp {^\s*$} $text]} {
+        incr state(index)
+        return
+    }
+
+    set code_block          [list $text]
+    set intermediate_blanks [list ]
+    while {[incr state(index)] < $state(nlines)} {
+        set line [lindex $state(lines) $state(index)]
+        regexp -indices {^(\s*)} $line -> leader
+        set nspaces [expr {[lindex $leader 1]+1}]
+        if {$nspaces == [string length $line]} {
+            # Empty or all blanks
+            # Intermediate empty lines do not terminate block
+            # even if not prefixed by 4 spaces. Collect them
+            # to add later if more preformatted lines follow.
+            lappend intermediate_blanks [string range $line 4 end]
+        } elseif {$nspaces < 4} {
+            # Not preformatted
+            break
+        } else {
+            lappend code_block {*}$intermediate_blanks
+            set intermediate_blanks {}
+            lappend code_block [string range $line 4 end]
+        }
+    }
+    set state(state) body
+    lappend state(body) preformatted $code_block
+}
+
+proc ruff::private::parse_fence_state {statevar} {
+    upvar 1 $statevar state
+    set marker [dict get $state(parsed) Text]
+    set marker_indent  [dict get $state(parsed) Indent]
+    set code_block {}
+
+    # Gobble up any lines until the matching fence
+    while {[incr state(index)] < $state(nlines)} {
+        set line [lindex $state(lines) $state(index)]
+        # Explicit check is faster than calling parse_line
+        # Note neither pandoc not cmark require marker indentation
+        # to be the same.
+        if {[regexp "^\s*$marker\s*$" $line]} {
+            incr state(index);  # Inform caller which line to look at next
+            unset state(parsed); # To indicate next line has not been parsed
+            break;  # Found end marker
+        } else {
+            # Remove the indentation of original marker if present.
+            # Smaller indentation is reduced to 0.
+            regexp -indices {^(\s*)} $line -> spaces
+            set start [lindex $spaces 1]; # Could be -1 also
+            incr start
+            if {$start < $marker_indent} {
+                set line [string range $line $start end]
+            } else {
+                set line [string range $line $marker_indent end]
+            }
+            lappend code_block $line
+        }
+    }
+    lappend state(body) preformatted $code_block
+    set state(state) body
+}
+
+proc ruff::private::parse_seealso_state {statevar} {
+    upvar 1 $statevar state
+
+    if {$state(mode) eq "docstring"} {
+        # parse_line should not have returned this for docstrings
+        error "Internal error: Got seealso in docstring mode."
+    }
+    set block_indent [dict get $state(parsed) Indent]
+    # The text is a list of symbols separated by spaces
+    # and optionally commas.
+    set symbols [string map {, { }} [dict get $state(parsed) Text]]
+    lappend state(seealso) {*}$symbols
+    while {[incr state(index)] < $state(nlines)} {
+        set line [lindex $state(lines) $state(index)]
+        set state(parsed) [parse_line $line $state(mode) $block_indent]
+        switch -exact -- [dict get $state(parsed) Type] {
+            heading -
+            fence -
+            bullet -
+            definition -
+            blank -
+            returns {
+                break
+            }
+            normal {
+                # If the indent is less than the block indent,
+                # treat as a new paragraph.
+                if {[dict get $state(parsed) Indent] < $block_indent} {
+                    break
+                }
+                # Append symbols at bottom of loop
+            }
+            preformatted -
+            continuation {
+                # Append symbols at bottom of loop
+            }
+            default {
+                error "Unexpected type [dict get $state(parsed) Type]"
+            }
+        }
+        set symbols [string map {, { }} [dict get $state(parsed) Text]]
+        lappend state(seealso) {*}$symbols
+    }
+    set state(state) body
+}
+
+proc ruff::private::parse_returns_state {statevar} {
+    upvar 1 $statevar state
+
+    set block_indent [dict get $state(parsed) Indent]
+    set lines [list [dict get $state(parsed) Text]]
+    while {[incr state(index)] < $state(nlines)} {
+        set line [lindex $state(lines) $state(index)]
+        set state(parsed) [parse_line $line $state(mode) $block_indent]
+        set text [dict get $state(parsed) Text]
+        switch -exact -- [dict get $state(parsed) Type] {
+            heading -
+            fence -
+            bullet -
+            definition -
+            seealso -
+            returns {
+                # To be considered as part of the return statement, the
+                # line must be at a greater indent. Else a new block.
+                # Note this applies to another return block as well.
+                if {[dict get $state(parsed) Indent] <= $block_indent} {
+                    break
+                }
+                # Note cannot use $text here since that will not contain
+                # the full line for these elements
+                lappend lines [string trimleft $line]
+            }
+            continuation {
+                lappend lines $text
+            }
+            normal {
+                # If the indent is less than the block indent,
+                # treat as a new paragraph.
+                if {[dict get $state(parsed) Indent] < $block_indent} {
+                    break
+                }
+                lappend lines $text
+            }
+            preformatted {
+                break
+            }
+            blank {
+                break;          # Terminates the paragraph
+            }
+            default {
+                error "Unexpected type [dict get $state(parsed) Type]"
+            }
+        }
+    }
+    if {[llength $lines]} {
+        if {$state(mode) eq "docstring"} {
+            lappend state(body) paragraph $lines
+        } else {
+            lappend state(return) $lines
+        }
+    } 
+    set state(state) body
+}
+
+proc ruff::private::parse_bullets_state {statevar} {
+    upvar 1 $statevar state
+
+    set list_block {}
+    set list_elem [list [dict get $state(parsed) Text]]
+    set marker    [dict get $state(parsed) Marker]
+    set block_indent [dict get $state(parsed) Indent]
+
+    while {[incr state(index)] < $state(nlines)} {
+        set line [lindex $state(lines) $state(index)]
+        set state(parsed) [parse_line $line $state(mode) $block_indent]
+        set text [dict get $state(parsed) Text]
+        switch -exact -- [dict get $state(parsed) Type] {
+            heading -
+            returns -
+            fence -
+            definition -
+            seealso {
+                if {[dict get $state(parsed) Indent] <= $block_indent} {
+                    # List element and list terminated if a block starter
+                    # appears at the same or less indentation. Note this is
+                    # DIFFERENT from normal lines which add to the list
+                    # item if at the same indent level.
+                    break
+                }
+                # Note cannot use $text here since that will not contain
+                # the full line for these elements
+                lappend list_elem [string trimleft $line]
+            }
+            continuation {
+                lappend list_elem $text
+            }
+            normal {
+                # If the indent is less than that of list element
+                # treat as a new paragraph. This differs from Markdown
+                # which treats it as part of the list item.
+                if {[dict get $state(parsed) Indent] < $block_indent} {
+                    break
+                }
+                lappend list_elem $text
+            }
+            preformatted {
+                # As in markdown list continuation prioritized over preformatted
+                lappend list_elem [string trim $text]
+            }
+            blank {
+                # Current list item is terminated but not the list.
+                # The check for list_elem length is to deal with
+                # multiple consecutive blank lines. These should not
+                # result in spurious list items.
+                if {[llength $list_elem]} {
+                    lappend list_block $list_elem
+                    set list_elem {}
+                }
+            }
+            bullet {
+                if {[dict get $state(parsed) Marker] ne $marker} {
+                    break;      # Different list item type
+                }
+                if {[llength $list_elem]} {
+                    lappend list_block $list_elem
+                }
+                set list_elem [list $text]
+            }
+            default {
+                error "Unexpected type [dict get $state(parsed) Type]"
+            }
+        }
+    }
+
+    if {[llength $list_elem]} {
+        lappend list_block $list_elem
+    }
+
+    lappend state(body) bullets $list_block
+    set state(state) body
+}
+
+proc ruff::private::parse_definitions_state {statevar} {
+    upvar 1 $statevar state
+
+    set definition_block {}
+    set term         [dict get $state(parsed) Term]
+    set definition   [list [dict get $state(parsed) Text]]
+    set block_indent [dict get $state(parsed) Indent]
+
+    while {[incr state(index)] < $state(nlines)} {
+        set line [lindex $state(lines) $state(index)]
+        set state(parsed) [parse_line $line $state(mode) $block_indent]
+        set type [dict get $state(parsed) Type]
+        # If $term is empty, then this line just followed a blank line.
+        # In that case, we continue with the definition list only
+        # if the line is a definition format or is itself blank.
+        if {$type ni { definition blank } && ![info exists term]} {
+            break
+        }
+        set text [dict get $state(parsed) Text]
+        switch -exact -- $type {
+            heading -
+            returns -
+            fence -
+            bullet -
+            seealso {
+                if {[dict get $state(parsed) Indent] <= $block_indent} {
+                    # List element and list terminated if a block starter
+                    # appears at the same or less indentation. Note this is
+                    # DIFFERENT from normal lines which add to the list
+                    # item if at the same indent level.
+                    break
+                }
+                # Note cannot use $text here since that will not contain
+                # the full line for these elements
+                lappend definition [string trimleft $line]
+            }
+            continuation {
+                lappend definition $text
+            }
+            normal {
+                # If the indent is less than that of list element
+                # treat as a new paragraph. This differs from Markdown
+                # which treats it as part of the list item.
+                if {[dict get $state(parsed) Indent] < $block_indent} {
+                    break
+                }
+                lappend definition $text
+            }
+            preformatted {
+                # As in markdown list continuation prioritized over preformatted
+                lappend definition [string trim $text]
+            }
+            blank {
+                # Current definition is terminated but not the list.
+                # The check for term is to deal with
+                # multiple consecutive blank lines. These should not
+                # result in spurious items.
+                if {[info exists term]} {
+                    lappend definition_block [dict create term $term definition $definition]
+                    unset term
+                }
+            }
+            definition {
+                if {[string length $term]} {
+                    lappend definition_block [dict create term $term definition $definition]
+                }
+                set term       [dict get $state(parsed) Term]
+                set definition [list [dict get $state(parsed) Text]]
+            }
+            default {
+                error "Unexpected type [dict get $state(parsed) Type]"
+            }
+        }
+    }
+
+    if {[info exists term]} {
+        lappend definition_block [dict create term $term definition $definition]
+    }
+
+    if {$state(mode) ne "docstring" && $state(state) in {init postsummary}} {
+        set state(state) body
+        set state(parameters) $definition_block
+    } else {
+        lappend state(body) definitions $definition_block
+    }
+}
+
+proc ruff::private::parse_normal_state {statevar} {
+    upvar 1 $statevar state
+
+    set block_indent [dict get $state(parsed) Indent]
+    set paragraph [list [dict get $state(parsed) Text]]
+    while {[incr state(index)] < $state(nlines)} {
+        set line [lindex $state(lines) $state(index)]
+        set state(parsed) [parse_line $line $state(mode) $block_indent]
+        switch -exact -- [dict get $state(parsed) Type] {
+            heading -
+            fence -
+            bullet -
+            definition -
+            blank -
+            seealso -
+            preformatted -
+            returns {
+                # All special lines terminate normal paragraphs
+                break
+            }
+            continuation -
+            normal {
+                # Append text at bottom
+            }
+            default {
+                error "Unexpected type [dict get $state(parsed) Type]"
+            }
+        }
+        lappend paragraph [string trim [dict get $state(parsed) Text]]
+    }
+    if {$state(mode) ne "docstring" && $state(state) eq "init"} {
+        set state(summary) $paragraph
+        set state(state) postsummary
+    } else {
+        set state(state) body
+        lappend state(body) paragraph $paragraph
+    }
+}
+
+proc ruff::private::parse_lines {lines {mode proc}} {
+    # Creates a documentation parse structure.
+    # lines - List of lines comprising the documentation
+    # mode - Parsing mode, must be one of `proc`, `method`, `docstring`
+    #
+    # Returns a dictionary representing the documentation.
+    #
+    # The parse structure is a dictionary with the following keys:
+    # summary - Contains the summary paragraph.
+    #           Not applicable if $mode is `docstring`.
+    # parameters - List of parameter name and description paragraph pairs.
+    #           Not applicable if $mode is `docstring`.
+    # body - The main body stored as a list of alternating type and
+    #        content elements. The type may be one of `heading`,
+    #        `paragraph`, `list`, `definitions` or `preformatted`.
+    # seealso - The *See also* section containing a list of program element
+    #           references. Not applicable if $mode is `docstring`.
+    # returns - A paragraph describing the return value.
+    #           Not applicable if $mode is `docstring`.
+    #
+    # Not all elements may be present in the dictionary.
+    # A paragraph is returned as a list of lines.
+
+    # The parsing engine is distributed among procedures that carry
+    # state around in the state array.
+
+    set state(state)  init
+    set state(mode)   $mode
+    set state(lines)  $lines
+    set state(nlines) [llength $lines]
+    set state(index)  0
+    set state(body)  {};        # list of alternating type and content
+    # Following may be set during parsing
+    # set state(summary) {};      # Summary paragraph
+    # set state(return)  {};      # list of paragraphs
+    # set state(seealso) {};      # list of symbol references
+    # set state(parameters) {};   # Parameter definition list
+
+    while {$state(index) < $state(nlines)} {
+        # The loop is structured such that the outer loop detects block
+        # starts and then for each block type the state function
+        # slurps in all lines for that block.
+        if {![info exists state(parsed)]} {
+            set state(parsed) [parse_line \
+                                   [lindex $state(lines) $state(index)] \
+                                   $state(mode) \
+                                   0]
+        }
+        set state(block_indent) [dict get $state(parsed) Indent]
+        # All state procs expect state(parsed) to contain the
+        # parsed format of the line at position state(index) that causes
+        # transition to that state.
+        switch -exact -- [dict get $state(parsed) Type] {
+            blank {
+                incr state(index)
+                unset state(parsed)
+            }
+            heading {
+                # Headings have to be on a single line
+                lappend state(body) heading [list [dict get $state(parsed) Level] [dict get $state(parsed) Text]]
+                incr state(index)
+                unset state(parsed)
+                set state(state) body
+            }
+            bullet       { parse_bullets_state state }
+            definition   { parse_definitions_state state }
+            returns      { parse_returns_state state }
+            seealso      { parse_seealso_state state }
+            normal       { parse_normal_state state }
+            preformatted { parse_preformatted_state state }
+            fence        { parse_fence_state state }
+            continuation -
+            default {
+                error "Internal error: Unknown or unexpected line type\
+                       \"[dict get $state(parsed) Type]\" returned in top-level\
+                       parse of line \"[lindex $state(lines) $state(index)]\"."
+            }
+ 
+        }
+    }
+
+    set result [dict create body $state(body)]
+    foreach elem {summary parameters seealso returns} {
+        if {[info exists state($elem)]} {
+            dict set result $elem $state($elem)
+        }
+    }
+    return $result
+}
+
+proc ruff::private::TBDparse {lines {mode proc}} {
     # Creates a parse structure given a list of lines that are assumed
     # to be documentation for a programming structure
     #
@@ -619,7 +1198,8 @@ proc ruff::private::parse {lines {mode proc}} {
                 #ruff
                 # A markdown style header line
                 if {$mode ne "docstring"} {
-                    error "Header markup not supported within procs and methods."; # TBD - support headers in procs
+                    # TBD - support headers in procs
+                    error "Header markup not supported within procs and methods."
                 }
                 change_state header result
                 set result(header_level) [string length [lindex $matches 1]]
@@ -645,7 +1225,7 @@ proc ruff::private::parse {lines {mode proc}} {
                 # pairs. The list item value is itself a list of lines.
                 set result(indent) [string length [lindex $matches 1]]
                 if {$mode ne "docstring" &&
-                    [lsearch -exact {init summary postsummary parameter option} $result(state)] >= 0} {
+                    $result(state) in {init summary postsummary parameter option}} {
                     #ruff
                     # As a special case, a parameter definition where the
                     # term begins with a `-` is treated as a option definition.
@@ -753,9 +1333,8 @@ proc ruff::private::parse {lines {mode proc}} {
 }
 
 
-# Note new state may be same as old state
-# (but a new fragment)
-proc ruff::private::change_state {new v_name} {
+# Note new state may be same as old state (but a new fragment)
+proc ruff::private::TBDchange_state {new v_name} {
     upvar 1 $v_name result
 
     # Close off existing state
@@ -835,11 +1414,14 @@ proc ruff::private::distill_docstring {text} {
     # Splits a documentation string to return the documentation lines
     # as a list.
     # text - documentation string to be parsed
-
+    #
+    # If any tabs are present, they are replaced with spaces assuming
+    # a tab stop width of 8.
     
     set lines {}
     set state init
     foreach line [split $text \n] {
+        set line [textutil::tabify::untabify2 $line]
         if {[regexp {^\s*$} $line]} {
             #ruff
             # Initial blank lines are skipped and 
@@ -877,12 +1459,15 @@ proc ruff::private::distill_body {text} {
     # Given a procedure or method body,
     # returns the documentation lines as a list.
     # text - text to be processed to collect all documentation lines.
+    #
     # The first block of contiguous comment lines preceding the 
     # first line of code are treated as documentation lines.
-
+    # If any tabs are present, they are replaced with spaces assuming
+    # a tab stop width of 8.
     set lines {}
     set state init;             # init, collecting or searching
     foreach line [split $text \n] {
+        set line [textutil::tabify::untabify2 $line]
         set line [string trim $line]; # Get rid of whitespace
         if {$line eq ""} {
             # Blank lines.
@@ -955,66 +1540,31 @@ proc ruff::private::extract_docstring {text} {
     # as described in the documentation for the distill_docstring
     # and parse commands. The result is further processed to
     # return a list of type and value elements described below:
-    # deflist - the corresponding value is another list containing
-    #   definition item name and its value as a string.
-    # bulletlist - the corresponding value is a list of strings
-    #   each being one list item.
-    # paragraph - the corresponding value is a string comprising
-    #   the paragraph.
-    # preformatted - the corresponding value is a string comprising
-    #   preformatted text.
-    # seealso - the corresponding value is a list. Only one seealso
-    #   element will be present in the returned list.
+    #
+    # heading   - The corresponding value is a list comprising the heading level
+    #             and text.
+    # paragraph - The corresponding values is a list containing the lines
+    #             for that paragraph.
+    # list      - The corresponding value is a list of lists with the outer
+    #             list elements being the list items the contents of which
+    #             are the lines.
+    # definitions - The corresponding value is a list of dictionaries, each
+    #             with the keys `term` and `definition`, the latter being
+    #             the list of lines making up the definition.
+    # preformatted - The corresponding value is a list of lines that should
+    #             not be formatted.
+    #
+    # Each element may occur multiple times and are expected to be displayed
+    # in the order of their occurence.
 
-    set paragraphs {}
-
-    # Loop and construct the documentation
-    foreach {type content} [parse [distill_docstring $text] docstring] {
-        switch -exact -- $type {
-            deflist {
-                # Each named list is a list of pairs
-                set deflist {}
-                foreach {name desc} $content {
-                    lappend deflist $name [join $desc " "]
-                }
-                lappend paragraphs deflist $deflist
-            }
-            bulletlist {
-                # Bullet lists are lumped with paragraphs
-                set bulletlist {}
-                foreach desc $content {
-                    lappend bulletlist [join $desc " "]
-                }
-                lappend paragraphs bulletlist $bulletlist
-            }
-            summary {
-                # Do nothing. Summaries are first line in description.
-                set paragraphs [linsert $paragraphs 0 paragraph [join $content " "]]
-            }
-            header {
-                # Content is a pair {header_level, list of lines}
-                lappend paragraphs header [list [lindex $content 0] [join [lindex $content 1] " "]]
-            }
-            paragraph {
-                lappend paragraphs paragraph [join $content " "]
-            }
-            preformatted {
-                lappend paragraphs preformatted [join $content \n]
-            }
-            seealso {
-                # For See Also, all entries need to be collected
-                # $content will be a list of lists
-                lappend seealso {*}[concat {*}$content]
-            }
-            default {
-                error "Text fragments of type '$type' not supported in docstrings"
-            }
-        }
+    set doc [parse_lines [distill_docstring $text] docstring]
+    set result [dict get $doc body]
+    # Just error checking - should not have anykeys other than body
+    dict unset doc body
+    if {[llength [dict keys $doc]]} {
+        app::log_error "Internal error: docstring contains unexpected keys [join [dict keys $doc]]."
     }
-    if {[info exists seealso]} {
-        lappend paragraphs seealso $seealso
-    }
-    return $paragraphs
+    return $result
 }
 
 proc ruff::private::extract_proc {procname} {
@@ -1036,7 +1586,11 @@ proc ruff::private::extract_proc {procname} {
             lappend param_defaults $name $val
         }
     }
-    return [extract_proc_or_method proc $procname [info args $procname] $param_defaults [info body $procname]]
+    return [extract_proc_or_method proc \
+                $procname \
+                [info args $procname] \
+                $param_defaults \
+                [info body $procname]]
 }
 
 proc ruff::private::extract_ensemble {ens} {
@@ -1057,7 +1611,7 @@ proc ruff::private::extract_ensemble {ens} {
 
     array set ens_config [namespace ensemble configure $ens]
     if {[llength $ens_config(-parameters)]} {
-        app::log_error "Skipping ensemble command $ens has it has a non-empty -parameters attribute."
+        app::log_error "Skipping ensemble command $ens (non-empty -parameters attribute)."
     }
 
     if {[llength $ens_config(-subcommands)]} {
@@ -1084,11 +1638,13 @@ proc ruff::private::extract_ensemble {ens} {
             set real_cmd "${ens_config(-namespace)}::$real_cmd"
         }
         if {[info procs $real_cmd] ne "$real_cmd"} {
-            app::log_error "Skipping subcommand \"$cmd\" for ensemble \"$ens\" because it is not a procedure."
+            app::log_error "Skipping subcommand \"$cmd\" for ensemble \"$ens\"\
+                            because it is not a procedure."
             continue
         }
         if {[catch {extract_proc $real_cmd} result]} {
-            app::log_error "Could not retrieve information for \"$real_cmd\" implementing ensemble command \"$ens $cmd\": $result"
+            app::log_error "Could not retrieve information for \"$real_cmd\"\
+                            implementing ensemble command \"$ens $cmd\": $result"
             continue
         }
         dict set result name "$ens $cmd"
@@ -1137,7 +1693,8 @@ proc ruff::private::extract_ooclass_method {class method} {
 }
 
 
-proc ruff::private::extract_proc_or_method {proctype procname param_names param_defaults body {class ""}} {
+proc ruff::private::extract_proc_or_method {proctype procname param_names
+                                            param_defaults body {class ""}} {
     # Helper procedure used by extract_proc and extract_ooclass_method to
     # construct metainformation for a method or proc.
     #  proctype - should be either 'proc' or 'method'
@@ -1154,108 +1711,49 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names param_
     # The metainformation is returned as a dictionary with the following keys:
     #  name - name of the proc or method
     #  parameters - a list of parameters. Each element of the
-    #   list is a pair or a triple, consisting of the parameter name,
-    #   the description and possibly the default value if there is one.
-    #  options - a list of options. Each element is a pair consisting
-    #   of the name and its description.
-    #  description - a list of paragraphs describing the command. The
-    #   list contains preformatted, paragraph, bulletlist and deflist
-    #   elements as described for the extract_docstring command.
-    #  return - a description of the return value of the command
-    #  summary - a copy of the first paragraph if it was present
-    #   before the parameter descriptions.
-    #  source - the source code of the command
-    #  seealso - the corresponding value is a list. Only one seealso
-    #   element will be present in the returned list.
+    #   list is a dictionary with keys term, definition and optionally default.
+    #  body - a list of paragraphs describing the command. The
+    #   list contains heading, preformatted, paragraph, list and definitions
+    #   as described for the [extract_docstring] command.
+    #  returns - a description of the return value of the command (optional)
+    #  summary - a copy of the first paragraph if it was present (optional)
+    #  source - the source code of the command (optional)
+    #  seealso - the corresponding value is a list of symbols (optional).
     #
 
     variable ProgramOptions
-    
+
     array set param_default $param_defaults
     array set params {}
     array set options {}
     set paragraphs {}
 
-    # Loop and construct the documentation
-    foreach {type content} [parse [distill_body $body] $proctype] {
-        switch -exact -- $type {
-            parameter {
-                # For each parameter, check if it is a 
-                # parameter in the proc/method definition
-                foreach {name desc} $content {
-                    if {[lsearch -exact $param_names $name] >= 0} {
-                        set params($name) [join $desc " "]
-                    } else {
-                        # Assume it's a parameter as well. Perhaps it
-                        # might be a possible token in the args parameter
-                        app::log_error "Parameter '$name' not listed in arguments for '$procname'"
-                        set params($name) [join $desc " "]
-                    }
-                }
-            }
-            summary -
-            return {
-                set doc($type) [join $content " "]
-            }
-            deflist {
-                # Named lists are lumped with paragraphs
-                # Each named list is a list of pairs
-                set deflist {}
-                foreach {name desc} $content {
-                    lappend deflist $name [join $desc " "]
-                }
-                lappend paragraphs deflist $deflist
-            }
-            bulletlist {
-                # Bullet lists are lumped with paragraphs
-                set bulletlist {}
-                foreach desc $content {
-                    lappend bulletlist [join $desc " "]
-                }
-                lappend paragraphs bulletlist $bulletlist
-            }
-            option {
-                foreach {name desc} $content {
-                    if {[lsearch -exact $param_names "args"] < 0} {
-                        app::log_error "Documentation for '$procname' contains option '$name' but the procedure definition does not have an 'args' parameter"
-                    }
-                    set options($name) [join $desc " "]
-                }
-            }
-            header {
-                error "Headers not supported in proc or method body"; # TBD - header in proc body
-            }
-            paragraph {
-                lappend paragraphs paragraph [join $content " "]
-            }
-            preformatted {
-                lappend paragraphs preformatted [join $content \n]
-            }
-            seealso {
-                # For See Also, all entries need to be collected
-                # $content will be a list of lists
-                lappend doc(seealso) {*}[concat {*}$content]
-            }
-            default {
-                error "Unknown text fragment type '$type'."
-            }
+    set doc [parse_lines [distill_body $body] $proctype]
+    # doc -> dictionary with keys summary, body, parameters, returns, seealso
+    dict set doc name $procname
+    dict set doc class $class
+    dict set doc proctype $proctype
+
+    # Match up the parameter docs with the passed in parameter info.
+    # First collect the documentated parameters
+    if {[dict exists $doc parameters]} {
+        foreach param [dict get $doc parameters] {
+            # param is a dict with keys term and definition
+            set name [dict get $param term]
+            set params($name) $param
         }
     }
-
-    set doc(name)        $procname
-    set doc(class)       $class
-    set doc(description) $paragraphs
-    set doc(proctype)    $proctype
 
     # Construct parameter descriptions. Note those not listed in the
     # actual proc definition are left out even if they are in the params
     # table
-    set doc(parameters) {}
+    set parameters {}
     foreach name $param_names {
         if {[info exists params($name)]} {
-            set paramdata [dict create name $name description $params($name) type parameter]
+            set paramdata $params($name)
+            unset params($name)
         } else {
-            set paramdata [dict create name $name description "Not documented." type parameter]
+            set paramdata [dict create term $name definition "Not documented." type parameter]
         }
 
         # Check if there is a default
@@ -1263,14 +1761,18 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names param_
             dict set paramdata default $param_default($name)
         }
 
-        lappend doc(parameters) $paramdata
+        dict set paramdata type parameter
+        lappend parameters $paramdata
     }
 
-    # Add the options into the parameter table
-    foreach name [lsort [array names options]] {
-        lappend doc(parameters) [dict create name $name description $options($name) type option]
+    # Add any left over parameters from the documentation.
+    foreach {name paramdata} [array get params] {
+        dict set paramdata type "option"; # Assume option since not in proc definition
+        lappend parameters $paramdata
     }
+    dict set doc parameters $parameters
 
+    # TBD - do we need to extract source even if -includesource is not specified
     set source "$proctype $procname "
     set param_list {}
     foreach name $param_names {
@@ -1292,9 +1794,8 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names param_
         regsub -line -all {^\s*#.*$} $source "" source
         regsub -all {\n{2,}} $source "\n" source
     }
-    set doc(source) $source
-
-    return [dict create {*}[array get doc]]
+    dict set doc source $source
+    return $doc
 }
 
 
@@ -1415,7 +1916,7 @@ proc ruff::private::extract_ooclass {classname args} {
 }
 
 
-proc ruff::private::extract {pattern args} {
+proc ruff::private::extract_procs_and_classes {pattern args} {
     # Extracts metainformation for procs and classes 
     #
     # pattern - glob-style pattern to match against procedure and class names
@@ -1535,10 +2036,19 @@ proc ruff::private::extract_namespace {ns args} {
     #
     # Any additional options are passed on to the extract command.
     #
-    # Returns a dictionary with keys 'classes' and 'procs'. See ruff::private::extract
-    # for details.
-    
-    return [extract ${ns}::* {*}$args]
+    # Returns a dictionary containing information for the namespace.
+
+    # The returned dictionary has keys `preamble`, `classes` and `procs`.
+    # See [extract_docstring] for format of the `preamble` value
+    # and [extract_procs_and_classes] for the others.
+
+    set result [extract_procs_and_classes ${ns}::* {*}$args]
+    if {[info exists ${ns}::_ruffdoc]} {
+        dict set result preamble [extract_docstring [set ${ns}::_ruffdoc]]
+    } else {
+        dict set result preamble {}
+    }
+    return $result
 }
 
 proc ruff::private::extract_namespaces {namespaces args} {
@@ -1547,17 +2057,16 @@ proc ruff::private::extract_namespaces {namespaces args} {
     #
     # Any additional options are passed on to the extract_namespace command.
     #
-    # Returns a dictionary with keys 'classes' and 'procs'. See ruff::private::extract
-    # for details.
-    
-    set procs [dict create]
-    set classes [dict create]
+    # The dictionary returned is keyed by namespace with nested
+    # keys 'classes' and 'procs'. See [extract] for details.
+    #
+    # Returns a dictionary with the namespace information.
+
+    set result [dict create]
     foreach ns $namespaces {
-        set nscontent [extract ${ns}::* {*}$args]
-        set procs   [dict merge $procs [dict get $nscontent procs]]
-        set classes [dict merge $classes [dict get $nscontent classes]]
+        dict set result $ns [extract_namespace $ns {*}$args]
     }
-    return [dict create procs $procs classes $classes]
+    return $result
 }
 
 
@@ -1616,7 +2125,7 @@ proc ruff::private::get_ooclass_method_path {class_name method_name} {
         }
         set method_path [concat $method_path [get_ooclass_method_path $super $method_name]]
     }
-    
+
 
     #ruff
     # Returns an ordered list containing the classes that are searched
@@ -1634,7 +2143,7 @@ proc ruff::private::locate_ooclass_method {class_name method_name} {
     #
     # Returns the name of the implementing class or an empty string
     # if the method is not implemented.
-    
+
     # Note: we CANNOT just calculate a canonical search path for a
     # given class and then search along that for a class that
     # implements a method. The search path itself will depend on the
@@ -1643,7 +2152,7 @@ proc ruff::private::locate_ooclass_method {class_name method_name} {
     # derived class hides a method (this is just one case, there may
     # be others). Luckily, get_ooclass_method_path does exactly this.
 
-    
+
     set class_path [get_ooclass_method_path $class_name $method_name]
 
     if {[llength $class_path] == 0} {
@@ -1695,8 +2204,6 @@ proc ruff::document {formatter namespaces args} {
     #  procedure is also included. Default value is false.
     # -output PATH - if specified, the generated document is written
     #  to the specified file which will overwritten if it already exists.
-    # -append BOOLEAN - if true, the generated document is appended
-    #  to the specified file instead of overwriting it.
     # -title STRING - specifies the title to use for the page
     # -recurse BOOLEAN - if true, child namespaces are recursively
     #  documented.
@@ -1710,7 +2217,6 @@ proc ruff::document {formatter namespaces args} {
     # documentation to the specified file.
 
     array set opts {
-        -append false
         -hidesourcecomments false
         -includeclasses true
         -includeprivate false
@@ -1755,14 +2261,13 @@ proc ruff::document {formatter namespaces args} {
         set namespaces [namespace_tree $namespaces]
     }
 
-    set preamble [dict create]
+    # TBD - make sane the use of -modulename
+    lappend args -modulename $opts(-title)
+
     if {$opts(-preamble) ne ""} {
-        dict lappend preamble "" {*}[extract_docstring $opts(-preamble)]
-    }
-    foreach ns $namespaces {
-        if {[info exists ${ns}::_ruffdoc]} {
-            dict lappend preamble $ns {*}[extract_docstring [set ${ns}::_ruffdoc]]
-        }
+        # TBD - format of -preamble argument passed to formatters
+        # is different so override what was passed in.
+        lappend args -preamble [extract_docstring $opts(-preamble)]
     }
 
     set classprocinfodict [extract_namespaces $namespaces \
@@ -1773,9 +2278,7 @@ proc ruff::document {formatter namespaces args} {
     load_formatter $formatter
     set docs [formatter::${formatter}::generate_document \
                   $classprocinfodict \
-                  {*}$args \
-                  -preamble $preamble \
-                  -modulename $opts(-title)]
+                  {*}$args]
 
     if {$opts(-output) eq ""} {
         return $docs

@@ -527,7 +527,7 @@ proc ruff::formatter::html::symbol_link {sym {scope {}}} {
 }
 
 proc ::ruff::formatter::html::fmtpreformatted {content} {
-    return "<pre class='ruff'>\n[escape $content]\n</pre>\n"
+    return "<pre class='ruff'>\n[escape [join $content \n]]\n</pre>\n"
 }
 
 proc ::ruff::formatter::html::resolve_code_link {link_label scope} {
@@ -607,7 +607,7 @@ proc ruff::formatter::html::ns_link_heading {ns heading} {
     return "[ns_file_base $ns]#[anchor $ns $heading]"
 }
 
-proc ruff::formatter::html::fmtdeflist {listitems args} {
+proc ruff::formatter::html::fmtdefinitions {definitions args} {
 
     # -preformatted is one of both, none, itemname or itemdef
     array set opts {
@@ -617,24 +617,26 @@ proc ruff::formatter::html::fmtdeflist {listitems args} {
     array set opts $args
 
     append doc "<table class='ruff_deflist'>\n"
-    foreach {name desc} $listitems {
+    foreach item $definitions {
+        set def [join [dict get $item definition] " "]
         if {$opts(-preformatted) in {none itemname}} {
-            set desc [md_inline $desc $opts(-scope)]
+            set def [md_inline $def $opts(-scope)]
         }
+        set term [dict get $item term]
         if {$opts(-preformatted) in {none itemdef}} {
-            set name [md_inline $name $opts(-scope)]
+            set term [md_inline $term $opts(-scope)]
         }
-        append doc "<tr><td class='ruff_defitem'>$name</td><td class='ruff_defitem'>$desc</td></tr>\n"
+        append doc "<tr><td class='ruff_defitem'>$term</td><td class='ruff_defitem'>$def</td></tr>\n"
     }
     append doc "</table>\n"
-    
+
     return $doc
 }
 
-proc ruff::formatter::html::fmtbulletlist {listitems {scope {}}} {
+proc ruff::formatter::html::fmtbullets {bullets {scope {}}} {
     append doc "<ul class='ruff'>\n"
-    foreach item $listitems {
-        append doc "<li>[md_inline $item $scope]</li>\n"
+    foreach lines $bullets {
+        append doc "<li>[md_inline [join $lines { }] $scope]</li>\n"
     }
     append doc "</ul>\n"
     return $doc
@@ -720,8 +722,8 @@ proc ruff::formatter::html::fmthead {text level args} {
 }
 
 
-proc ruff::formatter::html::fmtpara {text {scope {}}} {
-    return "<p class='ruff'>[md_inline [string trim $text] $scope]</p>\n"
+proc ruff::formatter::html::fmtpara {lines {scope {}}} {
+    return "<p class='ruff'>[md_inline [string trim [join $lines { }]] $scope]</p>\n"
 }
 
 proc ruff::formatter::html::fmtparas {paras {scope {}}} {
@@ -733,18 +735,18 @@ proc ruff::formatter::html::fmtparas {paras {scope {}}} {
     set doc ""
     foreach {type content} $paras {
         switch -exact -- $type {
-            header {
+            heading {
                 lassign $content level text
                 append doc [fmthead $text $level -scope $scope]
             }
             paragraph {
                 append doc [fmtpara $content $scope]
             }
-            deflist {
-                append doc [fmtdeflist $content -preformatted none -scope $scope]
+            definitions {
+                append doc [fmtdefinitions $content -preformatted none -scope $scope]
             }
-            bulletlist {
-                append doc [fmtbulletlist $content $scope]
+            bullets {
+                append doc [fmtbullets $content $scope]
             }
             preformatted {
                 append doc [fmtpreformatted $content]
@@ -803,7 +805,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     set desclist {};            # For the parameter descriptions
     set arglist {};             # Used later for synopsis
     foreach param $aproc(parameters) {
-        set name [dict get $param name]
+        set name [dict get $param term]
         set desc {}
         if {[dict get $param type] eq "parameter"} {
             lappend arglist [_arg $name]
@@ -811,13 +813,13 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
                 lappend desc "(optional, default [_const [dict get $param default]])"
             }
         }
-        if {[dict exists $param description]} {
-            lappend desc [md_inline [dict get $param description] $scope]
+        if {[dict exists $param definition]} {
+            lappend desc [md_inline [dict get $param definition] $scope]
         } elseif {$name eq "args"} {
             lappend desc "Additional options."
         }
  
-        lappend desclist [_arg $name] [join $desc " "]
+        lappend desclist [list term [_arg $name] definition [join $desc " "]]
     }
 
     if {$aproc(proctype) ne "method"} {
@@ -860,7 +862,7 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
     if {[llength $desclist]} {
         append doc [fmthead Parameters $header_levels(nonav)]
         # Parameters are output as a list.
-        append doc [fmtdeflist $desclist -preformatted both]
+        append doc [fmtdefinitions $desclist -preformatted both]
     }
 
     if {[info exists aproc(return)] && $aproc(return) ne ""} {
@@ -868,9 +870,9 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
         append doc [fmtpara $aproc(return) $scope]
     }
 
-    if {[llength $aproc(description)]} {
+    if {[llength $aproc(body)]} {
         append doc [fmthead "Description" $header_levels(nonav)]
-        append doc [fmtparas $aproc(description) $scope]
+        append doc [fmtparas $aproc(body) $scope]
     }
 
     if {[info exists aproc(seealso)] && [llength $aproc(seealso)]} {
@@ -898,7 +900,6 @@ proc ruff::formatter::html::generate_proc_or_method {procinfo args} {
         append doc "<div id='$src_id' class='ruff_dyn_src'>$note\n<pre>\n[escape $aproc(source)]\n</pre></div>\n"
         append doc "</div>";    # class='ruff_source'
     }
-
 
     return "${doc}\n"
 }
@@ -952,20 +953,20 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
     if {[llength $aclass(superclasses)]} {
         append doc [fmthead Superclasses $header_levels(nonav)]
         # NOTE: Don't sort - order matters! 
-        set class_links [symbol_refs_string [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)]]
+        set class_links [symbol_refs [trim_namespace_multi $aclass(superclasses) $opts(-hidenamespace)]]
         append doc [fmtpara $class_links $scope]
     }
     if {[llength $aclass(mixins)]} {
         append doc [fmthead "Mixins" $header_levels(nonav)]
 
         # Don't sort - order matters!
-        set class_links [symbol_refs_string [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)]]
+        set class_links [symbol_refs [trim_namespace_multi $aclass(mixins) $opts(-hidenamespace)]]
         append doc [fmtpara $class_links $scope]
     }
 
     if {[llength $aclass(subclasses)]} {
         append doc [fmthead "Subclasses" $header_levels(nonav)]
-        set class_links [symbol_refs_string [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)]]
+        set class_links [symbol_refs [trim_namespace_multi $aclass(subclasses) $opts(-hidenamespace)]]
         append doc [fmtpara $class_links $scope]
     }
 
@@ -987,14 +988,16 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
         foreach imp_class [lsort -dictionary [array names external_methods]] {
             set refs [symbol_refs_string $external_methods($imp_class)]
             lappend ext_list \
-                [md_inline [symbol_ref $imp_class] $scope] \
-                [md_inline $refs $imp_class]
+                [list \
+                     term [md_inline [symbol_ref $imp_class] $scope] \
+                     definition [md_inline $refs $imp_class]]
         }
-        append doc [fmtdeflist $ext_list -preformatted both]
+        append doc [fmtdefinitions $ext_list -preformatted both]
     }
     if {[llength $aclass(filters)]} {
         append doc [fmthead "Filters" $header_levels(nonav)]
-        append doc [fmtpara [join [lsort $aclass(filters)] {, }] $scope]
+        # TBD - are these filters linked?
+        append doc [fmtpara $aclass(filters) $scope]
     }
 
     if {[info exists aclass(constructor)] && !$opts(-mergeconstructor)} {
@@ -1049,7 +1052,7 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
         } else {
             set forward_text "Method forwarded to [dict get $info forward]"
             append doc [fmtprochead $aclass(name)::$name -tooltip $forward_text -level $header_levels(method) -cssclass $header_css(method)]
-            append doc [fmtpara $forward_text $scope]
+            append doc [fmtpara [list $forward_text] $scope]
             set method_summaries($aclass(name).$name) \
                 [dict create label \
                      [symbol_link $aclass(name).$name $aclass(name)] \
@@ -1058,13 +1061,12 @@ proc ruff::formatter::html::generate_ooclass {classinfo args} {
         }
     }
 
-    set summary_list {}
-    foreach name [lsort -dictionary [array names method_summaries]] {
-        lappend summary_list [dict get $method_summaries($name) label] [dict get $method_summaries($name) desc]
-    }
+    set summary_list [lmap name [lsort -dictionary [array names method_summaries]] {
+        list term [dict get $method_summaries($name) label] definition [dict get $method_summaries($name) desc]
+    }]
     if {[llength $summary_list]} {
         # append dochdr [fmthead "Method summary" $header_levels(nonav)]
-        append dochdr [fmtdeflist $summary_list -preformatted both]
+        append dochdr [fmtdefinitions $summary_list -preformatted both]
     }
 
     return "$dochdr\n$doc"
@@ -1096,9 +1098,8 @@ proc ::ruff::formatter::html::generate_procs {procinfodict args} {
     #
     # Additional parameters are passed on to the generate_proc procedure.
     #
-    # Returns documentation string in NaturalDocs format with 
-    # procedure descriptions sorted in alphabetical order
-    # within each namespace.
+    # Note does not assume all procs in same namespace though that's
+    # how it is currently called.
 
     set doc ""
     set namespaces [sift_names [dict keys $procinfodict]]
@@ -1134,12 +1135,58 @@ proc ::ruff::formatter::html::section_navigation {namespaces {highlight_ns {}}} 
     return $nav
 }
 
-proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
+proc ::ruff::formatter::html::collect_link_targets {ns ns_content} {
+    variable link_targets
+
+    # Set up a link for the namespace itself
+    set link_targets($ns) [ns_link_symbol $ns $ns]
+
+    # Gather links for preamble headings
+    foreach {type content} [dict get $ns_content preamble] {
+        if {$type eq "heading"} {
+            lassign $content level heading
+            set link_targets($heading) [ns_link_heading $ns $heading]
+            set link_targets(${ns}::$heading) $link_targets($heading)
+        }
+    }
+
+    # Gather links for procs
+    foreach proc_name [dict keys [dict get $ns_content procs]] {
+        fqn! $proc_name
+        ns_member! $ns $proc_name
+        set link_targets(${proc_name}) [ns_link_symbol $ns $proc_name]
+    }
+
+    # Finally gather links for classes and methods
+    # A class name is also treated as a namespace component
+    # although that is not strictly true.
+    foreach {class_name class_info} [dict get $ns_content classes] {
+        ns_member! $ns $class_name
+        set link_targets($class_name) [ns_link_symbol $ns $class_name]
+        set method_info_list [concat [dict get $class_info methods] [dict get $class_info forwards]]
+        foreach name {constructor destructor} {
+            if {[dict exists $class_info $name]} {
+                lappend method_info_list [dict get $class_info $name]
+            }
+        }
+        foreach method_info $method_info_list {
+            # The class name is the scope for methods. Because of how
+            # the link target lookup works, we use the namespace
+            # operator to separate the class from method. We also
+            # store it a second time using the "." separator as that
+            # is how they are sometimes referenced.
+            set method_name [dict get $method_info name]
+            set link_targets(${class_name}::${method_name}) [ns_link_symbol $ns ${class_name}::${method_name}]
+            set link_targets(${class_name}.${method_name}) $link_targets(${class_name}::${method_name}) 
+        }
+    }
+}
+
+proc ::ruff::formatter::html::generate_document {ns_info args} {
     # Produces documentation in HTML format from the passed in
     # class and proc metainformation.
-    #   classprocinfodict - dictionary containing meta information about the 
-    #    classes and procs
-    # The following options may be specified:
+    #   ns_info - dictionary keyed by namespace containing parsed documentation
+    #    about the namespace.
     #   -preamble DICT - a dictionary indexed by a namespace. Each value is
     #    a flat list of pairs consisting of a heading and
     #    corresponding content. These are inserted into the document
@@ -1175,7 +1222,6 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         [list \
              -includesource false \
              -hidenamespace "" \
-             -outdir "." \
              -pagesplit none \
              -titledesc "" \
              -modulename "Reference" \
@@ -1190,42 +1236,19 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     #
 
     # First collect section links
-    foreach {ns ns_content} $opts(-preamble) {
-        foreach {type content} $ns_content {
-            if {$type eq "header"} {
+    if {[info exists opts(-preamble)]} {
+        foreach {type content} $opts(-preamble) {
+            if {$type eq "heading"} {
                 lassign $content level heading
-                set link_targets($heading) [ns_link_heading $ns $heading]
-                set link_targets(${ns}::$heading) $link_targets($heading)
+                set link_targets($heading) [ns_link_heading "" $heading]
             }
-        } 
+        }
     }
 
-    # A class name is also treated as a namespace component
-    # although that is not strictly true.
-    foreach {class_name class_info} [dict get $classprocinfodict classes] {
-        set ns [namespace qualifiers $class_name]
-        set link_targets($class_name) [ns_link_symbol $ns $class_name]
-        set method_info_list [concat [dict get $class_info methods] [dict get $class_info forwards]]
-        foreach name {constructor destructor} {
-            if {[dict exists $class_info $name]} {
-                lappend method_info_list [dict get $class_info $name]
-            }
-        }
-        foreach method_info $method_info_list {
-            # The class name is the scope for methods. Because of how
-            # the link target lookup works, we use the namespace
-            # operator to separate the class from method. We also
-            # store it a second time using the "." separator as that
-            # is how they are sometimes referenced.
-            set method_name [dict get $method_info name]
-            set link_targets(${class_name}::${method_name}) [ns_link_symbol $ns ${class_name}::${method_name}]
-            set link_targets(${class_name}.${method_name}) $link_targets(${class_name}::${method_name}) 
-        }
+    dict for {ns ns_content} $ns_info {
+        collect_link_targets $ns $ns_content
     }
-    foreach proc_name [dict keys [dict get $classprocinfodict procs]] {
-        fqn! $proc_name
-        set link_targets(${proc_name}) [ns_link_symbol [namespace qualifiers $proc_name] $proc_name]
-    }
+
 
     # Generate the header used by all files
     set header {<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">}
@@ -1266,15 +1289,6 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     append footer "</div>";        # <div id='doc3' ...>
     append footer "</body></html>"
 
-
-    # Arrange procs and classes by namespace
-    set info_by_ns [sift_classprocinfo $classprocinfodict]
-
-    # Collect links to namespaces. Need to do this before generating preamble
-    foreach ns [dict keys $info_by_ns] {
-        set link_targets($ns) [ns_link_symbol $ns $ns]
-    }
-
     # Now generate documentation in one of two modes: single page or separate.
     set docs [list ]
 
@@ -1283,10 +1297,9 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
     set doc $header
     append doc "<div id='yui-main'><div class='yui-b'>"
 
-    if {[info exists opts(-preamble)] &&
-        [dict exists $opts(-preamble) ""]} {
+    if {[info exists opts(-preamble)] && $opts(-preamble) ne ""} {
         # Print the toplevel (global stuff)
-        append doc [fmtparas [dict get $opts(-preamble) ""] ""]
+        append doc [fmtparas $opts(-preamble) ""]
     } else {
         # If no preamble was given and we are in multipage mode
         # display a generic message.
@@ -1295,7 +1308,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         }
     }
 
-    set sorted_ns [lsort [dict keys $info_by_ns]]
+    set sorted_ns [lsort [dict keys $ns_info]]
 
     # If not single page, append links to namespace pages and close page
     if {$opts(-pagesplit) ne "none"} {
@@ -1317,23 +1330,20 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
 
         append doc [fmthead $ns 1]
  
-        if {[info exists opts(-preamble)] &&
-            [dict exists $opts(-preamble) $ns]} {
-            # Print the preamble for this namespace
-            append doc [fmtparas [dict get $opts(-preamble) $ns] $ns]
-        }
+        # Print the preamble for this namespace
+        append doc [fmtparas [dict get $ns_info $ns preamble] $ns]
 
-        if {[dict exists $info_by_ns $ns procs]} {
+        if {[dict size [dict get $ns_info $ns procs]]} {
             append doc [fmthead "Commands" 2 -scope $ns]
-            append doc [generate_procs [dict get $info_by_ns $ns procs] \
+            append doc [generate_procs [dict get $ns_info $ns procs] \
                             -includesource $opts(-includesource) \
                             -hidenamespace $opts(-hidenamespace) \
                            ]
         }
 
-        if {[dict exists $info_by_ns $ns classes]} {
+        if {[dict size [dict get $ns_info $ns classes]]} {
             append doc [fmthead "Classes" 2 -scope $ns]
-            append doc [generate_ooclasses [dict get $info_by_ns $ns classes] \
+            append doc [generate_ooclasses [dict get $ns_info $ns classes] \
                             -includesource $opts(-includesource) \
                             -hidenamespace $opts(-hidenamespace) \
                            ]
@@ -1381,7 +1391,7 @@ proc ::ruff::formatter::html::generate_document {classprocinfodict args} {
         append doc $footer
         lappend docs "::" $doc
     }
-        
+ 
     return $docs
 }
 
