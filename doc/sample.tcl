@@ -3,7 +3,7 @@
 
 namespace eval ruff::sample {
     variable _ruffdoc {
-        == Introduction
+        ## Introduction
 
         The code in this namespace illustrates the various documentation
         features in [Ruff!](ruff.html). The corresponding source is
@@ -15,12 +15,12 @@ namespace eval ruff::sample {
         The documentation (such as this section) not specific to a *procedure*
         or *method* is placed in the variable `_ruffdoc` within each namespace.
 
-        == Formatting
+        ## Formatting
 
         The formatting elements may appear both within `_ruffdoc` content
         as well as proc and method comments.
 
-        === Lists
+        ### Lists
 
         This is an **unnumbered list**.
           * First item
@@ -34,17 +34,17 @@ namespace eval ruff::sample {
           itema - Definition of item A
           itemb - Definition of item B
 
-        === Inline formatting
+        ### Inline formatting
 
         Basic markdown inline formatting is supported as
         `code`, *emphasis*, **strong** and ***strong emphasis***.
 
-        === Links
+        ### Links
 
         Links to program elements, e.g. [Derived], and to
         external resources, e.g. [example](https://www.example.com).
 
-        === Preformatted blocks
+        ### Preformatted blocks
 
         ````
         Lines consisting of *3* or more backquotes can be used
