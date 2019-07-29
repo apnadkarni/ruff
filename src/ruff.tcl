@@ -312,7 +312,16 @@ namespace eval ruff {
 
         variable ruff_dir
         set ruff_dir [file dirname [info script]]
-
+        proc ruff_dir {} {
+            variable ruff_dir
+            return $ruff_dir
+        }
+        proc read_ruff_file {fn} {
+            set fd [open [file join [ruff_dir] $fn] r]
+            set data [read $fd]
+            close $fd
+            return $data
+        }
         variable names
         set names(display) "Ruff!"
         set names(longdisplay) "Runtime Function Formatter"
@@ -332,6 +341,10 @@ proc ruff::private::identity {s} {
     return $s
 }
 
+proc ruff::private::ns_canonicalize {name} {
+    return [regsub {:::*} $name ::]
+}
+
 proc ruff::private::fqn? {name} {
     # Returns `1` if $name is fully qualified, else `0`.
     return [string match ::* $name]
@@ -345,7 +358,7 @@ proc ruff::private::fqn! {name} {
 }
 
 proc ruff::private::ns_member! {fqns name} {
-    if {[namespace qualifiers $name] ne $fqns} {
+    if {[namespace qualifiers [ns_canonicalize $name]] ne [ns_canonicalize $fqns]} {
         error "Name \"$name\" does not belong to the \"$fqns\" namespace."
     }
 }
@@ -377,6 +390,48 @@ proc ruff::private::ns_file_base {ns {ext {}}} {
     } else {
         return "[file rootname $ns_file_base_cache($ns)]$ext"
     }
+}
+
+proc ruff::private::markup_escape {text} {
+    # Escapes any characters that might be treated as special for markup.
+    #  text - The text to escape.
+    return [regsub -all {[\\\[\]`*_{}()#]} $text {\\\0}]
+}
+
+proc ruff::private::markup_emphasis {text} {
+    # Returns the markup text for emphasis.
+    #  text - The text to emphasize.
+
+    return "*[markup_escape $text]*"
+
+}
+proc ruff::private::markup_reference {symbol} {
+    # Returns the markup text for cross-referencing a symbol.
+    #  symbol - the symbol to reference
+    return "\[$symbol\]"
+}
+
+proc ruff::private::markup_code {text} {
+    # Returns $text marked up as code using Ruff! syntax.
+    #  text - String to markup.
+
+    # If text contains backticks, markup is more complicated.
+    if {[string first "`" $text] < 0} {
+        return "`$text`"
+    }
+
+    # Find the longest consecutive sequence of `
+    set matches [regexp -all -inline {`+} $text]
+    set n 0
+    foreach match $matches {
+        if {[string length $match] > $n} {
+            set n [string length $match]
+        }
+    }
+    # Number of backticks required is one more than max length of matches
+    set sep [string repeat ` [incr n]]
+    # Need to separate with spaces.
+    return "$sep $text $sep"
 }
 
 proc ruff::private::regexp_escape {s} {
@@ -755,17 +810,12 @@ proc ruff::private::parse_returns_state {statevar} {
             fence -
             bullet -
             definition -
+            blank -
             seealso -
+            preformatted -
             returns {
-                # To be considered as part of the return statement, the
-                # line must be at a greater indent. Else a new block.
-                # Note this applies to another return block as well.
-                if {[dict get $state(parsed) Indent] <= $block_indent} {
-                    break
-                }
-                # Note cannot use $text here since that will not contain
-                # the full line for these elements
-                lappend lines [string trimleft $line]
+                # All special lines terminate normal paragraphs
+                break
             }
             continuation {
                 lappend lines $text
@@ -778,12 +828,6 @@ proc ruff::private::parse_returns_state {statevar} {
                 }
                 lappend lines $text
             }
-            preformatted {
-                break
-            }
-            blank {
-                break;          # Terminates the paragraph
-            }
             default {
                 error "Unexpected type [dict get $state(parsed) Type]"
             }
@@ -793,10 +837,14 @@ proc ruff::private::parse_returns_state {statevar} {
         if {$state(mode) eq "docstring"} {
             lappend state(body) paragraph $lines
         } else {
-            lappend state(return) $lines
+            lappend state(returns) {*}$lines
         }
     } 
-    set state(state) body
+    if {$state(mode) ne "docstring" && $state(state) eq "init"} {
+        set state(state) postsummary
+    } else {
+        set state(state) body
+    }
 }
 
 proc ruff::private::parse_bullets_state {statevar} {
@@ -1037,7 +1085,7 @@ proc ruff::private::parse_lines {lines {mode proc}} {
     set state(body)  {};        # list of alternating type and content
     # Following may be set during parsing
     # set state(summary) {};      # Summary paragraph
-    # set state(return)  {};      # list of paragraphs
+    # set state(returns)  {};      # list of paragraphs
     # set state(seealso) {};      # list of symbol references
     # set state(parameters) {};   # Parameter definition list
 
@@ -1735,7 +1783,7 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names
     dict set doc proctype $proctype
 
     # Match up the parameter docs with the passed in parameter info.
-    # First collect the documentated parameters
+    # First collect the documented parameters
     if {[dict exists $doc parameters]} {
         foreach param [dict get $doc parameters] {
             # param is a dict with keys term and definition
@@ -2175,6 +2223,8 @@ proc ruff::private::locate_ooclass_method {class_name method_name} {
 
 proc ruff::private::load_formatters {} {
     # Loads all available formatter implementations
+    uplevel #0 source formatter.tcl
+    return
     foreach formatter {html markdown} {
         load_formatter $formatter
     }
@@ -2275,11 +2325,16 @@ proc ruff::document {formatter namespaces args} {
                                -includeprocs $opts(-includeprocs) \
                                -includeprivate $opts(-includeprivate)]
 
-    load_formatter $formatter
-    set docs [formatter::${formatter}::generate_document \
-                  $classprocinfodict \
-                  {*}$args]
-
+    if {1} {
+        set obj [formatter::Html new]
+        set docs [$obj generate_document $classprocinfodict {*}$args]
+        $obj destroy
+    } else {
+        load_formatter $formatter
+        set docs [formatter::${formatter}::generate_document \
+                      $classprocinfodict \
+                      {*}$args]
+    }
     if {$opts(-output) eq ""} {
         return $docs
     }
