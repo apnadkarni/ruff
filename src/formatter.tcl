@@ -1008,7 +1008,8 @@ oo::class create ruff::formatter::Html {
             }
             dict set linkinfo label $text
             dict set NavigationLinks $anchor $linkinfo
-            set heading "<a name='$anchor'>[my ToHtml $text $scope]</a>"
+            # NOTE: <a></a> empty because the text itself may contain anchors.
+            set heading "<a name='$anchor'></a>[my ToHtml $text $scope]"
         } else {
             set heading [my ToHtml $text $scope]
         }
@@ -1082,8 +1083,12 @@ oo::class create ruff::formatter::Html {
         my AddHeading nonav Synopsis $scope
         lassign $synopsis cmds params
         set cmds   "<span class='ruff_cmd'>[my Escape [join $cmds { }]]</span>"
-        set params "<span class='ruff_arg'>[my Escape [join $params { }]]</span>"
-        append Document "<p><div class='ruff_synopsis'>$cmds $params</div></p>\n"
+        if {[llength $params]} {
+            set params "<span class='ruff_arg'>[my Escape [join $params { }]]</span>"
+        } else {
+            set params ""
+        }
+        append Document "<div class='ruff_synopsis'>$cmds $params</div>\n"
         return
     }
 

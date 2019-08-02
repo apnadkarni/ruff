@@ -55,6 +55,10 @@ p.linkline {
     float: right;
 }
 
+h1 .tinylink a {
+    color: white;
+}
+
 #bd {
 font-family: Arial, sans-serif;
 font-size: 108%;
