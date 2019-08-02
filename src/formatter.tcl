@@ -886,8 +886,9 @@ oo::class create ruff::formatter::Html {
         # Implements the [Formatter.Begin] method for HTML.
 
         # Generate the header used by all files
-        set Header {<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">}
-        append Header "<html><head>\n"
+        # set Header {<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">}
+        set Header "<!DOCTYPE html>"
+        append Header "<html><head><meta charset=\"utf-8\"/>\n"
         # append Header "<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans|Noto+Serif|Droid+Sans+Mono'>"
         set titledesc [my Option -titledesc]
         append Header "<title>$titledesc</title>\n"

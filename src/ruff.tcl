@@ -2344,6 +2344,7 @@ proc ruff::document {formatter namespaces args} {
     foreach {ns doc} $docs {
         set fn [private::ns_file_base $ns]
         set fd [open [file join $dir $fn] w]
+        fconfigure $fd -encoding utf-8
         if {[catch {
             puts $fd $doc
         } msg]} {
