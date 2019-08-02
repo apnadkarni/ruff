@@ -132,6 +132,7 @@ span.ns_scope a:hover {
 
 table {
   margin: 1em;
+  margin-top: 0.5em;
   border: thin solid;
   border-collapse: collapse;
   border-color: #808080;
@@ -143,11 +144,14 @@ td {
   border-color: #808080;
   vertical-align: top;
   font-size: 93%;
+  padding: 0.3em;
+  padding-top: 0.1em;
 }
 th {
   border: thin solid;
   border-color: #808080;
-  padding: 4px;
+  padding: 0.3em;
+  padding-top: 0.1em;
   background-color: #CCCCCC;
 }
 
@@ -181,7 +185,7 @@ h4.ruffclass, h4.ruffproc, h4.ruffmethod,
 h5.ruffclass, h5.ruffproc, h5.ruffmethod {
     border-bottom: thin solid #006666;
     color: #006666;
-    margin-bottom: 0em;
+    margin-bottom: 0.2em;
 }
 
 pre {
@@ -205,7 +209,7 @@ pre {
     font-size: smaller;
     font-family: Consolas, "Courier New", monospace;
     padding: 5px;
-    margin: 0px 50px 20px;
+    margin: 0em 2em 1em;
 }
 .ruff_const, .ruff_cmd, ruff_defitem {
     font-weight: bold;
@@ -214,4 +218,8 @@ pre {
 .ruff_arg {
     font-style: italic;
     font-family: Consolas, "Courier New", monospace;
+}
+
+.ruff_source_link {
+    font-size: smaller;
 }

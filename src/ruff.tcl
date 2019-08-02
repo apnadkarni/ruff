@@ -1,6 +1,6 @@
 # Copyright (c) 2009-2019, Ashok P. Nadkarni
 # All rights reserved.
-# See the file WOOF_LICENSE in the Woof! root directory for license
+# See the file LICENSE in the source root directory for license.
 
 # Ruff! - RUntime Formatting Function
 # ...a document generator using introspection
@@ -2223,20 +2223,19 @@ proc ruff::private::locate_ooclass_method {class_name method_name} {
 
 proc ruff::private::load_formatters {} {
     # Loads all available formatter implementations
-    uplevel #0 source formatter.tcl
-    return
-    foreach formatter {html markdown} {
+    foreach formatter {html } {
         load_formatter $formatter
     }
 }
 
-proc ruff::private::load_formatter {formatter {force false}} {
+proc ruff::private::load_formatter {formatter} {
     # Loads the specified formatter implementation
     variable ruff_dir
-    set fmt_cmd [namespace parent]::formatter::${formatter}::generate_document
-    if {[info commands $fmt_cmd] eq "" || $force} {
-        uplevel #0 [list source [file join $ruff_dir ${formatter}_formatter.tcl]]
+    set class [namespace parent]::formatter::[string totitle $formatter]
+    if {![info object isa class $class]} {
+        uplevel #0 [list source [file join $ruff_dir formatter_${formatter}.tcl]]
     }
+    return $class
 }
 
 proc ruff::document {formatter namespaces args} {
@@ -2325,16 +2324,10 @@ proc ruff::document {formatter namespaces args} {
                                -includeprocs $opts(-includeprocs) \
                                -includeprivate $opts(-includeprivate)]
 
-    if {1} {
-        set obj [formatter::Html new]
-        set docs [$obj generate_document $classprocinfodict {*}$args]
-        $obj destroy
-    } else {
-        load_formatter $formatter
-        set docs [formatter::${formatter}::generate_document \
-                      $classprocinfodict \
-                      {*}$args]
-    }
+    set obj [[load_formatter html] new]
+    set docs [$obj generate_document $classprocinfodict {*}$args]
+    $obj destroy
+
     if {$opts(-output) eq ""} {
         return $docs
     }
@@ -2508,7 +2501,7 @@ proc ruff::private::document_self {args} {
     return
 }
 
-ruff::private::load_formatters
+source [file join $::ruff::private::ruff_dir formatter.tcl]
 
 ################################################################
 #### Application overrides
