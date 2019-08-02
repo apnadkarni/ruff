@@ -673,7 +673,15 @@ oo::class create ruff::formatter::Formatter {
             # The method names need to be escaped and linked.
             my AddDefinitions [lmap definition $method_summaries {
                 set term [dict get $definition term]
-                dict set definition term [markup_reference $term]
+                # TBD - The resolution currently only searches the namespace
+                # hierarchy, not the class hierarchy so methods defined
+                # in superclasses/mixins etc. will not be found. So
+                # those we just mark as code.
+                if {[my ResolvableReference? $term $scope dontcare]} {
+                    dict set definition term [markup_reference $term]
+                } else {
+                    dict set definition term [markup_code $term]
+                }
             }] $scope none
         }
         foreach var {superclasses mixins subclasses filters} {
