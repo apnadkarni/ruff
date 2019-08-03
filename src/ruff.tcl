@@ -13,8 +13,7 @@ package require textutil::tabify
 namespace eval ruff {
     variable version 0.6.0
 
-    variable _ruffdoc
-    set _ruffdoc {
+    variable _ruff_preamble {
         ## Introduction
 
         Ruff! (Runtime function formatter) is a documentation generation system
@@ -27,8 +26,8 @@ namespace eval ruff {
 
         ## Why Ruff!
 
-        In comparison with other source code based documentation generators, Ruff!
-        produces documentation that not only requires less effort from the
+        In comparison with other source code based documentation generators,
+        Ruff! produces documentation that not only requires less effort from the
         programmer, but is also more complete, more accurate and more
         maintainable.
 
@@ -62,11 +61,20 @@ namespace eval ruff {
         and the full API for a class, with inherited and mixed-in methods, is
         easily seen.
 
-        The Ruff! documentation itself, along with the associated [sample],
-        is produced with Ruff!. For larger examples (though with older versions)
+        The Ruff! documentation itself is produced with Ruff!.
+        For larger examples (though with older versions)
         are the reference pages for [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
         and [CAWT](http://www.posoft.de/download/extensions/Cawt/CawtReference-1.2.0.html).
 
+        ## Documentation
+
+        The [::ruff] reference page describes the Ruff! documentation generation
+        API. The [::ruff::sample] page shows some sample output for some of the
+        Ruff! features along with the associated source code from which
+        it was generated.
+
+    }
+    variable _ruffdoc {
         ## Usage
 
         Ruff! is not intended to be a standalone script. Rather the package
@@ -855,6 +863,10 @@ proc ruff::private::parse_bullets_state {statevar} {
     set marker    [dict get $state(parsed) Marker]
     set block_indent [dict get $state(parsed) Indent]
 
+    # between_bullets keeps track of blank lines. If a list item follow
+    # a sequence of blank lines, it continues the list. Any other line
+    # type will terminate the list.
+    set between_bullets false
     while {[incr state(index)] < $state(nlines)} {
         set line [lindex $state(lines) $state(index)]
         set state(parsed) [parse_line $line $state(mode) $block_indent]
@@ -865,6 +877,10 @@ proc ruff::private::parse_bullets_state {statevar} {
             fence -
             definition -
             seealso {
+                # If we are between bullets, this does not continue the list.
+                if {$between_bullets} {
+                    break
+                }
                 if {[dict get $state(parsed) Indent] <= $block_indent} {
                     # List element and list terminated if a block starter
                     # appears at the same or less indentation. Note this is
@@ -878,8 +894,14 @@ proc ruff::private::parse_bullets_state {statevar} {
             }
             continuation {
                 lappend list_elem $text
+                set between_bullets false
             }
             normal {
+                # If we are between bullets, this does not continue the list.
+                if {$between_bullets} {
+                    break
+                }
+
                 # If the indent is less than that of list element
                 # treat as a new paragraph. This differs from Markdown
                 # which treats it as part of the list item.
@@ -889,6 +911,10 @@ proc ruff::private::parse_bullets_state {statevar} {
                 lappend list_elem $text
             }
             preformatted {
+                # If we are between bullets, this does not continue the list.
+                if {$between_bullets} {
+                    break
+                }
                 # As in markdown list continuation prioritized over preformatted
                 lappend list_elem [string trim $text]
             }
@@ -901,6 +927,7 @@ proc ruff::private::parse_bullets_state {statevar} {
                     lappend list_block $list_elem
                     set list_elem {}
                 }
+                set between_bullets true
             }
             bullet {
                 if {[dict get $state(parsed) Marker] ne $marker} {
@@ -910,6 +937,7 @@ proc ruff::private::parse_bullets_state {statevar} {
                     lappend list_block $list_elem
                 }
                 set list_elem [list $text]
+                set between_bullets false
             }
             default {
                 error "Unexpected type [dict get $state(parsed) Type]"
@@ -2453,22 +2481,12 @@ proc ruff::private::document_self {args} {
     file mkdir $opts(-outdir)
     set namespaces [list ::ruff ::ruff::sample]
     set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"
-    set preamble {
-        ## About Ruff!
-
-        Ruff! is a documentation generator for Tcl.
-
-        Follow the links on the
-        left for reference pages or sample output.
-    }
     set common_args [list \
                          -recurse $opts(-includeprivate) \
                          -titledesc $title \
                          -pagesplit $opts(-pagesplit) \
+                         -preamble $::ruff::_ruff_preamble \
                          -version $::ruff::version]
-    if {$opts(-pagesplit) ne "none"} {
-        lappend common_args -preamble $preamble
-    }
     switch -exact -- $opts(-formatter) {
         doctools {
             error "Formatter '$opts(-formatter)' not implemented for generating Ruff! documentation."
