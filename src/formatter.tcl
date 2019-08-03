@@ -831,7 +831,7 @@ oo::class create ruff::formatter::Formatter {
             my AddParagraphs $preamble ""
         }
         if {[my Option -pagesplit none] ne "none"} {
-            my DocumentEnd
+            lappend docs :: [my DocumentEnd]
         }
 
         foreach ns [my SortedNamespaces] {
