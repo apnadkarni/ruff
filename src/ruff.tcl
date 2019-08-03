@@ -2223,7 +2223,7 @@ proc ruff::private::locate_ooclass_method {class_name method_name} {
 
 proc ruff::private::load_formatters {} {
     # Loads all available formatter implementations
-    foreach formatter {html } {
+    foreach formatter {html markdown} {
         load_formatter $formatter
     }
 }
@@ -2324,7 +2324,7 @@ proc ruff::document {formatter namespaces args} {
                                -includeprocs $opts(-includeprocs) \
                                -includeprivate $opts(-includeprivate)]
 
-    set obj [[load_formatter html] new]
+    set obj [[load_formatter $formatter] new]
     set docs [$obj generate_document $classprocinfodict {*}$args]
     $obj destroy
 

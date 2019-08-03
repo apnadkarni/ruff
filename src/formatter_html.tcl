@@ -296,54 +296,6 @@ oo::class create ruff::formatter::Html {
         return
     }
 
-    method AddProcedure {procinfo} {
-        # See [Formatter.AddProcedure].
-        #  procinfo - dictionary describing the procedure.
-        dict with procinfo {
-            # Creates the following locals
-            #  proctype, display_name, fqn, synopsis, parameters, summary,
-            #  body, seealso, returns, source
-            #
-            # Only the fqn and proctype are mandatory.
-        }
-
-        set scope [namespace qualifiers $fqn]
-        if {[info exists summary]} {
-            my AddProgramElementHeading proc $fqn $summary
-            my AddParagraph $summary $scope
-        } else {
-            my AddProgramElementHeading proc $fqn
-        }
-
-        if {[info exists synopsis]} {
-            my AddSynopsis $synopsis $scope
-        }
-
-        if {[info exists parameters]} {
-            my AddParameters $parameters $scope
-        }
-
-        if {[info exists returns]} {
-            my AddHeading nonav "Return value" $scope
-            my AddParagraph $returns $scope
-        }
-
-        if {[info exists body] && [llength $body]} {
-            my AddHeading nonav Description $scope
-            my AddParagraphs $body $scope
-        }
-
-        if {[info exist seealso]} {
-            my AddReferences $seealso $scope "See also"
-        }
-
-        if {[info exists source]} {
-            my AddSource $source $scope
-        }
-
-        return
-    }
-
     method Navigation {{highlight_ns {}}} {
         # Adds the navigation box to the document.
         #  highlight_ns - Namespace to be highlighted in navigation.
