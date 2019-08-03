@@ -2,7 +2,7 @@
 # features. It also serves as test input.
 
 namespace eval ruff::sample {
-    variable _ruffdoc {
+    variable _ruff_preamble {
         ## Introduction
 
         The code in this namespace illustrates the various documentation

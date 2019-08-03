@@ -17,5 +17,5 @@ This last may be added back in a future release on demand.
 * Variable references beginning with `$` within comments are formatted as such.
 * List element continuation is different, particularly with respect to leading
 whitespace. *Incompatibility*
-* The format of `_ruffdoc` contents has changed. See the documentation. *Incompatibility*
+* The use of `_ruffdoc` is deprecated. Use _ruff_preamble instead.
 * Requires Tcl 8.6. 8.4/8.5 are not supported. *Incompatibility* Note this does not mean you cannot use Ruff! to document packages that support those versions!
