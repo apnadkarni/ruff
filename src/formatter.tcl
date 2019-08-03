@@ -130,10 +130,10 @@ oo::class create ruff::formatter::Formatter {
         # Construct a definition block for the parameters
         set definitions [lmap param $parameters {
             set definition [dict get $param definition]
-            set term [markup_code [dict get $param term]]
+            set term [my FormatInline [markup_code [dict get $param term]]]
             dict create term $term definition $definition
         }]
-        my AddDefinitions $definitions $scope none
+        my AddDefinitions $definitions $scope term
         return
     }
 
@@ -863,5 +863,221 @@ oo::class create ruff::formatter::Formatter {
         }
 
         return $docs
+    }
+
+    method FormatInline {text {scope {}}} {
+        # Converts Ruff! inline formatting to the output format.
+        #  text - Inline text to convert.
+        #  scope - Documentation scope for resolving references.
+        # This method should be overridden by the concrete subclass.
+        error "Method FormatInline not overridden."
+    }
+
+    # Credits: tcllib/Caius markdown module
+    # This method is here and not in the Html class because other subclasses
+    # (notably markdown) also need to use ruff->html inline conversion.
+    method ToHtml {text {scope {}}} {
+        set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
+        set index 0
+        set result {}
+
+        set re_backticks   {\A`+}
+        set re_whitespace  {\s}
+        set re_inlinelink  {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\]\s*\(\s*((?:[^\s\)]+|\([^\s\)]+\))+)?(\s+([\"'])(.*)?\4)?\s*\)}
+        set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\s*\[((?:[^\]]|\[[^\]]*?\])*)\])?}
+        set re_htmltag     {\A</?\w+\s*>|\A<\w+(?:\s+\w+=(?:\"[^\"]+\"|\'[^\']+\'))*\s*/?>}
+        set re_autolink    {\A<(?:(\S+@\S+)|(\S+://\S+))>}
+        set re_comment     {\A<!--.*?-->}
+        set re_entity      {\A\&\S+;}
+
+        while {[set chr [string index $text $index]] ne {}} {
+            switch $chr {
+                "\\" {
+                    # ESCAPES
+                    set next_chr [string index $text [expr $index + 1]]
+
+                    if {[string first $next_chr {\`*_\{\}[]()#+-.!>|}] != -1} {
+                        set chr $next_chr
+                        incr index
+                    }
+                }
+                {_} {
+                    # Unlike Markdown, do not treat underscores as special char
+                }
+                {*} {
+                    # EMPHASIS
+                    if {[regexp $re_whitespace [string index $result end]] &&
+                        [regexp $re_whitespace [string index $text [expr $index + 1]]]} \
+                        {
+                            #do nothing
+                        } \
+                        elseif {[regexp -start $index \
+                                     "\\A(\\$chr{1,3})((?:\[^\\$chr\\\\]|\\\\\\$chr)*)\\1" \
+                                     $text m del sub]} \
+                        {
+                            switch [string length $del] {
+                                1 {
+                                    append result "<em>[my ToHtml $sub $scope]</em>"
+                                }
+                                2 {
+                                    append result "<strong>[my ToHtml $sub $scope]</strong>"
+                                }
+                                3 {
+                                    append result "<strong><em>[my ToHtml $sub $scope]</em></strong>"
+                                }
+                            }
+
+                            incr index [string length $m]
+                            continue
+                        }
+                }
+                {`} {
+                    # CODE
+                    regexp -start $index $re_backticks $text m
+                    set start [expr $index + [string length $m]]
+
+                    if {[regexp -start $start -indices $m $text m]} {
+                        set stop [expr [lindex $m 0] - 1]
+
+                        set sub [string trim [string range $text $start $stop]]
+
+                        append result "<code>[my Escape $sub]</code>"
+                        set index [expr [lindex $m 1] + 1]
+                        continue
+                    }
+                }
+                {!} -
+                "[" {
+                    # Note: "[", not {[} because latter messes Emacs indentation
+                    # LINKS AND IMAGES
+                    if {$chr eq {!}} {
+                        set ref_type img
+                    } else {
+                        set ref_type link
+                    }
+
+                    set match_found 0
+                    set css ""
+
+                    if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
+                        # INLINE
+                        incr index [string length $m]
+
+                        set url [my Escape [string trim $url {<> }]]
+                        set txt [my ToHtml $txt $scope]
+                        set title [my ToHtml $title $scope]
+
+                        set match_found 1
+                    } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
+                        if {$lbl eq {}} {
+                            set lbl [regsub -all {\s+} $txt { }]
+                        }
+
+                        if {[my ResolvableReference? $lbl $scope code_link]} {
+                            # RUFF CODE REFERENCE
+                            set url [my Escape [dict get $code_link ref]]
+                            set txt [my Escape [dict get $code_link label]]
+                            set title $txt
+                            if {[dict get $code_link type] eq "symbol"} {
+                                set css "class='ruff_cmd'"
+                            }
+                            incr index [string length $m]
+                            set match_found 1
+                        } else {
+                            app::log_error "Warning: no target found for link \"$lbl\". Assuming markdown reference."
+                            set lbl [string tolower $lbl]
+
+                            if {[info exists ::Markdown::_references($lbl)]} {
+                                lassign $::Markdown::_references($lbl) url title
+
+                                set url [my Escape [string trim $url {<> }]]
+                                set txt [my ToHtml $txt $scope]
+                                set title [my ToHtml $title $scope]
+
+                                # REFERENCED
+                                incr index [string length $m]
+                                set match_found 1
+                            }
+                        }
+                    }
+                    # PRINT IMG, A TAG
+                    if {$match_found} {
+                        if {$ref_type eq {link}} {
+                            if {$title ne {}} {
+                                append result "<a href=\"$url\" title=\"$title\" $css>$txt</a>"
+                            } else {
+                                append result "<a href=\"$url\" $css>$txt</a>"
+                            }
+                        } else {
+                            if {$title ne {}} {
+                                append result "<img src=\"$url\" alt=\"$txt\" title=\"$title\" $css/>"
+                            } else {
+                                append result "<img src=\"$url\" alt=\"$txt\" $css/>"
+                            }
+                        }
+
+                        continue
+                    }
+                }
+                {<} {
+                    # HTML TAGS, COMMENTS AND AUTOLINKS
+                    if {[regexp -start $index $re_comment $text m]} {
+                        append result $m
+                        incr index [string length $m]
+                        continue
+                    } elseif {[regexp -start $index $re_autolink $text m email link]} {
+                        if {$link ne {}} {
+                            set link [my Escape $link]
+                            append result "<a href=\"$link\">$link</a>"
+                        } else {
+                            set mailto_prefix "mailto:"
+                            if {![regexp "^${mailto_prefix}(.*)" $email mailto email]} {
+                                # $email does not contain the prefix "mailto:".
+                                set mailto "mailto:$email"
+                            }
+                            append result "<a href=\"$mailto\">$email</a>"
+                        }
+                        incr index [string length $m]
+                        continue
+                    } elseif {[regexp -start $index $re_htmltag $text m]} {
+                        append result $m
+                        incr index [string length $m]
+                        continue
+                    }
+
+                    set chr [my Escape $chr]
+                }
+                {&} {
+                    # ENTITIES
+                    if {[regexp -start $index $re_entity $text m]} {
+                        append result $m
+                        incr index [string length $m]
+                        continue
+                    }
+
+                    set chr [my Escape $chr]
+                }
+                {$} {
+                    # Ruff extension - treat $var as variables name
+                    # Note: no need to escape characters but do so
+                    # if you change the regexp
+                    if {[regexp -start $index {\$\w+} $text m]} {
+                        append result "<code>$m</code>"
+                        incr index [string length $m]
+                        continue
+                    }
+                }
+                {>} -
+                {'} -
+                "\"" {
+                    # OTHER SPECIAL CHARACTERS
+                    set chr [my Escape $chr]
+                }
+                default {}
+            }
+            append result $chr
+            incr index
+        }
+        return $result
     }
 }

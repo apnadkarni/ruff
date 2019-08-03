@@ -179,11 +179,15 @@ oo::class create ruff::formatter::Markdown {
         #                 indicating which fields of the definition are
         #                 are already formatted.
 
-        # Note: CommonMark does not recognize tables without a heading line
-        if {1} {
+        if {0} {
+            # This does not escape <> properly. Moreover, cmark seems
+            # to handle `` within html tags differently depending on whether
+            # the tag is (e.g.) <b> or <td>
             append Document "\n<table><tbody>\n"
             foreach item $definitions {
                 set def [join [dict get $item definition] " "]
+                # Note: since we are generating raw HTML here, we have to
+                # use ToHtml and not ToMarkdown here.
                 if {$preformatted in {none term}} {
                     set def [my ToMarkdown $def $scope]
                 }
@@ -199,9 +203,11 @@ oo::class create ruff::formatter::Markdown {
             }
             append Document "</tbody></table>\n"
         } else {
+            # Note: CommonMark does not recognize tables without a heading line
             # TBD - how do empty headers look in generated HTML?
-            append Document "|||\n|----|----|\n"
-            foreach {name desc} $listitems {
+            append Document "\n|||\n|----|----|\n"
+            foreach item $definitions {
+                set def [join [dict get $item definition] " "]
                 if {$preformatted in {none term}} {
                     set def [my ToMarkdown $def $scope]
                 }
@@ -244,7 +250,7 @@ oo::class create ruff::formatter::Markdown {
 
         # my AddHeading nonav Synopsis $scope
         lassign $synopsis cmds params
-        append Document "\n> `[join $cmds { }]` *`[join $params { }]`*"
+        append Document "\n> `[join $cmds { }]` *`[join $params { }]`*\n"
         return
     }
 
@@ -455,7 +461,9 @@ oo::class create ruff::formatter::Markdown {
                 append result $chr
                 incr index
             }
-            
+
             return $result
         }
-    };                              # 
+
+        forward FormatInline my ToMarkdown
+    }
