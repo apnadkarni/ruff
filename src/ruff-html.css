@@ -125,6 +125,10 @@ span.ns_scope a:link, span.ns_scope a:visited {
 
 }
 
+li {
+  margin-top: 0.5em;
+}
+
 span.ns_scope a:hover {
   text-decoration: none;
   color: #666666;

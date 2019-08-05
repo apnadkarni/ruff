@@ -27,35 +27,32 @@ namespace eval ruff {
         ## Why Ruff!
 
         In comparison with other source code based documentation generators,
-        Ruff! produces documentation that not only requires less effort from the
-        programmer, but is also more complete, more accurate and more
-        maintainable.
-
-        Ruff! saves the programmer the initial effort required for
-        documentation:
+        Ruff! produces documentation that not only requires less duplication
+        of effort from the programmer, but is also more complete, more
+        accurate and more maintainable.
 
         * Comments in source code do not have to be
         reproduced for documentation purposes.
-        * Ruff! requires minimal
-        markup in the comments making it very lightweight.
-        * Program elements
-        like command arguments and defaults and relatonships like
-        inheritance are automatically derived.
+
+        * Ruff! requires minimal markup in the comments making it lightweight
+        as well as reducing clutter.
+
+        * Program elements like command arguments, defaults and 
+        class relationships like inheritance are automatically derived.
 
         Further, maintaining documentation in sync with the code is much
         easier. For example, changing the defaults for arguments, or adding
-        a mix-in to a class, is taken care of with no additional
-        effort needed to document the changes.
-
+        a mix-in to a class, is automatically taken care of.
+        
         On the output side,
 
         * Ruff! supports multiple formats (currently HTML and Markdown).
+        Additional formats can be added through subclassing.
 
-        * Generated documentation can be within a single page or across multiple
-          pages, one per namespace.
+        * Generated documentation can optionally be split across multiple pages.
 
         * Hyperlinks between program elements, and optionally source code,
-        making navigation easy and efficient.
+        make navigation easy and efficient.
 
         * In object oriented code, class relationships are extracted
         and the full API for a class, with inherited and mixed-in methods, is
@@ -87,26 +84,46 @@ namespace eval ruff {
         Once loaded, you can use the [document] command to document
         classes and commands within one or more namespaces.
 
-        The following command will create the file `NS.html` using the
-        built-in HTML formatter.
+        The following command will document the `ns` namespace using
+        the built-in HTML formatter.
         ````
         package require ruff
-        ::ruff::document html [list ::NS] -output NS.html -recurse true
+        ::ruff::document html [list ::NS] -output NS.html
         ````
-        Refer to [document] for various options that control the
-        content included in the documentation.
+
+        The following will document the namespace and its children,
+        splitting the output across multiple pages.
+        ````
+        ::ruff::document html [list ::NS] -output NS.html -recurse true -pagesplit namespace
+        ````
+        Refer to [document] for various other options.
 
         ## Documenting procedures
 
         Ruff! generates documentation using Tcl's runtime system to gather
-        proc definitions. Comments in procedure bodies are further parsed to
-        extract the documentation for the procedure.
+        proc and class definitions. Comments in procedure and method
+        bodies are further parsed to extract the documentation.
 
         The structure Ruff! expects is described below. In practice,
         the structure is simple and intuitive though the description may be
         a bit long winded. You can simply look at the documentation
-        of the [sample] namespace instead, and click on the `Show source`
-        links for each procedure or class there to see the formatting.
+        of the [sample] namespace instead, and click on the **Show source**
+        links for each procedure or method there to see the formatting.
+
+        ```
+        proc ruff::sample::character_at {text {pos 0}} {
+            # Returns the character at index $pos in a string $text.
+            #  text - Text string.
+            #  pos  - Character position. Negative positions are
+            #         interpreted from end of string.
+            if {$pos < 0 || $pos >= [string length $text]} {
+                #ruff
+                # The command raises an error if $pos is not within bounds.
+                error "Index $pos out of bounds"   
+            }
+            return [string index $text $pos]
+        }
+        ```
 
         The first block of comments within a procedure that appear before
         the first line of code are always processed by Ruff!. Note preceding
