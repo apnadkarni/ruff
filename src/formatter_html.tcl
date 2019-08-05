@@ -332,7 +332,8 @@ oo::class create ruff::formatter::Html {
                 set tag  [dict get $link tag]
                 set href [dict get $link href]
                 if {[dict exists $link tip]} {
-                    append Document "<$tag><a class='tooltip' href='$href'>$label<span>[dict get $link tip]</span></a></$tag>"
+                    append Document "<$tag class='tooltip'><a href='$href'>$label</a><span class='tooltiptext'>[dict get $link tip]</span></$tag>"
+                    #append Document "<$tag><a class='tooltip' href='$href'>$label<span>[dict get $link tip]</span></a></$tag>"
                 } else {
                     append Document "<$tag><a href='$href'>$label</a></$tag>"
                 }

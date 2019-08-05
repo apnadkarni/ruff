@@ -111,9 +111,31 @@ div.navbox {
    font-weight: bold;
 }
 
-/* Easy CSS Tooltip - by Koller Juergen [www.kollermedia.at] */
-.navbox a.tooltip span {display:none; padding:2px 3px; margin-left:8px; width: 100%;}
-.navbox a.tooltip:hover span{display:inline; position:absolute; border:1px solid #cccccc; background:#ffffff; color:#6c6c6c;}
+/* Tooltip text - see https://www.w3schools.com/css/css_tooltip.asp */
+.tooltip {
+    position: relative;
+    /* display: inline-block; */
+}
+
+.tooltip .tooltiptext {
+    width: 100%;
+    font-weight: bold;
+    background-color: white;
+    color: #006666;
+    text-align: left;
+    border: 1px solid #006666;
+    /* border-radius: 4px; */
+    position: absolute;
+    z-index: 1;
+    margin-left: 4px;
+    padding: 2px 3px;
+    visibility: hidden;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
 
 span.ns_scope {
     color: #aaaaaa;
