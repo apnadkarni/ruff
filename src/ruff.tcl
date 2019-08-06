@@ -16,7 +16,9 @@ if {[catch {
 }
 
 namespace eval ruff {
-    variable version 0.6.0
+    # If you change version here, change in pkgIndex.tcl as well
+    variable version 1.0b0
+    proc version {} {variable version; return $version}
 
     variable _ruff_intro {
         ## Introduction
@@ -364,13 +366,12 @@ namespace eval ruff {
         ```
         Then from the shell command line,
         ```
-        pandoc -s -o ruff.html -c ruff.css ruff.md
+        pandoc -s -o ruff.html -c ruff-md.css ruff.md
         ```
 
         When generating HTML from Markdown, it is generally desirable to specify
-        a CSS style file. The `ruff.css` file provides some minimal CSS that
+        a CSS style file. The `ruff-md.css` file provides some *minimal* CSS that
         resembles the output of the internal HTML formatter.
-
     }
 
     namespace eval private {
@@ -2582,6 +2583,35 @@ proc ruff::private::document_self {args} {
     return
 }
 
+proc ruff::private::distribute {{dir {}}} {
+    if {$dir eq ""} {
+        set dir [file join [ruff_dir] .. dist]
+    }
+    set outname ruff-[version]
+    set dir [file join $dir $outname]
+    set zipfile [file join $dir ${outname}.zip]
+    file mkdir $dir
+    set files {
+        pkgIndex.tcl
+        formatter.tcl
+        formatter_html.tcl
+        formatter_markdown.tcl
+        ../doc/sample.tcl
+        ../doc/ruff.html
+        ../doc/ruff_ruff.html
+        ../doc/ruff_ruff_sample.html
+    }
+    file copy -force -- {*}[lmap file $files {file join [ruff_dir] $file}] $dir
+    file delete -force -- $zipfile
+    set curdir [pwd]
+    try {
+        cd [file join $dir ..]
+        exec {*}[auto_execok zip.exe] -r ${outname}.zip $outname
+    } finally {
+        cd $curdir
+    }
+}
+
 source [file join $::ruff::private::ruff_dir formatter.tcl]
 
 ################################################################
@@ -2604,7 +2634,20 @@ proc ruff::app::log_error {msg} {
     puts stderr "$msg"
 }
 
-
-
-
 package provide ruff $::ruff::version
+
+# If we are the main script, accept commands.
+if {[info exists argv0] &&
+    [file dirname [file normalize [info script]/..]] eq [file dirname [file normalize $argv0/..]]} {
+    switch -exact -- [lindex $argv 0] {
+        document {
+            ruff::private::document_self {*}[lrange $argv 1 end]
+        }
+        distribute {
+            ruff::private::distribute
+        }
+        default {
+            puts "Unknown command \"[lindex $argv 0]\"."
+        }
+    }
+}
