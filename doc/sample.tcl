@@ -94,6 +94,8 @@ proc ruff::sample::proc_full {arg {optarg AVALUE} args} {
     #  AVALUE - one possible value
     #  BVALUE - another possible value
     #
+    #  CVALUE - a third value but note the intervening blank comment
+    #  above in the source code.
     # Bullet lists are indicated by a starting `-` or `*` character.
     # - This is a bullet list iterm
     # * This is also a bullet list item
@@ -112,6 +114,27 @@ proc ruff::sample::proc_full {arg {optarg AVALUE} args} {
     # a feature right next to the code implementing it.
 
     some more code.
+}
+
+proc ruff::sample::character_at {text {pos 0}} {
+    # Get the character from a string.
+    #  text - Text string.
+    #  pos  - Character position. 
+    # The command will treat negative values of $pos as offset from
+    # the end of the string.
+    #
+    # Returns the character at index $pos in string $text.
+    set n [string length $text]
+    if {[tcl::mathfunc::abs $pos] >= [string length $text]} {
+        #ruff
+        # An error exception is raised if $pos is not within bounds.
+        error "Index $pos out of bounds."
+    }
+    if {$pos < 0} {
+        return [string index $text end$pos]
+    } else {
+        return [string index $text $pos]
+    }
 }
 
 oo::class create ruff::sample::Base {

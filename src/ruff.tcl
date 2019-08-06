@@ -7,8 +7,13 @@
 #
 
 package require Tcl 8.6
-package require textutil::adjust
-package require textutil::tabify
+if {[catch {
+    package require textutil::adjust
+    package require textutil::tabify
+} msg ropts]} {
+    puts stderr "Ruff! needs packages textutil::adjust and textutil::tabify from tcllib."
+    return -options $ropts $msg
+}
 
 namespace eval ruff {
     variable version 0.6.0
@@ -112,43 +117,51 @@ namespace eval ruff {
 
         ```
         proc ruff::sample::character_at {text {pos 0}} {
-            # Returns the character at index $pos in a string $text.
+            # Get the character from a string.
             #  text - Text string.
-            #  pos  - Character position. Negative positions are
-            #         interpreted from end of string.
-            if {$pos < 0 || $pos >= [string length $text]} {
+            #  pos  - Character position. 
+            # The command will treat negative values of $pos as offset from
+            # the end of the string.
+            #
+            # Returns the character at index $pos in string $text.
+            set n [string length $text]
+            if {[tcl::mathfunc::abs $pos] >= [string length $text]} {
                 #ruff
-                # The command raises an error if $pos is not within bounds.
-                error "Index $pos out of bounds"   
+                # An error exception is raised if $pos is not within bounds.
+                error "Index $pos out of bounds."
             }
-            return [string index $text $pos]
+            if {$pos < 0} {
+                return [string index $text end$pos]
+            } else {
+                return [string index $text $pos]
+            }
         }
         ```
+        You can see the generated documentation for the above at 
+        [sample::character_at].
 
-        The first block of comments within a procedure that appear before
-        the first line of code are always processed by Ruff!. Note preceding
+        The first block of comments within a procedure *before
+        the first line of code* are always processed by Ruff!. Note preceding
         blank lines are OK. We will refer to this block as the lead comment
-        block. It is terminated by either a line of code or a completely
-        blank line (without even the comment character).
+        block. It is terminated by either a line of code or a blank line.
 
         Any comments appearing after the first line of code are not
         processed by Ruff! unless immediately preceded by a line beginning
         with `#ruff` which indicates the start of another Ruff! comment
         block.
 
-        The lead comment block begins with a summary line that will be used
-        anywhere the document output inserts a procedure summary, for
-        example, in the Table of Contents. It also appears as the first
-        paragraph in the **Description** section of procedure. The summary
-        line is terminated with a blank comment or by the parameter block.
+        The lead comment block begins with a summary that will be used anywhere
+        the document output inserts a procedure summary, for example, a tooltip.
+        The summary is terminated with a blank comment or by the parameter
+        block.
 
         The parameter block is a definition list (see below) and follows its
         syntactic structure. It only differs from definition lists in that
         it must directly follow the summary line and receives special
         treatment in that the default value, if any for the argument, is
         automatically inserted by Ruff!. Options and switches may also be
-        documented here as shown in the example above. The parameter block
-        is terminated by a blank comment or a blank line or code.
+        documented here. The parameter block
+        is terminated in the same fashion as definition blocks.
 
         Any blocks following the parameter block, whether part of the lead
         block or appearing in a subsequent comment block marked with a
@@ -157,55 +170,68 @@ namespace eval ruff {
         * All processed lines are stripped of the leading `#` character and a
         single following space if there is one.
 
+        * A blank line (after the comment character is stripped) ends the
+        previous block. Note in the case of lists, it ends the list element
+        but not the list itself.
+
         * A line containing 3 or more consecutive backquote (\`) characters
-        with only surrounding whitespace on the line starts a preformatted
-        block. The block is terminated by another such sequence and
+        with only surrounding whitespace on the line starts a fenced
+        block. The block is terminated by the same sequence and
         all intervening lines are passed through to the output unchanged.
+
+        * Lines starting with a `-` or a `*` character followed by at least one
+        space begins a bulleted list item block. A list item may be continued
+        across multiple lines and is terminated by another list item, a blank
+        line or a line with lesser indentation. Note in particular that lines of
+        other types will not terminate a list item unless they have less
+        indentation.
+
+        * Lines containing a `-` surrounded by whitespace begins a definition
+        list element. The text before the `-` separator is the definition term
+        and the text after is the description. Both the term and description are
+        subject to inline formatting. Definition blocks follow the same rules
+        for termination as bullet lists described above.
+
+        * Parameter blocks have the same format as definition lists and are
+        distinguished from them only by their presence in the lead block. Unlike
+        definition blocks, the term is assumed to be the name of an argument and
+        is automatically formatted and not subject to inline formatting.
 
         * If the line is indented 4 or more spaces, it is treated a
         preformatted line and passed through to the output with the
         the first 4 spaces stripped. No other processing is done on the line.
 
-        * Lines starting with a `-` or a `*` character followed by at least
-        one space are treated as a bulleted list item.
-
-        * Lines containing a `-` surrounded by whitespace is treated as a
-        definition list element. The text before the `-` separator is the
-        definition term and the text after is the description. The built-in
-        HTML formatter displays definition lists as tables. Note parameter
-        blocks have the same format and are distringuished from definition
-        lists only by their presence in the lead block.
-
         * Any line beginning with the word `Returns` is treated as
-        description of the return value.
+        description of the return value. It follows the same rules as normal
+        paragraphs below.
 
-        * A line beginning with `See also:` (note the colon) is
-        assumed to be a list of program element names. These are then
-        automatically linked and listed in the *See also* section of
-        a procedure documentation.
+        * A line beginning with `See also:` (note the colon) is assumed to begin
+        a reference block consisting of a list of program element names
+        (such as procedures, classes etc.). These
+        are then automatically linked and listed in the **See also** section of a
+        procedure documentation. The list may continue over multiple lines
+        following normal paragraph rules. Note the program element names should
+        not contain inline formatting as this is automatically added.
 
-        * All other lines are treated as part of the previous block of
-        lines. In the case of list elements, including parameter blocks and
-        definition lists, the line is only treated as a continuation if its
-        indentation is not less than the indentation of the first line of
-        that list element. Otherwise it is treated as the start of a text
-        paragraph. Lines following a blank line or a blank comment line are
-        also treated as the start of a normal text paragraph.
-
-        Refer to those commands for the syntax and comment structure expected
-        by Ruff!.
+        * All other lines begin a normal paragraph. The paragraph ends with
+        a line of one of the above types.
 
         ### Differences from Markdown
+
+        Note that the block level parsing is similar but not identical to
+        Markdown. Amongst other differences, Ruff! has
 
         * no nested blocks
         * no numbered lists or multi-paragraph list elements
         * no blockquotes
 
+        Ruff! adds
         * definition lists
 
         ## Documenting classes
 
-        Documentation for class methods is exactly as described above for
+        Documentation for classes primarily concerns documentation of its methods.
+        The format for method documentation is exactly as described above for
         procedures. Information about class relationships is automatically
         collected and need not be explicitly provided. Note that unlike for
         procedures and methods, Tcl does not provide a means to retrieve the
@@ -217,32 +243,39 @@ namespace eval ruff {
 
         ## Documenting namespaces
 
-        Documentation for a namespace is generated by looking for the
-        variable `_ruff_premble` within the namespace. If present, its content
-        should be a list of alternating pairs comprising a section title and
-        section content.
+        In addition to procedures and classes within a namespace, there may be a
+        need to document general information such as the sections you are
+        currently reading. For this purpose, Ruff! looks for a variable
+        `_ruff_preamble` within each namespace. The indentation of the first
+        line of section content is stripped off from all subsequent lines before
+        processing (This impacts what constitutes a preformatted line). The
+        result is then processed in the same manner as procedure or method
+        bodies except for the following differences:
 
-        The section content is processed in the same manner as the procedure
-        and method bodies except that (obviously) there is no
-        summary or parameter block. The indentation of the first line
-        of section content is stripped off from all subsequent lines
-        before processing or Ruff! (This impacts what constitutes a
-        preformatted line).
+        * There is (obviously) no summary or parameter block.
 
-        Additionally, section content may contain Markdown ATX style
-        headings indicated by a prefix of one or more `#` characters.
+        * Additionally, content may contain Markdown ATX style
+        headings indicated by a prefix of one or more `#` characters followed
+        by at least one space.
 
         The documentation generated from the `_ruff_preamble` content is placed
         before the documentation of the commands in classes for that namespace.
 
+        **Note**: Older versions supported the `ruffdoc` variable. Though this
+        will still work, it is deprecated.
+
+        Content that should lie outside of any namespace can be passed through
+        the `-preamble` option to [document]. When generating single page
+        output, this is included at the top of the documentation. When
+        generating multipage output this forms the content of the main
+        documentation page.
+
         ## Inline formatting
 
-        The text within paragraphs can be formatted as bold, italic, code
-        etc. by using Markdown syntax with some minor extensions. Note
-        Markdown compatibility is only for inline elements. **Markdown block
-        level markup is not supported.**
-
-        In particular, the following inline markup is supported:
+        Once documentation blocks are parsed as above, their content is subject
+        to inline formatting rules using Markdown syntax with some minor
+        extensions. Markdown compatibility is only for inline elements noted
+        below.
 
         \`   - `Text surrounded by backquotes is formatted as inline code`.
         `*`    - *Text surrounded by single asterisks is emphasized*.
@@ -303,11 +336,19 @@ namespace eval ruff {
         other external tools are required.
 
         The following is a simple example of generating the documentation for
-        Ruff! itself:
+        Ruff! itself in a single page format:
 
         ```
+        source sample.tcl; # To load the example code used in documentation.
         ruff::document html ::ruff -output ruff.html -title "Ruff! reference"
         ```
+
+        To generate documentation, including private namespaces, in multipage
+        format:
+        ````
+        ruff::document html ::ruff -recurse true -pagesplit namespace -output full/ruff.html -title "Ruff! internal reference"
+        ````
+
 
         ### Markdown formatter
 
@@ -1033,7 +1074,7 @@ proc ruff::private::parse_definitions_state {statevar} {
                 }
             }
             definition {
-                if {[string length $term]} {
+                if {[info exists term]} {
                     lappend definition_block [dict create term $term definition $definition]
                 }
                 set term       [dict get $state(parsed) Term]
