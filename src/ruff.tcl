@@ -2593,6 +2593,7 @@ proc ruff::private::distribute {{dir {}}} {
     file mkdir $dir
     set files {
         pkgIndex.tcl
+        ruff.tcl
         formatter.tcl
         formatter_html.tcl
         formatter_markdown.tcl
