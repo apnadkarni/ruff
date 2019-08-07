@@ -1206,16 +1206,19 @@ proc ruff::private::parse_lines {lines {mode proc}} {
             definition   { parse_definitions_state state }
             returns      { parse_returns_state state }
             seealso      { parse_seealso_state state }
+            continuation {
+                # TBD - See if we can get rid of continuation state
+                # we do not really use this state.
+                parse_normal_state state
+            }
             normal       { parse_normal_state state }
             preformatted { parse_preformatted_state state }
             fence        { parse_fence_state state }
-            continuation -
             default {
                 error "Internal error: Unknown or unexpected line type\
                        \"[dict get $state(parsed) Type]\" returned in top-level\
                        parse of line \"[lindex $state(lines) $state(index)]\"."
             }
- 
         }
     }
 
@@ -2597,6 +2600,9 @@ proc ruff::private::distribute {{dir {}}} {
         formatter.tcl
         formatter_html.tcl
         formatter_markdown.tcl
+        ruff-html.js
+        ruff-html.css
+        ruff-md.css
         ../doc/sample.tcl
         ../doc/ruff.html
         ../doc/ruff_ruff.html
@@ -2645,7 +2651,7 @@ if {[info exists argv0] &&
             ruff::private::document_self {*}[lrange $argv 1 end]
         }
         distribute {
-            ruff::private::distribute
+            ruff::private::distribute {*}[lrange $argv 1 end]
         }
         default {
             puts "Unknown command \"[lindex $argv 0]\"."
