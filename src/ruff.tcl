@@ -682,7 +682,7 @@ proc ruff::private::parse_line {line mode current_indent}  {
     # Note that $text starts AND ends with a non-whitespace character.
     # Also note order of match cases in switch is importent.
     switch -regexp -matchvar matches -indexvar indices -- $text {
-        {^(#+)\s*(\S.*)} {
+        {^(#+)\s+(\S.*)} {
             # = A Header
             return [list Type heading \
                         Indent $indent \
