@@ -2364,7 +2364,7 @@ proc ruff::document {namespaces args} {
     array set opts {
         -excludeprocs {}
         -excludeclasses {}
-        -formatter html
+        -format html
         -hidesourcecomments false
         -include {procs classes}
         -includeprivate false
