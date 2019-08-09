@@ -2058,10 +2058,12 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
     # Extracts metainformation for procs and classes 
     #
     # pattern - glob-style pattern to match against procedure and class names
-    # -includeclasses BOOLEAN - if true (default), class information
-    #     is collected
-    # -includeprocs - if true (default), proc information is
-    #     collected
+    # -excludeclasses REGEXP - If specified, any classes whose names
+    #  match `REGEXPR` will not be included in the documentation.
+    # -excludeprocs REGEXP - If specified, any procedures whose names
+    #  match `REGEXPR` will not be included in the documentation.
+    # -include LIST - `classes` and / or `procs` depending on whether one
+    #     or both are to be collected.
     # -includeprivate BOOLEAN - if true private methods are also included.
     #  Default is false.
     # -includeimports BOOLEAN - if true commands imported from other
@@ -2080,18 +2082,17 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
     # Returns a dictionary with keys 'classes' and 'procs'
 
     array set opts {
-        -includeclasses true
-        -includeprocs true
+        -excludeclasses {}
+        -excludeprocs {}
+        -include {procs classes}
         -includeprivate false
         -includeimports false
     }
     array set opts $args
 
     set classes [dict create]
-    if {$opts(-includeclasses)} {
-        # TBD - We do a catch in case this Tcl version does not support objects
-        set class_names {}
-        catch {set class_names [info class instances ::oo::class $pattern]}
+    if {"classes" in $opts(-include)} {
+        set class_names [info class instances ::oo::class $pattern]
         foreach class_name $class_names {
             # This covers child namespaces as well which we do not want
             # so filter those out. The differing pattern interpretations in
@@ -2102,9 +2103,8 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
                 # TBD - do we need to do -includeimports processing here?
                 continue
             }
-            # Names beginning with _ are treated as private
-            if {(!$opts(-includeprivate)) &&
-                [string index [namespace tail $class_name] 0] eq "_"} {
+            if {$opts(-excludeclasses) ne "" &&
+                [regexp $opts(-excludeclasses) [namespace tail $class_name]]} {
                 continue
             }
 
@@ -2119,17 +2119,16 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
     }
 
     set procs [dict create]
-    if {$opts(-includeprocs)} {
+    if {"procs" in $opts(-include)} {
         # Collect procs
         foreach proc_name [info procs $pattern] {
+            if {$opts(-excludeprocs) ne "" &&
+                [regexp $opts(-excludeprocs) [namespace tail $proc_name]]} {
+                continue
+            }
             if {(! $opts(-includeimports)) &&
                 [namespace origin $proc_name] ne $proc_name} {
                 continue;       # Do not want to include imported commands
-            }
-            # Names beginning with _ are treated as private
-            if {(!$opts(-includeprivate)) &&
-                [string index [namespace tail $proc_name] 0] eq "_"} {
-                continue
             }
 
             if {[catch {
@@ -2142,14 +2141,13 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
         }
         # Collect ensembles
         foreach ens_name [ensembles $pattern] {
+            if {$opts(-excludeprocs) ne "" &&
+                [regexp $opts(-excludeprocs) [namespace tail $ens_name]]} {
+                continue
+            }
             if {(! $opts(-includeimports)) &&
                 [namespace origin $ens_name] ne $ens_name} {
                 continue;       # Do not want to include imported commands
-            }
-            # Names beginning with _ are treated as private
-            if {(!$opts(-includeprivate)) &&
-                [string index [namespace tail $ens_name] 0] eq "_"} {
-                continue
             }
 
             if {[catch {
@@ -2333,15 +2331,18 @@ proc ruff::private::load_formatter {formatter} {
     return $class
 }
 
-proc ruff::document {formatter namespaces args} {
+proc ruff::document {namespaces args} {
     # Generates documentation for the specified namespaces using the
     # specified formatter.
-    # formatter - the formatter to be used to produce the documentation
-    # namespaces - list of namespaces for which documentation is to be generated
-    # -includeclasses BOOLEAN - if true (default), class information
-    #     is collected
-    # -includeprocs BOOLEAN - if true (default), proc information is
-    #     collected
+    # namespaces - list of namespaces for which documentation is to be generated.
+    # -excludeclasses REGEXP - If specified, any classes whose names
+    #  match `REGEXPR` will not be included in the documentation.
+    # -excludeprocs REGEXP - If specified, any procedures whose names
+    #  match `REGEXPR` will not be included in the documentation.
+    # -format FORMAT - The output format. `FORMAT` defaults to `html`.
+    # -include LIST - Specifies which program elements are to be documented.
+    #  `LIST` must be a list from one or both amongst `classes` or `procs`.
+    #  Defaults to both.
     # -includeprivate BOOLEAN - if true private methods are also included
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
@@ -2361,10 +2362,12 @@ proc ruff::document {formatter namespaces args} {
     # documentation to the specified file.
 
     array set opts {
+        -excludeprocs {}
+        -excludeclasses {}
+        -formatter html
         -hidesourcecomments false
-        -includeclasses true
+        -include {procs classes}
         -includeprivate false
-        -includeprocs true
         -includesource false
         -output ""
         -preamble ""
@@ -2415,11 +2418,12 @@ proc ruff::document {formatter namespaces args} {
     }
 
     set classprocinfodict [extract_namespaces $namespaces \
-                               -includeclasses $opts(-includeclasses) \
-                               -includeprocs $opts(-includeprocs) \
+                               -excludeprocs $opts(-excludeprocs) \
+                               -excludeclasses $opts(-excludeclasses) \
+                               -include $opts(-include) \
                                -includeprivate $opts(-includeprivate)]
 
-    set obj [[load_formatter $formatter] new]
+    set obj [[load_formatter $opts(-format)] new]
     set docs [$obj generate_document $classprocinfodict {*}$args]
     $obj destroy
 
@@ -2527,7 +2531,7 @@ proc ruff::private::document_self {args} {
     variable names
 
     array set opts [list \
-                        -formatter html \
+                        -format html \
                         -includesource true \
                         -pagesplit namespace \
                         -includeprivate false \
@@ -2549,16 +2553,22 @@ proc ruff::private::document_self {args} {
     set namespaces [list ::ruff ::ruff::sample]
     set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"
     set common_args [list \
+                         -format $opts(-format) \
                          -recurse $opts(-includeprivate) \
                          -titledesc $title \
                          -pagesplit $opts(-pagesplit) \
                          -preamble $::ruff::_ruff_intro \
                          -version $::ruff::version]
-    switch -exact -- $opts(-formatter) {
+    if {$opts(-includeprivate)} {
+        lappend common_args -recurse 1
+    } else {
+        lappend common_args -excludeprocs {^[_A-Z]}
+    }
+    switch -exact -- $opts(-format) {
         doctools {
-            error "Formatter '$opts(-formatter)' not implemented for generating Ruff! documentation."
+            error "Formatter '$opts(-format)' not implemented for generating Ruff! documentation."
             # Not implemented yet
-            document doctools $namespaces {*}$common_args \
+            document $namespaces {*}$common_args \
                 -output [file join $opts(-outdir) ruff.man] \
                 -hidenamespace ::ruff \
                 -keywords [list "documentation generation"] \
@@ -2566,12 +2576,12 @@ proc ruff::private::document_self {args} {
         }
         markdown -
         html {
-            if {$opts(-formatter) eq "html"} {
+            if {$opts(-format) eq "html"} {
                 set ext .html
             } else {
                 set ext .md
             }
-            document $opts(-formatter) $namespaces {*}$common_args \
+            document $namespaces {*}$common_args \
                 -output [file join $opts(-outdir) ruff$ext] \
                 -titledesc $title \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
@@ -2580,7 +2590,7 @@ proc ruff::private::document_self {args} {
         default {
             # The formatter may exist but we do not support it for
             # out documentation.
-            error "Formatter '$opts(-formatter)' not implemented for generating Ruff! documentation."
+            error "Format '$opts(-format)' not implemented for generating Ruff! documentation."
         }
     }
     return

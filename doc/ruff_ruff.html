@@ -431,33 +431,37 @@ pandoc -s -o ruff.html -c ruff-md.css ruff.md
 <h4 class='ruffproc'><a name='::ruff::document'>document</a><span class='ns_scope'> [<a href="ruff_ruff.html#::ruff" title="::ruff" class='ruff_cmd'>::ruff</a>]</span><span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='ruff.html'>Main</a></span></h4>
 <div style='clear:both;'></div>
 <p class='ruff'>Generates documentation for the specified namespaces using the specified formatter.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>document</span> <span class='ruff_arg'>formatter namespaces args</span></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>document</span> <span class='ruff_arg'>namespaces args</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
-<tr><td class='ruff_defitem'><code>formatter</code></td><td class='ruff_defitem'>the formatter to be used to produce the documentation</td></tr>
-<tr><td class='ruff_defitem'><code>namespaces</code></td><td class='ruff_defitem'>list of namespaces for which documentation is to be generated</td></tr>
+<tr><td class='ruff_defitem'><code>namespaces</code></td><td class='ruff_defitem'>list of namespaces for which documentation is to be generated.</td></tr>
 <tr><td class='ruff_defitem'><code>args</code></td><td class='ruff_defitem'>Not documented.</td></tr>
 <tr><td class='ruff_defitem'><code>-includeprivate BOOLEAN</code></td><td class='ruff_defitem'>if true private methods are also included in the generated documentation. Default is false.</td></tr>
-<tr><td class='ruff_defitem'><code>-includeprocs BOOLEAN</code></td><td class='ruff_defitem'>if true (default), proc information is collected</td></tr>
+<tr><td class='ruff_defitem'><code>-excludeclasses REGEXP</code></td><td class='ruff_defitem'>If specified, any classes whose names match <code>REGEXPR</code> will not be included in the documentation.</td></tr>
+<tr><td class='ruff_defitem'><code>-include LIST</code></td><td class='ruff_defitem'>Specifies which program elements are to be documented. <code>LIST</code> must be a list from one or both amongst <code>classes</code> or <code>procs</code>. Defaults to both.</td></tr>
+<tr><td class='ruff_defitem'><code>-excludeprocs REGEXP</code></td><td class='ruff_defitem'>If specified, any procedures whose names match <code>REGEXPR</code> will not be included in the documentation.</td></tr>
 <tr><td class='ruff_defitem'><code>-pagesplit SPLIT</code></td><td class='ruff_defitem'>if <code>none</code>, a single documentation file is produced. If <code>namespace</code>, a separate file is output for every namespace.</td></tr>
 <tr><td class='ruff_defitem'><code>-recurse BOOLEAN</code></td><td class='ruff_defitem'>if true, child namespaces are recursively documented.</td></tr>
 <tr><td class='ruff_defitem'><code>-title STRING</code></td><td class='ruff_defitem'>specifies the title to use for the page</td></tr>
 <tr><td class='ruff_defitem'><code>-includesource BOOLEAN</code></td><td class='ruff_defitem'>if true, the source code of the procedure is also included. Default value is false.</td></tr>
 <tr><td class='ruff_defitem'><code>-output PATH</code></td><td class='ruff_defitem'>if specified, the generated document is written to the specified file which will overwritten if it already exists.</td></tr>
-<tr><td class='ruff_defitem'><code>-includeclasses BOOLEAN</code></td><td class='ruff_defitem'>if true (default), class information is collected</td></tr>
+<tr><td class='ruff_defitem'><code>-format FORMAT</code></td><td class='ruff_defitem'>The output format. <code>FORMAT</code> defaults to <code>html</code>.</td></tr>
 </table>
 <h5 class='ruff'>Return value</h5><p class='ruff'>Returns the documentation string if the -output option is not specified, otherwise returns an empty string after writing the documentation to the specified file.</p>
 <h5 class='ruff'>Description</h5><p class='ruff'>Any additional arguments are passed through to the document command.</p>
 <div class='ruff_source'><p class='ruff_source_link'><a id='l_1' href="javascript:toggleSource('1')">Show source</a></p>
-<div id='1' class='ruff_dyn_src'><pre>proc ::ruff::document {formatter namespaces args} {
+<div id='1' class='ruff_dyn_src'><pre>proc ::ruff::document {namespaces args} {
 
     # Generates documentation for the specified namespaces using the
     # specified formatter.
-    # formatter - the formatter to be used to produce the documentation
-    # namespaces - list of namespaces for which documentation is to be generated
-    # -includeclasses BOOLEAN - if true (default), class information
-    #     is collected
-    # -includeprocs BOOLEAN - if true (default), proc information is
-    #     collected
+    # namespaces - list of namespaces for which documentation is to be generated.
+    # -excludeclasses REGEXP - If specified, any classes whose names
+    #  match `REGEXPR` will not be included in the documentation.
+    # -excludeprocs REGEXP - If specified, any procedures whose names
+    #  match `REGEXPR` will not be included in the documentation.
+    # -format FORMAT - The output format. `FORMAT` defaults to `html`.
+    # -include LIST - Specifies which program elements are to be documented.
+    #  `LIST` must be a list from one or both amongst `classes` or `procs`.
+    #  Defaults to both.
     # -includeprivate BOOLEAN - if true private methods are also included
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
@@ -477,10 +481,12 @@ pandoc -s -o ruff.html -c ruff-md.css ruff.md
     # documentation to the specified file.
 
     array set opts {
+        -excludeprocs {}
+        -excludeclasses {}
+        -formatter html
         -hidesourcecomments false
-        -includeclasses true
+        -include {procs classes}
         -includeprivate false
-        -includeprocs true
         -includesource false
         -output &quot;&quot;
         -preamble &quot;&quot;
@@ -530,9 +536,9 @@ pandoc -s -o ruff.html -c ruff-md.css ruff.md
         lappend args -preamble [extract_docstring $opts(-preamble)]
     }
 
-    set classprocinfodict [extract_namespaces $namespaces  -includeclasses $opts(-includeclasses)  -includeprocs $opts(-includeprocs)  -includeprivate $opts(-includeprivate)]
+    set classprocinfodict [extract_namespaces $namespaces  -excludeprocs $opts(-excludeprocs)  -excludeclasses $opts(-excludeclasses)  -include $opts(-include)  -includeprivate $opts(-includeprivate)]
 
-    set obj [[load_formatter $formatter] new]
+    set obj [[load_formatter $opts(-format)] new]
     set docs [$obj generate_document $classprocinfodict {*}$args]
     $obj destroy
 
