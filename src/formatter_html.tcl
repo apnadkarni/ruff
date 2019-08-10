@@ -158,7 +158,8 @@ oo::class create ruff::formatter::Html {
         set level    [dict get $HeaderLevels $type]
         set ns       [namespace qualifiers $fqn]
         set anchor   [my Anchor $fqn]
-        set linkinfo [dict create tag h$level href "#$anchor"]
+        set href     [my SymbolReference $ns $fqn]
+        set linkinfo [dict create tag h$level href $href]
         if {[llength $tooltip]} {
             set tip "[my ToHtml [string trim [join $tooltip { }]] $ns]\n"
             dict set linkinfo tip $tip

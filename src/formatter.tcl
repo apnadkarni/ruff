@@ -373,7 +373,7 @@ oo::class create ruff::formatter::Formatter {
 
     method SymbolReference {ns symbol} {
         # Generates a reference for a symbol in a namespace.
-        #  ns - the namespace containing the heading
+        #  ns - the namespace containing the symbol.
         #  symbol - the text of the symbol.
         # This method should be overridden by the concrete formatter.
         # Returns the reference to the symbol.
