@@ -1891,7 +1891,12 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names
             set paramdata $params($name)
             unset params($name)
         } else {
-            set paramdata [dict create term $name definition "Not documented." type parameter]
+            if {$name eq "args"} {
+                set definition "Optional arguments."
+            } else {
+                set definition "Not documented."
+            }
+            set paramdata [dict create term $name definition $definition type parameter]
         }
 
         # Check if there is a default

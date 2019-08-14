@@ -537,7 +537,11 @@ oo::class create ruff::formatter::Formatter {
             if {$param_type eq "parameter"} {
                 lappend arglist $param_name
                 if {[dict exists $param default]} {
-                    lappend desc "(optional, default [markup_code [dict get $param default]])"
+                    set optval [dict get $param default]
+                    if {$optval eq ""} {
+                        set optval \"\"
+                    }
+                    lappend desc "(optional, default [markup_code $optval])"
                 }
             }
 
