@@ -654,8 +654,8 @@ oo::class create ruff::formatter::Formatter {
         # Methods are summarized as a definition list.
         set method_summaries [list ]
 
-        # NOTE: we do NOT include constructor and destructor in summary
-        # as they are implicitly present.
+        # NOTE: Constructor and destructor are added later after other
+        # methods are sorted.
         if {[info exists methods]} {
             foreach method_info $methods {
                 set method_name [dict get $method_info name]
@@ -692,6 +692,18 @@ oo::class create ruff::formatter::Formatter {
 
         # Sort the method summary table alphabetically
         set method_summaries [lsort -index 1 $method_summaries]
+
+        # Insert constructor and destructor at the beginning if present.
+        set specials {}
+        if {[info exists constructor]} {
+            lappend specials [list term "constructor" definition "Constructor for the class."]
+        }
+        if {[info exists destructor]} {
+            lappend specials [list term "destructor" definition "Destructor for the class."]
+        }
+        if {[llength specials]} {
+            set method_summaries [linsert $method_summaries 0 {*}$specials]
+        }
 
         set methods [lmap method_info $methods {
             my TransformProcOrMethod $method_info
