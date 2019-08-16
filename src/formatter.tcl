@@ -553,7 +553,7 @@ oo::class create ruff::formatter::Formatter {
         } else {
             switch -exact -- $proc_name {
                 constructor {
-                    set synopsis [list "$class create" $arglist]
+                    set synopsis [list "[namespace tail $class] create" $arglist]
                 }
                 destructor  {set synopsis [list "OBJECT destroy"]}
                 default  {
@@ -637,7 +637,15 @@ oo::class create ruff::formatter::Formatter {
         foreach var {superclasses subclasses mixins} {
             # NOTE: do not sort the list. Order is important for semantics.
             if {[info exists $var] && [llength [set $var]]} {
-                set $var [trim_namespace_multi [set $var] $hidenamespace]
+                set referenced_classes [set $var]
+                set $var {}
+                foreach referenced_class $referenced_classes {
+                    if {[namespace qualifiers $referenced_class] eq [namespace qualifiers $fqn]} {
+                        lappend $var [namespace tail $referenced_class]
+                    } else {
+                        lappend $var [trim_namespace $referenced_class $hidenamespace]
+                    }
+                }
             }
         }
 
@@ -673,7 +681,12 @@ oo::class create ruff::formatter::Formatter {
         if {[info exists external_methods]} {
             foreach external_method $external_methods {
                 lassign $external_method method_name imp_class
-                lappend method_summaries [list term $method_name definition [list "See [markup_reference $imp_class.$method_name]"]]
+                if {[namespace qualifiers $fqn] eq [namespace qualifiers $imp_class]} {
+                    set referenced_class [namespace tail $imp_class]
+                } else {
+                    set referenced_class $imp_class
+                }
+                lappend method_summaries [list term $method_name definition [list "See [markup_reference $referenced_class.$method_name]"]]
             }
         }
 
