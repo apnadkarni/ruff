@@ -2340,6 +2340,9 @@ proc ruff::document {namespaces args} {
     # Generates documentation for the specified namespaces using the
     # specified formatter.
     # namespaces - list of namespaces for which documentation is to be generated.
+    # -autopunctuate BOOLEAN - If `true`, the first letter of definition
+    #  descriptions (including parameter descriptions) is capitalized
+    #  and a period added at the end if necessary.
     # -excludeclasses REGEXP - If specified, any classes whose names
     #  match `REGEXPR` will not be included in the documentation.
     # -excludeprocs REGEXP - If specified, any procedures whose names

@@ -799,6 +799,9 @@ oo::class create ruff::formatter::Formatter {
         # class and proc metainformation.
         #   ns_info - dictionary keyed by namespace containing parsed documentation
         #    about the namespace.
+        #   -autopunctuate BOOLEAN - If `true`, the first letter of definition
+        #    descriptions (including parameter descriptions) is capitalized
+        #    and a period added at the end if necessary.
         #   -preamble DICT - a dictionary indexed by a namespace. Each value is
         #    a flat list of pairs consisting of a heading and
         #    corresponding content. These are inserted into the document
@@ -829,6 +832,7 @@ oo::class create ruff::formatter::Formatter {
                  -pagesplit none \
                  -titledesc "" \
                  -modulename "Reference" \
+                 -autopunctuate 0 \
                 ]
 
         array set Options $args

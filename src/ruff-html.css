@@ -200,12 +200,13 @@ h2.ruff {
 h3.ruff, h4.ruff, h5.ruff, h6.ruff {
     color: #006666;
 }
-h5.ruff, h6.ruff {
+h5.ruff {
     font-style: italic;
     font-weight: normal;
 }
-
-
+h6.ruff {
+    font-weight: normal;
+}
 h3.ruffclass, h3.ruffproc, h3.ruffmethod,
 h4.ruffclass, h4.ruffproc, h4.ruffmethod,
 h5.ruffclass, h5.ruffproc, h5.ruffmethod {

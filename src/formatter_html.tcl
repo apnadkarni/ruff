@@ -225,6 +225,12 @@ oo::class create ruff::formatter::Html {
         append Document "<table class='ruff_deflist'>\n"
         foreach item $definitions {
             set def [join [dict get $item definition] " "]
+            if {[my Option -autopunctuate 0]} {
+                set def [string toupper $def 0 0]
+                if {[regexp {[[:alnum:]]} [string index $def end]]} {
+                    append def "."
+                }
+            }
             if {$preformatted in {none term}} {
                 set def [my ToHtml $def $scope]
             }
