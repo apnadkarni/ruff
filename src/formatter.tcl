@@ -541,7 +541,18 @@ oo::class create ruff::formatter::Formatter {
                     if {$optval eq ""} {
                         set optval \"\"
                     }
-                    lappend desc "(optional, default [markup_code $optval])"
+                    # If we add on a default clause, the autopunctuation
+                    # done in the formatters misses opportunities to punctuate
+                    # so we do so here. TBD - refactor into a separate proc.
+                    if {[my Option -autopunctuate 0]} {
+                        set desc [lreplace $desc 0 0 [string toupper [lindex $desc 0] 0 0]]
+                        set last_frag [lindex $desc end]
+                        if {[regexp {[[:alnum:]]} [string index $last_frag end]]} {
+                            set desc [lreplace $desc end end "${last_frag}."]
+                        }
+                    }
+                    # set desc [linsert $desc 0 "(optional, default [markup_code $optval])" ]
+                    lappend desc "Optional, default [markup_code $optval]."
                 }
             }
 
