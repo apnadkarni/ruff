@@ -435,15 +435,23 @@ proc ruff::private::program_option {opt} {
     return $ProgramOptions($opt)
 }
 
-proc ruff::private::ns_file_base {ns {ext {}}} {
+proc ruff::private::ns_file_base {ns_or_class {ext {}}} {
     # Returns the file name to use for documenting namespace $ns.
-    # ns - the namespace for the file
+    # ns_or_class - the namespace or class for the file
     # ext - if non-empty, this is used as the file extension.
     #  It should include the initial period.
     variable output_file_base
     variable output_file_ext
     variable ns_file_base_cache
     variable ProgramOptions
+
+    # Methods can also be represented as Class::method so this is a
+    # hack to get the real namespace and not the class name
+    if {[info object isa class $ns_or_class]} {
+        set ns [namespace qualifiers $ns_or_class]
+    } else {
+        set ns $ns_or_class
+    }
     if {![info exists ns_file_base_cache($ns)]} {
         if {$ProgramOptions(-pagesplit) eq "none" || $ns eq "::"} {
             set fn "$output_file_base$output_file_ext"
