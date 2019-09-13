@@ -2,6 +2,10 @@
 # All rights reserved.
 # See the file LICENSE in the source root directory for license.
 
+# Ruff! formatter for markdown
+# For compiling generated markdown to html using pandoc:
+# pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle="My package" ruff.md
+
 namespace eval ruff::formatter {}
 
 oo::class create ruff::formatter::Markdown {
@@ -71,7 +75,7 @@ oo::class create ruff::formatter::Markdown {
         # Generate the Footer used by all files
         set Footer ""
         if {[my Option? -copyright copyright]} {
-            append Footer "\n\n (c) [my Escape $copyright]"
+            append Footer "\n\n---\n\\(c) [my Escape $copyright]\n"
         }
         return
     }
@@ -125,7 +129,7 @@ oo::class create ruff::formatter::Markdown {
             set ns_link [my ToMarkdown [markup_reference $ns]]
             append Document \
                 [my Escape [namespace tail $name]] \
-                "\[${ns_link}\]\n"
+                " \[${ns_link}\]\n"
         } else {
             append Document [my Escape $name] "\n"
         }
@@ -340,7 +344,7 @@ oo::class create ruff::formatter::Markdown {
                                      "\\A(\\$chr{1,3})((?:\[^\\$chr\\\\]|\\\\\\$chr)*)\\1" \
                                      $text m del sub]} \
                         {
-                            append result "$del[ToMarkdown $sub $scope]$del"
+                            append result "$del[my ToMarkdown $sub $scope]$del"
                             incr index [string length $m]
                             continue
                         }
@@ -387,7 +391,7 @@ oo::class create ruff::formatter::Markdown {
                             set match_found 1
                         } else {
                             # Note: Do quotes inside $title need to be escaped?
-                            append result $pre [ToMarkdown $txt $scope] "\](" $url " " "\"[ToMarkdown $title $scope]\"" ")"
+                            append result $pre [my ToMarkdown $txt $scope] "\](" $url " " "\"[my ToMarkdown $title $scope]\"" ")"
                             set url [escape [string trim $url {<> }]]
                             set match_found 1
                         }
@@ -469,6 +473,11 @@ oo::class create ruff::formatter::Markdown {
             }
 
             return $result
+        }
+
+        method extension {} {
+            # Returns the default file extension to be used for output files.
+            return html
         }
 
         forward FormatInline my ToMarkdown

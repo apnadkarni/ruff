@@ -1,9 +1,16 @@
 # ruff
-Documentation generator for Tcl
 
-## Changes since V0.5
+Ruff! (Runtime function formatter) is a documentation generation system
+for programs written in the Tcl programming language. Ruff! uses runtime
+introspection in conjunction with comment analysis to generate reference
+manuals for Tcl programs with minimal effort on the programmer's part.
 
-The following changes have been made since Ruff! 0.5:
+See https://ruff.magicsplat.com for benefits and reference documentation. 
+
+## Changelog
+
+This release is **not** compatible with Ruff! releases prior to 0.9 due
+to the following changes.
 
 * Added optional multifile output to split documentation on a namespace basis.
 * Added formatter for markdown output.
@@ -13,7 +20,7 @@ This last may be added back in a future release on demand.
 * Support added for inline markdown markup within comments.
 * Support added for documenting ensemble commands.
 * Support for a *See also* section.
-* Auto-linking of program elements removed. Use \[\] to link symbols. *Incompatibility*
+* Auto-linking of program elements removed. Use \[\] to link symbols or use the *See also* feature. *Incompatibility*
 * Variable references beginning with `$` within comments are formatted as such.
 * List element continuation is different, particularly with respect to leading
 whitespace. *Incompatibility*

@@ -813,6 +813,11 @@ oo::class create ruff::formatter::Formatter {
         return
     }
 
+    method extension {} {
+        # Returns the default file extension to be used for output files.
+        error "Method extension not overridden by derived class."
+    }
+
     method generate_document {ns_info args} {
         # Produces documentation in HTML format from the passed in
         # class and proc metainformation.

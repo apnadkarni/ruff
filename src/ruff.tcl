@@ -50,7 +50,7 @@ namespace eval ruff {
         Further, maintaining documentation in sync with the code is much
         easier. For example, changing the defaults for arguments, or adding
         a mix-in to a class, is automatically taken care of.
-        
+
         On the output side,
 
         * Ruff! supports multiple formats (currently HTML and Markdown).
@@ -91,17 +91,17 @@ namespace eval ruff {
         Once loaded, you can use the [document] command to document
         classes and commands within one or more namespaces.
 
-        The following command will document the `ns` namespace using
+        The following command will document the `NS` namespace using
         the built-in HTML formatter.
         ````
         package require ruff
-        ::ruff::document html [list ::NS] -output NS.html
+        ::ruff::document ::NS -output ns.html
         ````
 
-        The following will document the namespace and its children,
+        The following will document the namespace `NS`, `NS2` and their children,
         splitting the output across multiple pages.
         ````
-        ::ruff::document html [list ::NS] -output NS.html -recurse true -pagesplit namespace
+        ::ruff::document [list ::NS ::NS2] -output docs.html -recurse true -pagesplit namespace
         ````
         Refer to [document] for various other options.
 
@@ -2013,7 +2013,7 @@ proc ruff::private::locate_ooclass_method {class_name method_name} {
 
 proc ruff::private::load_formatters {} {
     # Loads all available formatter implementations
-    foreach formatter {html markdown} {
+    foreach formatter [formatters] {
         load_formatter $formatter
     }
 }
@@ -2032,6 +2032,7 @@ proc ruff::document {namespaces args} {
     # Generates documentation for the specified namespaces using the
     # specified formatter.
     # namespaces - list of namespaces for which documentation is to be generated.
+    # args - Options described below.
     # -autopunctuate BOOLEAN - If `true`, the first letter of definition
     #  descriptions (including parameter descriptions) is capitalized
     #  and a period added at the end if necessary.
@@ -2047,19 +2048,21 @@ proc ruff::document {namespaces args} {
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
     #  procedure is also included. Default value is false.
-    # -output PATH - if specified, the generated document is written
-    #  to the specified file which will overwritten if it already exists.
-    # -title STRING - specifies the title to use for the page
-    # -recurse BOOLEAN - if true, child namespaces are recursively
-    #  documented.
+    # -output PATH - Specifies the path of the output file.
+    #  If the output is to multiple files, this is the path of the
+    #  documentation top. Other files will named accordingly by
+    #  appending the namespace. **Existing files are overwritten.**
+    #  By default, the output file is written to the current directory
+    #  with a name constructed from the first namespace specified.
     # -pagesplit SPLIT - if `none`, a single documentation file is produced.
     #  If `namespace`, a separate file is output for every namespace.
+    # -preamble TEXT - Any text that should be appear at the beginning
+    #  outside of any namespace documentation. `TEXT` is assumed
+    #  to be in Ruff! syntax.
+    # -recurse BOOLEAN - if true, child namespaces are recursively
+    #  documented.
+    # -title STRING - specifies the title to use for the page
     #
-    # Any additional arguments are passed through to the document command.
-    #
-    # Returns the documentation string if the -output option is not
-    # specified, otherwise returns an empty string after writing the
-    # documentation to the specified file.
 
     array set opts {
         -excludeprocs {}
@@ -2084,25 +2087,31 @@ proc ruff::document {namespaces args} {
     }
     set ProgramOptions(-pagesplit) $opts(-pagesplit)
 
-    array unset private::ns_file_base_cache
-    if {$opts(-output) eq ""} {
-        if {$opts(-pagesplit) ne "none"} {
-            # Need to link across files so output must be specified.
-            error "Output file must be specified with -output if -pagesplit option is not \"none\"."
-        }
-    } else {
-        set private::output_file_base [file root [file tail $opts(-output)]]
-        set private::output_file_ext [file extension $opts(-output)]
-    }
-
     # Fully qualify namespaces
     set namespaces [lmap ns $namespaces {
-        if {[string match ::* $ns]} {
-            set ns
-        } else {
-            return -level 0 "[uplevel 1 {namespace current}]::$ns"
+        if {![string match ::* $ns]} {
+            set ns "[string trimright [uplevel 1 {namespace current}] ::]::$ns"
         }
+        if {![namespace exists $ns]} {
+            error "Namespace $ns does not exist."
+        }
+        set ns
     }]
+    if {[llength $namespaces] == 0} {
+        error "At least one namespace needs to be specified."
+    }
+
+    set formatter [[load_formatter $opts(-format)] new]
+
+    array unset private::ns_file_base_cache
+    if {$opts(-output) eq ""} {
+        set opts(-output) [namespace tail [lindex $namespaces 0]]
+    }
+    set private::output_file_base [file root [file tail $opts(-output)]]
+    set private::output_file_ext [file extension $opts(-output)]
+    if {$private::output_file_ext in {{} .}} {
+        set private::output_file_ext .[$formatter extension]
+    }
 
     if {$opts(-recurse)} {
         set namespaces [namespace_tree $namespaces]
@@ -2123,13 +2132,8 @@ proc ruff::document {namespaces args} {
                                -include $opts(-include) \
                                -includeprivate $opts(-includeprivate)]
 
-    set obj [[load_formatter $opts(-format)] new]
-    set docs [$obj generate_document $classprocinfodict {*}$args]
-    $obj destroy
-
-    if {$opts(-output) eq ""} {
-        return $docs
-    }
+    set docs [$formatter generate_document $classprocinfodict {*}$args]
+    $formatter destroy
 
     set dir [file dirname $opts(-output)]
     file mkdir $dir
@@ -2149,17 +2153,8 @@ proc ruff::document {namespaces args} {
 }
 
 proc ruff::formatters {} {
-    # Get the list of supported formatters.
-    #
-    # Ruff! can produce documentation in several formats each of which
-    # is produced by a specific formatter. This command returns the list
-    # of such formatters that can be used with commands like
-    # document.
-    #
     # Returns a list of available formatters.
-    return [lsort [lmap ns [namespace children formatter] {
-        namespace tail $ns
-    }]]
+    return {html markdown}
 }
 
 # TBD - where is this used

@@ -53,6 +53,7 @@ p.linkline {
     font-variant: normal;
     font-family: Arial, sans-serif;
     float: right;
+    padding:2px;
 }
 
 h1 .tinylink a {

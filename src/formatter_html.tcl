@@ -312,14 +312,15 @@ oo::class create ruff::formatter::Html {
         set main_ref [ns_file_base {}]
 
         append Document "<div class='yui-b navbox'>"
-        # If highlight_ns is empty, assume main page. Hack hack hack
-        if {$highlight_ns eq ""} {
-            append Document "<h1><a style='padding-top:2px;$highlight_style' href='$main_ref'>$main_title</a></h1>\n<hr>\n"
-        } else {
-            append Document "<h1><a style='padding-top:2px;' href='$main_ref'>$main_title</a></h1>\n<hr>\n"
-        }
 
         if {[my Option -pagesplit none] ne "none"} {
+            # Split pages. Add navigation to each page.
+            # If highlight_ns is empty, assume main page. Hack hack hack
+            if {$highlight_ns eq ""} {
+                append Document "<h1><a style='padding-top:2px;$highlight_style' href='$main_ref'>$main_title</a></h1>\n<hr>\n"
+            } else {
+                append Document "<h1><a style='padding-top:2px;' href='$main_ref'>$main_title</a></h1>\n<hr>\n"
+            }
             foreach ns [my SortedNamespaces] {
                 set ref  [ns_file_base $ns]
                 set text [string trimleft $ns :]
@@ -392,6 +393,11 @@ oo::class create ruff::formatter::Html {
             <    &lt;
             >    &gt;
         } $s]
+    }
+
+    method extension {} {
+        # Returns the default file extension to be used for output files.
+        return html
     }
 
     forward FormatInline my ToHtml
