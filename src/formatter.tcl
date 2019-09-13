@@ -535,8 +535,16 @@ oo::class create ruff::formatter::Formatter {
             # The type may be parameter or option
             set param_type [dict get $param type]
             if {$param_type eq "parameter"} {
-                lappend arglist $param_name
-                if {[dict exists $param default]} {
+                if {![dict exists $param default]} {
+                    # Little buglet here since args is actually special
+                    # only if it is the last argument. Oh well...
+                    if {$param_name eq "args"} {
+                        lappend arglist "?$param_name?"
+                    } else {
+                        lappend arglist $param_name
+                    }
+                } else {
+                    lappend arglist "?$param_name?"
                     set optval [dict get $param default]
                     if {$optval eq ""} {
                         set optval \"\"
