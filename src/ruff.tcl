@@ -17,7 +17,7 @@ if {[catch {
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 1.0b0
+    variable version 1.0b1
     proc version {} {variable version; return $version}
 
     variable _ruff_intro {
@@ -44,12 +44,14 @@ namespace eval ruff {
         * Ruff! requires minimal markup in the comments making it lightweight
         as well as reducing clutter.
 
+        * Supports inline formatting using Markdown syntax.
+
         * Program elements like command arguments, defaults and 
         class relationships like inheritance are automatically derived.
 
-        Further, maintaining documentation in sync with the code is much
-        easier. For example, changing the defaults for arguments, or adding
-        a mix-in to a class, is automatically taken care of.
+        * Maintenance is less of a burden as documentation is automatically
+        updated with source modification such as changes to defaults, addition of
+        mix-ins etc.
 
         On the output side,
 
@@ -68,7 +70,7 @@ namespace eval ruff {
         The Ruff! documentation itself is produced with Ruff!.
         For larger examples (though with older versions)
         are the reference pages for [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
-        and [CAWT](http://www.posoft.de/download/extensions/Cawt/CawtReference-1.2.0.html).
+        and [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html).
 
         ## Documentation
 
@@ -77,6 +79,13 @@ namespace eval ruff {
         Ruff! features along with the associated source code from which
         it was generated.
 
+        ## Downloads and Install
+
+        Download Ruff! from
+        https://github.com/apnadkarni/ruff/releases.
+
+        To install, copy the distribution to a directory listed in your
+        Tcl `auto_path` variable.
     }
     variable _ruff_preamble {
         ## Usage
@@ -825,6 +834,18 @@ proc ruff::private::parse_fence_state {statevar} {
     set state(state) body
 }
 
+proc ruff::private::extract_seealso_symbols {symbols} {
+    # symbols - text line with symbols optionally separated by commas and optional
+    #   surrounding square brackets
+    return [lmap symbol [string map {, { }} $symbols] {
+        if {[regexp {^\[.*\]$} $symbol]} {
+            # Maybe optionally surrounded by []
+            set symbol [string range $symbol 1 end-1]
+        }
+        set symbol
+    }]
+}
+
 proc ruff::private::parse_seealso_state {statevar} {
     upvar 1 $statevar state
 
@@ -835,8 +856,7 @@ proc ruff::private::parse_seealso_state {statevar} {
     set block_indent [dict get $state(parsed) Indent]
     # The text is a list of symbols separated by spaces
     # and optionally commas.
-    set symbols [string map {, { }} [dict get $state(parsed) Text]]
-    lappend state(seealso) {*}$symbols
+    lappend state(seealso) {*}[extract_seealso_symbols [dict get $state(parsed) Text]]
     while {[incr state(index)] < $state(nlines)} {
         set line [lindex $state(lines) $state(index)]
         set state(parsed) [parse_line $line $state(mode) $block_indent]
@@ -865,8 +885,7 @@ proc ruff::private::parse_seealso_state {statevar} {
                 error "Unexpected type [dict get $state(parsed) Type]"
             }
         }
-        set symbols [string map {, { }} [dict get $state(parsed) Text]]
-        lappend state(seealso) {*}$symbols
+        lappend state(seealso) {*}[extract_seealso_symbols [dict get $state(parsed) Text]]
     }
     set state(state) body
 }
@@ -914,7 +933,7 @@ proc ruff::private::parse_returns_state {statevar} {
         } else {
             lappend state(returns) {*}$lines
         }
-    } 
+    }
     if {$state(mode) ne "docstring" && $state(state) eq "init"} {
         set state(state) postsummary
     } else {
