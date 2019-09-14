@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"/>
-<title>Ruff! - Runtime Formatting Function Reference (V1.0b0)</title>
+<title>Ruff! - Runtime Formatting Function Reference (V1.0b1)</title>
 <style>
 /*
 Copyright (c) 2009, Yahoo! Inc. All rights reserved.
@@ -56,6 +56,7 @@ p.linkline {
     font-variant: normal;
     font-family: Arial, sans-serif;
     float: right;
+    padding:2px;
 }
 
 h1 .tinylink a {
@@ -203,12 +204,13 @@ h2.ruff {
 h3.ruff, h4.ruff, h5.ruff, h6.ruff {
     color: #006666;
 }
-h5.ruff, h6.ruff {
+h5.ruff {
     font-style: italic;
     font-weight: normal;
 }
-
-
+h6.ruff {
+    font-weight: normal;
+}
 h3.ruffclass, h3.ruffproc, h3.ruffmethod,
 h4.ruffclass, h4.ruffproc, h4.ruffmethod,
 h5.ruffclass, h5.ruffproc, h5.ruffmethod {
@@ -285,31 +287,30 @@ pre {
 }
 </script></head>
 <body><div id='doc3' class='yui-t2'><div id='hd' class='banner'>
-<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.0b0)</a>
+<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.0b1)</a>
 </div>
 <div id='bd'><div id='yui-main'><div class='yui-b'><h1 class='ruff'><a name='::ruff'></a>::ruff<span class='tinylink'><a href='ruff.html'>Main</a></span></h1>
 <div style='clear:both;'></div>
 <h2 class='ruff'><a name='::ruff-Usage'></a>Usage<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='ruff.html'>Main</a></span></h2>
 <div style='clear:both;'></div>
-<p class='ruff'>Ruff! is not intended to be a standalone script. Rather the package provides commands that should be driven from a script that controls which particular namespaces, classes etc. are to be included. Include the following command to load the package into your script.</p>
+<p class='ruff'>Ruff! is not intended to be a standalone script. Rather the package provides commands that should be driven from a script that controls which particular namespaces, classes etc. are to be included.</p>
+<p class='ruff'>To document a package, first load it into a Tcl interpreter. Then load <code>ruff</code> and invoke the <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a> command to document classes and commands within one or more namespaces.</p>
+<p class='ruff'>For example, the following command will document the <code>NS</code> namespace using the built-in HTML formatter.</p>
 <pre class='ruff'>
 package require ruff
+::ruff::document ::NS
 </pre>
-<p class='ruff'>Once loaded, you can use the <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a> command to document classes and commands within one or more namespaces.</p>
-<p class='ruff'>The following command will document the <code>ns</code> namespace using the built-in HTML formatter.</p>
+<p class='ruff'>The output will be written to <code>NS.html</code>.</p>
+<p class='ruff'>The following will document the namespace <code>NS</code>, <code>NS2</code> and their children, splitting the output across multiple pages.</p>
 <pre class='ruff'>
-package require ruff
-::ruff::document html [list ::NS] -output NS.html
-</pre>
-<p class='ruff'>The following will document the namespace and its children, splitting the output across multiple pages.</p>
-<pre class='ruff'>
-::ruff::document html [list ::NS] -output NS.html -recurse true -pagesplit namespace
+::ruff::document {::NS ::NS2} -output docs.html -recurse true -pagesplit namespace
 </pre>
 <p class='ruff'>Refer to <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a> for various other options.</p>
 <h2 class='ruff'><a name='::ruff-Documenting_procedures'></a>Documenting procedures<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='ruff.html'>Main</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>Ruff! generates documentation using Tcl's runtime system to gather proc and class definitions. Comments in procedure and method bodies are further parsed to extract the documentation.</p>
 <p class='ruff'>The structure Ruff! expects is described below. In practice, the structure is simple and intuitive though the description may be a bit long winded. You can simply look at the documentation of the <a href="ruff_ruff_sample.html#::ruff::sample" title="sample" class='ruff_cmd'>sample</a> namespace instead, and click on the <strong>Show source</strong> links for each procedure or method there to see the formatting.</p>
+<p class='ruff'>An example procedure may look as follows:</p>
 <pre class='ruff'>
 proc ruff::sample::character_at {text {pos 0}} {
     # Get the character from a string.
@@ -347,7 +348,7 @@ proc ruff::sample::character_at {text {pos 0}} {
 <li>Parameter blocks have the same format as definition lists and are distinguished from them only by their presence in the lead block. Unlike definition blocks, the term is assumed to be the name of an argument and is automatically formatted and not subject to inline formatting.</li>
 <li>If the line is indented 4 or more spaces, it is treated a preformatted line and passed through to the output with the the first 4 spaces stripped. No other processing is done on the line.</li>
 <li>Any line beginning with the word <code>Returns</code> is treated as description of the return value. It follows the same rules as normal paragraphs below.</li>
-<li>A line beginning with <code>See also:</code> (note the colon) is assumed to begin a reference block consisting of a list of program element names (such as procedures, classes etc.). These are then automatically linked and listed in the <strong>See also</strong> section of a procedure documentation. The list may continue over multiple lines following normal paragraph rules. Note the program element names should not contain inline formatting as this is automatically added.</li>
+<li>A line beginning with <code>See also:</code> (note the colon) is assumed to begin a reference block consisting of a list of program element names (such as procedures, classes etc.). These are then automatically linked and listed in the <strong>See also</strong> section of a procedure documentation. The list may continue over multiple lines following normal paragraph rules. Note the program element names can, but need not be, explicitly marked as a program element reference using surrounding square brackets. For example, within a <code>See also:</code> section, both <code>document</code> and <code>[document]</code> will generate a cross-reference link to the documentation for the <code>document</code> procedure.</li>
 <li>All other lines begin a normal paragraph. The paragraph ends with a line of one of the above types.</li>
 </ul>
 <h3 class='ruff'><a name='::ruff-Differences_from_Markdown'></a>Differences from Markdown<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='ruff.html'>Main</a></span></h3>
@@ -373,7 +374,7 @@ proc ruff::sample::character_at {text {pos 0}} {
 <li>Additionally, content may contain Markdown ATX style headings indicated by a prefix of one or more <code>#</code> characters followed by at least one space.</li>
 </ul>
 <p class='ruff'>The documentation generated from the <code>_ruff_preamble</code> content is placed before the documentation of the commands in classes for that namespace.</p>
-<p class='ruff'><strong>Note</strong>: Older versions supported the <code>ruffdoc</code> variable. Though this will still work, it is deprecated.</p>
+<p class='ruff'><strong>Note</strong>: Older versions supported the <code>_ruffdoc</code> variable. Though this will still work, it is deprecated.</p>
 <p class='ruff'>Content that should lie outside of any namespace can be passed through the <code>-preamble</code> option to <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a>. When generating single page output, this is included at the top of the documentation. When generating multipage output this forms the content of the main documentation page.</p>
 <h2 class='ruff'><a name='::ruff-Inline_formatting'></a>Inline formatting<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='ruff.html'>Main</a></span></h2>
 <div style='clear:both;'></div>
@@ -388,7 +389,7 @@ proc ruff::sample::character_at {text {pos 0}} {
 <tr><td class='ruff_defitem'><code>$</code></td><td class='ruff_defitem'>Words beginning with <code>$</code> are treated as variable names and shown as inline code similar to backquotes (non-standard Markdown).</td></tr>
 </table>
 <p class='ruff'>The default HTML formatter supports other Markdown inline elements but other formatters might not.</p>
-<p class='ruff'>Text enclosed in <code>[]</code> is checked whether it references a section heading or a program element name (namespaces, classes, methods, procedures). If so, it is replaced by a link to the section or documentation of that element. If the text is not a fully qualified name, it is treated relative to namespace or class within whose documentation the link appears. If it is fully qualified, it is displayed relative to the namespace of the link location. For example,</p>
+<p class='ruff'>Text enclosed in <code>[]</code> is checked whether it references a section heading or a program element name (namespaces, classes, methods, procedures). If so, it is replaced by a link to the section or documentation of that element. If the text is not a fully qualified name, it is treated relative to the namespace or class within whose documentation the link appears. If it is fully qualified, it is displayed relative to the namespace of the link location. For example,</p>
 <ul class='ruff'>
 <li><code>[document]</code> is displayed as <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a></li>
 <li><code>[::ruff::formatters]</code> is displayed as <a href="ruff_ruff.html#::ruff::formatters" title="formatters" class='ruff_cmd'>formatters</a> if referenced from within a section documenting the <code>::ruff</code> namespace.</li>
@@ -407,58 +408,71 @@ proc ruff::sample::character_at {text {pos 0}} {
 <p class='ruff'>The internal HTML formatter offers (in the author's humble opinion) the best cross-linking and navigation support with a table of contents in addition to cosmetic enhancements such as tooltips and optional hiding/display of source code. It is also the simplest to use as no other external tools are required.</p>
 <p class='ruff'>The following is a simple example of generating the documentation for Ruff! itself in a single page format:</p>
 <pre class='ruff'>
-source sample.tcl; # To load the example code used in documentation.
-ruff::document html ::ruff -output ruff.html -title &quot;Ruff! reference&quot;
+ruff::document ::ruff -title &quot;Ruff! reference&quot;
 </pre>
 <p class='ruff'>To generate documentation, including private namespaces, in multipage format:</p>
 <pre class='ruff'>
-ruff::document html ::ruff -recurse true -pagesplit namespace -output full/ruff.html -title &quot;Ruff! internal reference&quot;
+ruff::document ::ruff -recurse true -pagesplit namespace -output full/ruff.html -title &quot;Ruff! internal reference&quot;
 </pre>
 <h3 class='ruff'><a name='::ruff-Markdown_formatter'></a>Markdown formatter<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='ruff.html'>Main</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>The Markdown formatter generates output in generic Markdown syntax. It includes cross-linking but does not include a table of contents, tooltips or source code display. On the other hand, it allows conversion to other formats using external tools.</p>
 <p class='ruff'>The following generates Ruff! documentation in Markdown format and then uses <code>pandoc</code> to convert it to HTML.</p>
 <pre class='ruff'>
-ruff::document markdown ::ruff -output ruff.md -title &quot;Ruff! reference&quot;
+ruff::document ::ruff -format markdown -output ruff.md -title &quot;Ruff! reference&quot;
 </pre>
-<p class='ruff'>Then from the shell command line,</p>
+<p class='ruff'>Then from the shell or Windows command line,</p>
 <pre class='ruff'>
-pandoc -s -o ruff.html -c ruff-md.css ruff.md
+pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&quot; ruff.md
 </pre>
 <p class='ruff'>When generating HTML from Markdown, it is generally desirable to specify a CSS style file. The <code>ruff-md.css</code> file provides some <em>minimal</em> CSS that resembles the output of the internal HTML formatter.</p>
 <h2 class='ruff'><a name='::ruff-Commands'></a>Commands<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='ruff.html'>Main</a></span></h2>
 <div style='clear:both;'></div>
 <h4 class='ruffproc'><a name='::ruff::document'>document</a><span class='ns_scope'> [<a href="ruff_ruff.html#::ruff" title="::ruff" class='ruff_cmd'>::ruff</a>]</span><span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='ruff.html'>Main</a></span></h4>
 <div style='clear:both;'></div>
-<p class='ruff'>Generates documentation for the specified namespaces using the specified formatter.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>document</span> <span class='ruff_arg'>namespaces args</span></div>
+<p class='ruff'>Generates documentation for commands and classes.</p>
+<div class='ruff_synopsis'><span class='ruff_cmd'>document</span> <span class='ruff_arg'>namespaces ?args?</span></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
-<tr><td class='ruff_defitem'><code>namespaces</code></td><td class='ruff_defitem'>list of namespaces for which documentation is to be generated.</td></tr>
-<tr><td class='ruff_defitem'><code>args</code></td><td class='ruff_defitem'>Not documented.</td></tr>
-<tr><td class='ruff_defitem'><code>-includeprivate BOOLEAN</code></td><td class='ruff_defitem'>if true private methods are also included in the generated documentation. Default is false.</td></tr>
+<tr><td class='ruff_defitem'><code>namespaces</code></td><td class='ruff_defitem'>List of namespaces for which documentation is to be generated.</td></tr>
+<tr><td class='ruff_defitem'><code>args</code></td><td class='ruff_defitem'>Options described below.</td></tr>
+<tr><td class='ruff_defitem'><code>-autopunctuate BOOLEAN</code></td><td class='ruff_defitem'>If <code>true</code>, the first letter of definition descriptions (including parameter descriptions) is capitalized and a period added at the end if necessary.</td></tr>
 <tr><td class='ruff_defitem'><code>-excludeclasses REGEXP</code></td><td class='ruff_defitem'>If specified, any classes whose names match <code>REGEXPR</code> will not be included in the documentation.</td></tr>
-<tr><td class='ruff_defitem'><code>-include LIST</code></td><td class='ruff_defitem'>Specifies which program elements are to be documented. <code>LIST</code> must be a list from one or both amongst <code>classes</code> or <code>procs</code>. Defaults to both.</td></tr>
 <tr><td class='ruff_defitem'><code>-excludeprocs REGEXP</code></td><td class='ruff_defitem'>If specified, any procedures whose names match <code>REGEXPR</code> will not be included in the documentation.</td></tr>
-<tr><td class='ruff_defitem'><code>-pagesplit SPLIT</code></td><td class='ruff_defitem'>if <code>none</code>, a single documentation file is produced. If <code>namespace</code>, a separate file is output for every namespace.</td></tr>
-<tr><td class='ruff_defitem'><code>-recurse BOOLEAN</code></td><td class='ruff_defitem'>if true, child namespaces are recursively documented.</td></tr>
-<tr><td class='ruff_defitem'><code>-title STRING</code></td><td class='ruff_defitem'>specifies the title to use for the page</td></tr>
-<tr><td class='ruff_defitem'><code>-includesource BOOLEAN</code></td><td class='ruff_defitem'>if true, the source code of the procedure is also included. Default value is false.</td></tr>
-<tr><td class='ruff_defitem'><code>-output PATH</code></td><td class='ruff_defitem'>if specified, the generated document is written to the specified file which will overwritten if it already exists.</td></tr>
 <tr><td class='ruff_defitem'><code>-format FORMAT</code></td><td class='ruff_defitem'>The output format. <code>FORMAT</code> defaults to <code>html</code>.</td></tr>
+<tr><td class='ruff_defitem'><code>-hidenamespace NAMESPACE</code></td><td class='ruff_defitem'>By default, documentation generated by Ruff! includes namespace qualifiers in all class and proc names. It is possible to have the generated output leave out the namespace qualifers by adding the <code>-hidenamespace NAMESPACE</code> qualifier to the document generation commands. This will omit <code>NAMESPACE</code> in displayed program element names and provides a more visually pleasing output with less noise. However, it may result in ambiguities in case of names being present in more than one namespace. In particular, some formatters may not cross-link correctly in such cases.</td></tr>
+<tr><td class='ruff_defitem'><code>-include LIST</code></td><td class='ruff_defitem'>Specifies which program elements are to be documented. <code>LIST</code> must be a list from one or both amongst <code>classes</code> or <code>procs</code>. Defaults to both.</td></tr>
+<tr><td class='ruff_defitem'><code>-includeprivate BOOLEAN</code></td><td class='ruff_defitem'>If true private methods are also included in the generated documentation. Default is false.</td></tr>
+<tr><td class='ruff_defitem'><code>-includesource BOOLEAN</code></td><td class='ruff_defitem'>If true, the source code of the procedure is also included. Default value is false.</td></tr>
+<tr><td class='ruff_defitem'><code>-output PATH</code></td><td class='ruff_defitem'>Specifies the path of the output file. If the output is to multiple files, this is the path of the documentation top. Other files will named accordingly by appending the namespace. <strong>Existing files are overwritten.</strong> By default, the output file is written to the current directory with a name constructed from the first namespace specified.</td></tr>
+<tr><td class='ruff_defitem'><code>-pagesplit SPLIT</code></td><td class='ruff_defitem'>If <code>none</code>, a single documentation file is produced. If <code>namespace</code>, a separate file is output for every namespace.</td></tr>
+<tr><td class='ruff_defitem'><code>-preamble TEXT</code></td><td class='ruff_defitem'>Any text that should be appear at the beginning outside of any namespace documentation, for example an introduction or overview of a package. <code>TEXT</code> is assumed to be in Ruff! syntax.</td></tr>
+<tr><td class='ruff_defitem'><code>-recurse BOOLEAN</code></td><td class='ruff_defitem'>If true, child namespaces are recursively documented.</td></tr>
+<tr><td class='ruff_defitem'><code>-title STRING</code></td><td class='ruff_defitem'>Specifies the title to use for the page.</td></tr>
 </table>
-<h5 class='ruff'>Return value</h5><p class='ruff'>Returns the documentation string if the -output option is not specified, otherwise returns an empty string after writing the documentation to the specified file.</p>
-<h5 class='ruff'>Description</h5><p class='ruff'>Any additional arguments are passed through to the document command.</p>
+<h5 class='ruff'>Description</h5><p class='ruff'>The command generates documentation for one or more namespaces and writes it out to file(s) as per the options shown above. See <a href="ruff_ruff.html#::ruff-Documenting_procedures" title="Documenting procedures" >Documenting procedures</a>, <a href="ruff_ruff.html#::ruff-Documenting_classes" title="Documenting classes" >Documenting classes</a> and <a href="ruff_ruff.html#::ruff-Documenting_namespaces" title="Documenting namespaces" >Documenting namespaces</a> for details of the expected source formats and the generation process.</p>
 <div class='ruff_source'><p class='ruff_source_link'><a id='l_1' href="javascript:toggleSource('1')">Show source</a></p>
 <div id='1' class='ruff_dyn_src'><pre>proc ::ruff::document {namespaces args} {
 
-    # Generates documentation for the specified namespaces using the
-    # specified formatter.
+    # Generates documentation for commands and classes.
     # namespaces - list of namespaces for which documentation is to be generated.
+    # args - Options described below.
+    # -autopunctuate BOOLEAN - If `true`, the first letter of definition
+    #  descriptions (including parameter descriptions) is capitalized
+    #  and a period added at the end if necessary.
     # -excludeclasses REGEXP - If specified, any classes whose names
     #  match `REGEXPR` will not be included in the documentation.
     # -excludeprocs REGEXP - If specified, any procedures whose names
     #  match `REGEXPR` will not be included in the documentation.
     # -format FORMAT - The output format. `FORMAT` defaults to `html`.
+    # -hidenamespace NAMESPACE - By default, documentation generated by Ruff!
+    #  includes namespace qualifiers in all class and proc names. It is possible
+    #  to have the generated output leave out the namespace qualifers by adding
+    #  the `-hidenamespace NAMESPACE` qualifier to the document generation
+    #  commands. This will omit `NAMESPACE` in displayed program element names
+    #  and provides a more visually pleasing output with less noise. However,
+    #  it may result in ambiguities in case of names being present in more than
+    #  one namespace. In particular, some formatters may not cross-link correctly
+    #  in such cases.
     # -include LIST - Specifies which program elements are to be documented.
     #  `LIST` must be a list from one or both amongst `classes` or `procs`.
     #  Defaults to both.
@@ -466,24 +480,38 @@ pandoc -s -o ruff.html -c ruff-md.css ruff.md
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
     #  procedure is also included. Default value is false.
-    # -output PATH - if specified, the generated document is written
-    #  to the specified file which will overwritten if it already exists.
-    # -title STRING - specifies the title to use for the page
-    # -recurse BOOLEAN - if true, child namespaces are recursively
-    #  documented.
+    # -output PATH - Specifies the path of the output file.
+    #  If the output is to multiple files, this is the path of the
+    #  documentation top. Other files will named accordingly by
+    #  appending the namespace. **Existing files are overwritten.**
+    #  By default, the output file is written to the current directory
+    #  with a name constructed from the first namespace specified.
     # -pagesplit SPLIT - if `none`, a single documentation file is produced.
     #  If `namespace`, a separate file is output for every namespace.
+    # -preamble TEXT - Any text that should be appear at the beginning
+    #  outside of any namespace documentation, for example an introduction
+    #  or overview of a package. `TEXT` is assumed to be in Ruff! syntax.
+    # -recurse BOOLEAN - if true, child namespaces are recursively
+    #  documented.
+    # -title STRING - specifies the title to use for the page
     #
-    # Any additional arguments are passed through to the document command.
-    #
-    # Returns the documentation string if the -output option is not
-    # specified, otherwise returns an empty string after writing the
-    # documentation to the specified file.
+    # The command generates documentation for one or more namespaces
+    # and writes it out to file(s) as per the options shown above.
+    # See [Documenting procedures], [Documenting classes] and
+    # [Documenting namespaces] for details of the expected source
+    # formats and the generation process.
+
+
+
+    # TBD - not documented because not tested
+    #   -stylesheet URLLIST - if specified, the stylesheets passed in URLLIST
+    #    are used instead of the built-in styles. Note the built-in YUI is
+    #    always included.
 
     array set opts {
         -excludeprocs {}
         -excludeclasses {}
-        -formatter html
+        -format html
         -hidesourcecomments false
         -include {procs classes}
         -includeprivate false
@@ -503,25 +531,31 @@ pandoc -s -o ruff.html -c ruff-md.css ruff.md
     }
     set ProgramOptions(-pagesplit) $opts(-pagesplit)
 
-    array unset private::ns_file_base_cache
-    if {$opts(-output) eq &quot;&quot;} {
-        if {$opts(-pagesplit) ne &quot;none&quot;} {
-            # Need to link across files so output must be specified.
-            error &quot;Output file must be specified with -output if -pagesplit option is not \&quot;none\&quot;.&quot;
-        }
-    } else {
-        set private::output_file_base [file root [file tail $opts(-output)]]
-        set private::output_file_ext [file extension $opts(-output)]
-    }
-
     # Fully qualify namespaces
     set namespaces [lmap ns $namespaces {
-        if {[string match ::* $ns]} {
-            set ns
-        } else {
-            return -level 0 &quot;[uplevel 1 {namespace current}]::$ns&quot;
+        if {![string match ::* $ns]} {
+            set ns &quot;[string trimright [uplevel 1 {namespace current}] ::]::$ns&quot;
         }
+        if {![namespace exists $ns]} {
+            error &quot;Namespace $ns does not exist.&quot;
+        }
+        set ns
     }]
+    if {[llength $namespaces] == 0} {
+        error &quot;At least one namespace needs to be specified.&quot;
+    }
+
+    set formatter [[load_formatter $opts(-format)] new]
+
+    array unset private::ns_file_base_cache
+    if {$opts(-output) eq &quot;&quot;} {
+        set opts(-output) [namespace tail [lindex $namespaces 0]]
+    }
+    set private::output_file_base [file root [file tail $opts(-output)]]
+    set private::output_file_ext [file extension $opts(-output)]
+    if {$private::output_file_ext in {{} .}} {
+        set private::output_file_ext .[$formatter extension]
+    }
 
     if {$opts(-recurse)} {
         set namespaces [namespace_tree $namespaces]
@@ -538,13 +572,8 @@ pandoc -s -o ruff.html -c ruff-md.css ruff.md
 
     set classprocinfodict [extract_namespaces $namespaces  -excludeprocs $opts(-excludeprocs)  -excludeclasses $opts(-excludeclasses)  -include $opts(-include)  -includeprivate $opts(-includeprivate)]
 
-    set obj [[load_formatter $opts(-format)] new]
-    set docs [$obj generate_document $classprocinfodict {*}$args]
-    $obj destroy
-
-    if {$opts(-output) eq &quot;&quot;} {
-        return $docs
-    }
+    set docs [$formatter generate_document $classprocinfodict {*}$args]
+    $formatter destroy
 
     set dir [file dirname $opts(-output)]
     file mkdir $dir
@@ -564,37 +593,39 @@ pandoc -s -o ruff.html -c ruff-md.css ruff.md
 }</pre></div>
 </div><h4 class='ruffproc'><a name='::ruff::formatters'>formatters</a><span class='ns_scope'> [<a href="ruff_ruff.html#::ruff" title="::ruff" class='ruff_cmd'>::ruff</a>]</span><span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='ruff.html'>Main</a></span></h4>
 <div style='clear:both;'></div>
-<p class='ruff'>Get the list of supported formatters.</p>
+<p class='ruff'>Gets the available output formatters.</p>
 <div class='ruff_synopsis'><span class='ruff_cmd'>formatters</span> </div>
 <h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of available formatters.</p>
-<h5 class='ruff'>Description</h5><p class='ruff'>Ruff! can produce documentation in several formats each of which is produced by a specific formatter. This command returns the list of such formatters that can be used with commands like document.</p>
+<h5 class='ruff'>Description</h5><p class='ruff'>The returned values can be passed to <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a> to generate documentation in that format.</p>
 <div class='ruff_source'><p class='ruff_source_link'><a id='l_2' href="javascript:toggleSource('2')">Show source</a></p>
 <div id='2' class='ruff_dyn_src'><pre>proc ::ruff::formatters {} {
 
-    # Get the list of supported formatters.
+    # Gets the available output formatters.
     #
-    # Ruff! can produce documentation in several formats each of which
-    # is produced by a specific formatter. This command returns the list
-    # of such formatters that can be used with commands like
-    # document.
+    # The returned values can be passed to [document] to generate
+    # documentation in that format.
     #
     # Returns a list of available formatters.
-    return [lsort [lmap ns [namespace children formatter] {
-        namespace tail $ns
-    }]]
+    return {html markdown}
 }</pre></div>
 </div><h4 class='ruffproc'><a name='::ruff::version'>version</a><span class='ns_scope'> [<a href="ruff_ruff.html#::ruff" title="::ruff" class='ruff_cmd'>::ruff</a>]</span><span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='ruff.html'>Main</a></span></h4>
 <div style='clear:both;'></div>
+<p class='ruff'>Returns the Ruff! version.</p>
 <div class='ruff_synopsis'><span class='ruff_cmd'>version</span> </div>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns the Ruff! version.</p>
 <div class='ruff_source'><p class='ruff_source_link'><a id='l_3' href="javascript:toggleSource('3')">Show source</a></p>
 <div id='3' class='ruff_dyn_src'><pre>proc ::ruff::version {} {
-    variable version; return $version
+
+    # Returns the Ruff! version.
+    variable version
+    return $version
 }</pre></div>
-</div></div></div><div class='yui-b navbox'><h1><a style='padding-top:2px;' href='ruff.html'>Main page</a></h1>
+</div></div></div><div class='yui-b navbox'><h1><a style='padding-top:2px;' href='ruff.html'>Start page</a></h1>
 <hr>
 <h1><a style='color: #006666;background-color: white; margin-left:-4px; padding-left:3px;padding-right:2px;' href='ruff_ruff.html'>ruff</a></h1>
 <h1><a href='ruff_ruff_sample.html'>ruff::sample</a></h1>
-<hr><h1><a href='#::ruff'>ruff</a></h1><h2><a href='#::ruff-Usage'>Usage</a></h2><h2><a href='#::ruff-Documenting_procedures'>Documenting procedures</a></h2><h3><a href='#::ruff-Differences_from_Markdown'>Differences from Markdown</a></h3><h2><a href='#::ruff-Documenting_classes'>Documenting classes</a></h2><h2><a href='#::ruff-Documenting_namespaces'>Documenting namespaces</a></h2><h2><a href='#::ruff-Inline_formatting'>Inline formatting</a></h2><h2><a href='#::ruff-Output'>Output</a></h2><h3><a href='#::ruff-Multipage_output'>Multipage output</a></h3><h3><a href='#::ruff-HTML_formatter'>HTML formatter</a></h3><h3><a href='#::ruff-Markdown_formatter'>Markdown formatter</a></h3><h2><a href='#::ruff-Commands'>Commands</a></h2><h4 class='tooltip'><a href='#::ruff::document'>document</a><span class='tooltiptext'>Generates documentation for the specified namespaces using the specified formatter.
-</span></h4><h4 class='tooltip'><a href='#::ruff::formatters'>formatters</a><span class='tooltiptext'>Get the list of supported formatters.
-</span></h4><h4><a href='#::ruff::version'>version</a></h4></div></div><div id='ft'><div style='float: right;'>Document generated by Ruff!</div><div>&copy; 2019 Ashok P. Nadkarni</div></div>
+<hr><h1><a href='#::ruff'>ruff</a></h1><h2><a href='#::ruff-Usage'>Usage</a></h2><h2><a href='#::ruff-Documenting_procedures'>Documenting procedures</a></h2><h3><a href='#::ruff-Differences_from_Markdown'>Differences from Markdown</a></h3><h2><a href='#::ruff-Documenting_classes'>Documenting classes</a></h2><h2><a href='#::ruff-Documenting_namespaces'>Documenting namespaces</a></h2><h2><a href='#::ruff-Inline_formatting'>Inline formatting</a></h2><h2><a href='#::ruff-Output'>Output</a></h2><h3><a href='#::ruff-Multipage_output'>Multipage output</a></h3><h3><a href='#::ruff-HTML_formatter'>HTML formatter</a></h3><h3><a href='#::ruff-Markdown_formatter'>Markdown formatter</a></h3><h2><a href='#::ruff-Commands'>Commands</a></h2><h4 class='tooltip'><a href='ruff_ruff.html#::ruff::document'>document</a><span class='tooltiptext'>Generates documentation for commands and classes.
+</span></h4><h4 class='tooltip'><a href='ruff_ruff.html#::ruff::formatters'>formatters</a><span class='tooltiptext'>Gets the available output formatters.
+</span></h4><h4 class='tooltip'><a href='ruff_ruff.html#::ruff::version'>version</a><span class='tooltiptext'>Returns the Ruff! version.
+</span></h4></div></div><div id='ft'><div style='float: right;'>Document generated by Ruff!</div><div>&copy; 2019 Ashok P. Nadkarni</div></div>
 </div></body></html>

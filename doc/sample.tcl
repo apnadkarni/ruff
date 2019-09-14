@@ -13,45 +13,80 @@ namespace eval ruff::sample {
         for a full description.
 
         The documentation (such as this section) not specific to a *procedure*
-        or *method* is placed in the variable `_ruffdoc` within each namespace.
+        or *method* is placed in the variable `_ruff_preamble` within each
+        namespace.
 
         ## Formatting
 
-        The formatting elements may appear both within `_ruffdoc` content
-        as well as proc and method comments.
+        The formatting elements described below may appear both within
+        `_ruff_preamble` content as well as proc and method comments.
 
         ### Lists
 
         This is an **unnumbered list**.
+        ````
           * First item
           * Second
           item
           across multiple lines
           * Third item
+        ````
+        This is displayed as
+
+        * First item
+        * Second
+        item
+        across multiple lines
+        * Third item
+
 
         This is a **definition list**.
-
+        ````
           itema - Definition of item A
           itemb - Definition of item B
+            across multiple lines.
+        ````
+
+        Definition lists are displayed in an output-specific format.
+
+        itema - Definition of item A
+        itemb - Definition of item B
+        across multiple lines.
 
         ### Inline formatting
 
+        ````
+        Basic markdown inline formatting is supported as
+        `code`, *emphasis*, **strong** and ***strong emphasis***.
+        ````
         Basic markdown inline formatting is supported as
         `code`, *emphasis*, **strong** and ***strong emphasis***.
 
         ### Links
 
-        Links to program elements, e.g. [Derived], and to
-        external resources, e.g. [example](https://www.example.com).
+        ````
+        Links may be references to program elements, e.g. [Derived], to
+        external resources, e.g. [example](https://www.example.com) or
+        explicit, e.g. <https://ruff.magicsplat.com>.
+        ````
+        Links may be references to program elements, e.g. [Derived], to
+        external resources, e.g. [example](https://www.example.com) or
+        explicit, e.g. <https://ruff.magicsplat.com>.
 
         ### Preformatted blocks
 
         ````
+        ```
         Lines consisting of *3* or more backquotes can be used
         to bracket unformatted content
         like
         this paragraph.
+        ```
         ````
+
+        The remaining sections show how commands and classes are documented.
+        Click on the *Show source* link to see the underlying source code
+        for the procedure or method from which the documentation was generated.
     }
 
     namespace eval ensemble_proc {
@@ -81,7 +116,7 @@ proc ruff::sample::proc_full {arg {optarg AVALUE} args} {
     # composed of multiple paragraphs. It is separated from
     # the parameter list above by one or more empty comments.
     #
-    # This is the second paragraph. The next paragraph
+    # This is the second paragraph. The next paragraph (in the *source* comments)
     # starts with the word Returns and hence will be treated
     # by Ruff! as describing the return value.
     #
@@ -99,7 +134,10 @@ proc ruff::sample::proc_full {arg {optarg AVALUE} args} {
     # Bullet lists are indicated by a starting `-` or `*` character.
     # - This is a bullet list iterm
     # * This is also a bullet list item
-    # See also: proc_without_docs Base
+    #
+    # An optional *See also* section may be used to
+    # cross-reference other program elements.
+    # See also: proc_without_docs [Base]
 
 
     # This paragraph will be ignored by Ruff! as it is not part

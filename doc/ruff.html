@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"/>
-<title>Ruff! - Runtime Formatting Function Reference (V1.0b0)</title>
+<title>Ruff! - Runtime Formatting Function Reference (V1.0b1)</title>
 <style>
 /*
 Copyright (c) 2009, Yahoo! Inc. All rights reserved.
@@ -56,6 +56,7 @@ p.linkline {
     font-variant: normal;
     font-family: Arial, sans-serif;
     float: right;
+    padding:2px;
 }
 
 h1 .tinylink a {
@@ -203,12 +204,13 @@ h2.ruff {
 h3.ruff, h4.ruff, h5.ruff, h6.ruff {
     color: #006666;
 }
-h5.ruff, h6.ruff {
+h5.ruff {
     font-style: italic;
     font-weight: normal;
 }
-
-
+h6.ruff {
+    font-weight: normal;
+}
 h3.ruffclass, h3.ruffproc, h3.ruffmethod,
 h4.ruffclass, h4.ruffproc, h4.ruffmethod,
 h5.ruffclass, h5.ruffproc, h5.ruffmethod {
@@ -285,7 +287,7 @@ pre {
 }
 </script></head>
 <body><div id='doc3' class='yui-t2'><div id='hd' class='banner'>
-<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.0b0)</a>
+<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.0b1)</a>
 </div>
 <div id='bd'><div id='yui-main'><div class='yui-b'><h2 class='ruff'><a name='Introduction'></a>Introduction<span class='tinylink'><a href='ruff.html'>Main</a></span></h2>
 <div style='clear:both;'></div>
@@ -297,23 +299,32 @@ pre {
 <ul class='ruff'>
 <li>Comments in source code do not have to be reproduced for documentation purposes.</li>
 <li>Ruff! requires minimal markup in the comments making it lightweight as well as reducing clutter.</li>
+<li>Supports inline formatting using Markdown syntax.</li>
 <li>Program elements like command arguments, defaults and class relationships like inheritance are automatically derived.</li>
+<li>Maintenance is less of a burden as documentation is automatically updated with source modification such as changes to defaults, addition of mix-ins etc.</li>
 </ul>
-<p class='ruff'>Further, maintaining documentation in sync with the code is much easier. For example, changing the defaults for arguments, or adding a mix-in to a class, is automatically taken care of.</p>
 <p class='ruff'>On the output side,</p>
 <ul class='ruff'>
 <li>Ruff! supports multiple formats (currently HTML and Markdown). Additional formats can be added through subclassing.</li>
 <li>Generated documentation can optionally be split across multiple pages.</li>
 <li>Hyperlinks between program elements, and optionally source code, make navigation easy and efficient.</li>
-<li>In object oriented code, class relationships are extracted and the full API for a class, with inherited and mixed-in methods, is easily seen.</li>
+<li>In object oriented code, class relationships are extracted and the full API for a class, with inherited and mixed-in methods, is flattened and summarized.</li>
 </ul>
-<p class='ruff'>The Ruff! documentation itself is produced with Ruff!. For larger examples (though with older versions) are the reference pages for <a href="http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html" >Woof!</a> and <a href="http://www.posoft.de/download/extensions/Cawt/CawtReference-1.2.0.html" >CAWT</a>.</p>
+<p class='ruff'>The Ruff! documentation itself is produced with Ruff!. For larger examples (though with older versions) are the reference pages for <a href="http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html" >Woof!</a> and <a href="http://www.cawt.tcl3d.org/download/CawtReference.html" >CAWT</a>.</p>
 <h2 class='ruff'><a name='Documentation'></a>Documentation<span class='tinylink'><a href='ruff.html'>Main</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>The <a href="ruff_ruff.html#::ruff" title="::ruff" class='ruff_cmd'>::ruff</a> reference page describes the Ruff! documentation generation API. The <a href="ruff_ruff_sample.html#::ruff::sample" title="::ruff::sample" class='ruff_cmd'>::ruff::sample</a> page shows some sample output for some of the Ruff! features along with the associated source code from which it was generated.</p>
-</div></div><div class='yui-b navbox'><h1><a style='padding-top:2px;color: #006666;background-color: white; margin-left:-4px; padding-left:3px;padding-right:2px;' href='ruff.html'>Main page</a></h1>
+<h2 class='ruff'><a name='Downloads_and_Install'></a>Downloads and Install<span class='tinylink'><a href='ruff.html'>Main</a></span></h2>
+<div style='clear:both;'></div>
+<p class='ruff'>Download Ruff! from <a href="https://sourceforge.net/projects/magicsplat/files/ruff/">https://sourceforge.net/projects/magicsplat/files/ruff/</a>.</p>
+<p class='ruff'>To install, extract the distribution to a directory listed in your Tcl <code>auto_path</code> variable.</p>
+<h2 class='ruff'><a name='Credits'></a>Credits<span class='tinylink'><a href='ruff.html'>Main</a></span></h2>
+<div style='clear:both;'></div>
+<p class='ruff'>Ruff! is authored by <a href="https://www.magicsplat.com" >Ashok P. Nadkarni</a>.</p>
+<p class='ruff'>It uses the <code>textutil</code> package from <a href="https://core.tcl-lang.org/tcllib" >tcllib</a> and a modified version of the Markdown inline parser from the <a href="http://caiusproject.com/" >Caius</a> project.</p>
+</div></div><div class='yui-b navbox'><h1><a style='padding-top:2px;color: #006666;background-color: white; margin-left:-4px; padding-left:3px;padding-right:2px;' href='ruff.html'>Start page</a></h1>
 <hr>
 <h1><a href='ruff_ruff.html'>ruff</a></h1>
 <h1><a href='ruff_ruff_sample.html'>ruff::sample</a></h1>
-<hr><h2><a href='#Introduction'>Introduction</a></h2><h2><a href='#Why_Ruff_'>Why Ruff!</a></h2><h2><a href='#Documentation'>Documentation</a></h2></div></div><div id='ft'><div style='float: right;'>Document generated by Ruff!</div><div>&copy; 2019 Ashok P. Nadkarni</div></div>
+<hr><h2><a href='#Introduction'>Introduction</a></h2><h2><a href='#Why_Ruff_'>Why Ruff!</a></h2><h2><a href='#Documentation'>Documentation</a></h2><h2><a href='#Downloads_and_Install'>Downloads and Install</a></h2><h2><a href='#Credits'>Credits</a></h2></div></div><div id='ft'><div style='float: right;'>Document generated by Ruff!</div><div>&copy; 2019 Ashok P. Nadkarni</div></div>
 </div></body></html>

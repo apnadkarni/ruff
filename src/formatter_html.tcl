@@ -308,7 +308,7 @@ oo::class create ruff::formatter::Html {
         #  highlight_ns - Namespace to be highlighted in navigation.
 
         set highlight_style "color: #006666;background-color: white; margin-left:-4px; padding-left:3px;padding-right:2px;"
-        set main_title "Main page"
+        set main_title "Start page"
         set main_ref [ns_file_base {}]
 
         append Document "<div class='yui-b navbox'>"

@@ -18,7 +18,11 @@ if {[catch {
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
     variable version 1.0b1
-    proc version {} {variable version; return $version}
+    proc version {} {
+        # Returns the Ruff! version.
+        variable version
+        return $version
+    }
 
     variable _ruff_intro {
         ## Introduction
@@ -65,7 +69,7 @@ namespace eval ruff {
 
         * In object oriented code, class relationships are extracted
         and the full API for a class, with inherited and mixed-in methods, is
-        easily seen.
+        flattened and summarized.
 
         The Ruff! documentation itself is produced with Ruff!.
         For larger examples (though with older versions)
@@ -81,36 +85,47 @@ namespace eval ruff {
 
         ## Downloads and Install
 
-        Download Ruff! from
-        https://github.com/apnadkarni/ruff/releases.
 
-        To install, copy the distribution to a directory listed in your
+        Download Ruff! from
+        <https://sourceforge.net/projects/magicsplat/files/ruff/>.
+
+        To install, extract the distribution to a directory listed in your
         Tcl `auto_path` variable.
+
+        ## Credits
+
+        Ruff! is authored by [Ashok P. Nadkarni](https://www.magicsplat.com).
+
+        It uses the `textutil` package from
+        [tcllib](https://core.tcl-lang.org/tcllib) and a modified version of the
+        Markdown inline parser from the
+        [Caius](http://caiusproject.com/) project.
     }
+
     variable _ruff_preamble {
+
         ## Usage
 
         Ruff! is not intended to be a standalone script. Rather the package
         provides commands that should be driven from a script that controls
         which particular namespaces, classes etc. are to be included.
-        Include the following command to load the package into your script.
 
-            package require ruff
-
-        Once loaded, you can use the [document] command to document
+        To document a package, first load it into a Tcl interpreter.
+        Then load `ruff` and invoke the [document] command to document
         classes and commands within one or more namespaces.
 
-        The following command will document the `NS` namespace using
+        For example, the following command will document the `NS` namespace using
         the built-in HTML formatter.
         ````
         package require ruff
-        ::ruff::document ::NS -output ns.html
+        ::ruff::document ::NS
         ````
+        The output will be written to `NS.html`.
 
         The following will document the namespace `NS`, `NS2` and their children,
         splitting the output across multiple pages.
         ````
-        ::ruff::document [list ::NS ::NS2] -output docs.html -recurse true -pagesplit namespace
+        ::ruff::document {::NS ::NS2} -output docs.html -recurse true -pagesplit namespace
         ````
         Refer to [document] for various other options.
 
@@ -126,6 +141,7 @@ namespace eval ruff {
         of the [sample] namespace instead, and click on the **Show source**
         links for each procedure or method there to see the formatting.
 
+        An example procedure may look as follows:
         ```
         proc ruff::sample::character_at {text {pos 0}} {
             # Get the character from a string.
@@ -221,8 +237,11 @@ namespace eval ruff {
         (such as procedures, classes etc.). These
         are then automatically linked and listed in the **See also** section of a
         procedure documentation. The list may continue over multiple lines
-        following normal paragraph rules. Note the program element names should
-        not contain inline formatting as this is automatically added.
+        following normal paragraph rules. Note the program element names can,
+        but need not be, explicitly marked as a program element reference
+        using surrounding square brackets. For example, within a `See also:`
+        section, both `document` and `[document]` will generate a cross-reference
+        link to the documentation for the `document` procedure.
 
         * All other lines begin a normal paragraph. The paragraph ends with
         a line of one of the above types.
@@ -272,7 +291,7 @@ namespace eval ruff {
         The documentation generated from the `_ruff_preamble` content is placed
         before the documentation of the commands in classes for that namespace.
 
-        **Note**: Older versions supported the `ruffdoc` variable. Though this
+        **Note**: Older versions supported the `_ruffdoc` variable. Though this
         will still work, it is deprecated.
 
         Content that should lie outside of any namespace can be passed through
@@ -306,7 +325,7 @@ namespace eval ruff {
         or a program element name (namespaces, classes, methods, procedures). If
         so, it is replaced by a link to the section or documentation of that
         element. If the text is not a fully qualified name, it is treated
-        relative to namespace or class within whose documentation the link
+        relative to the namespace or class within whose documentation the link
         appears. If it is fully qualified, it is displayed relative to the
         namespace of the link location. For example,
 
@@ -350,16 +369,14 @@ namespace eval ruff {
         Ruff! itself in a single page format:
 
         ```
-        source sample.tcl; # To load the example code used in documentation.
-        ruff::document html ::ruff -output ruff.html -title "Ruff! reference"
+        ruff::document ::ruff -title "Ruff! reference"
         ```
 
         To generate documentation, including private namespaces, in multipage
         format:
         ````
-        ruff::document html ::ruff -recurse true -pagesplit namespace -output full/ruff.html -title "Ruff! internal reference"
+        ruff::document ::ruff -recurse true -pagesplit namespace -output full/ruff.html -title "Ruff! internal reference"
         ````
-
 
         ### Markdown formatter
 
@@ -371,11 +388,11 @@ namespace eval ruff {
         The following generates Ruff! documentation in Markdown format and
         then uses `pandoc` to convert it to HTML.
         ```
-        ruff::document markdown ::ruff -output ruff.md -title "Ruff! reference"
+        ruff::document ::ruff -format markdown -output ruff.md -title "Ruff! reference"
         ```
-        Then from the shell command line,
+        Then from the shell or Windows command line,
         ```
-        pandoc -s -o ruff.html -c ruff-md.css ruff.md
+        pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle="My package" ruff.md
         ```
 
         When generating HTML from Markdown, it is generally desirable to specify
@@ -2048,8 +2065,7 @@ proc ruff::private::load_formatter {formatter} {
 }
 
 proc ruff::document {namespaces args} {
-    # Generates documentation for the specified namespaces using the
-    # specified formatter.
+    # Generates documentation for commands and classes.
     # namespaces - list of namespaces for which documentation is to be generated.
     # args - Options described below.
     # -autopunctuate BOOLEAN - If `true`, the first letter of definition
@@ -2091,6 +2107,13 @@ proc ruff::document {namespaces args} {
     #  documented.
     # -title STRING - specifies the title to use for the page
     #
+    # The command generates documentation for one or more namespaces
+    # and writes it out to file(s) as per the options shown above.
+    # See [Documenting procedures], [Documenting classes] and
+    # [Documenting namespaces] for details of the expected source
+    # formats and the generation process.
+
+
 
     # TBD - not documented because not tested
     #   -stylesheet URLLIST - if specified, the stylesheets passed in URLLIST
@@ -2186,6 +2209,11 @@ proc ruff::document {namespaces args} {
 }
 
 proc ruff::formatters {} {
+    # Gets the available output formatters.
+    #
+    # The returned values can be passed to [document] to generate
+    # documentation in that format.
+    #
     # Returns a list of available formatters.
     return {html markdown}
 }
@@ -2264,6 +2292,7 @@ proc ruff::private::document_self {args} {
                         -pagesplit namespace \
                         -includeprivate false \
                         -outdir [file join $ruff_dir .. doc] \
+                        -autopunctuate true \
                        ]
     array set opts $args
 
@@ -2286,6 +2315,7 @@ proc ruff::private::document_self {args} {
                          -title $title \
                          -pagesplit $opts(-pagesplit) \
                          -preamble $::ruff::_ruff_intro \
+                         -autopunctuate $opts(-autopunctuate) \
                          -version $::ruff::version]
     if {$opts(-includeprivate)} {
         lappend common_args -recurse 1
