@@ -78,7 +78,7 @@ oo::class create ruff::formatter::Html {
         set Header "<!DOCTYPE html>"
         append Header "<html><head><meta charset=\"utf-8\"/>\n"
         # append Header "<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans|Noto+Serif|Droid+Sans+Mono'>"
-        set titledesc [my Option -titledesc]
+        set titledesc [my Option -title]
         append Header "<title>$titledesc</title>\n"
         if {[my Option? -stylesheets stylesheets]} {
             append Header "<style>\n$yui_style\n</style>\n"

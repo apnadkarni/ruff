@@ -398,7 +398,7 @@ proc ::ruff::formatter::doctools::generate_document {classprocinfodict args} {
              -section "n" \
              -version "0.0" \
              -name "" \
-             -titledesc "" \
+             -title "" \
              -modulename "" \
              -require {} \
              -author "" \
@@ -414,8 +414,8 @@ proc ::ruff::formatter::doctools::generate_document {classprocinfodict args} {
     if {$opts(-author) ne ""} {
         append doc "\[copyright {$opts(-year) \"$opts(-author)\"}\]\n"
     }
-    if {$opts(-titledesc) ne ""} {
-        append doc "\[titledesc \"$opts(-titledesc)\"\]\n"
+    if {$opts(-title) ne ""} {
+        append doc "\[titledesc \"$opts(-title)\"\]\n"
     }
     if {$opts(-modulename) ne ""} {
         append doc "\[moddesc \"$opts(-modulename)\"\]\n"

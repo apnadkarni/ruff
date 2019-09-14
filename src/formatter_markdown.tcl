@@ -70,7 +70,7 @@ oo::class create ruff::formatter::Markdown {
         # Currently, it is empty but might change in the future with
         # support for specific dialects which implement metainformation.
         set Header ""
-        set titledesc [my Option -titledesc]
+        set titledesc [my Option -title]
 
         # Generate the Footer used by all files
         set Footer ""

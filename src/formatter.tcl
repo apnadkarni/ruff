@@ -839,7 +839,7 @@ oo::class create ruff::formatter::Formatter {
         #    with that namespace component removed.
         #   -pagesplit SPLIT - if `none`, a single documentation file is produced.
         #    If `namespace`, a separate file is output for every namespace.
-        #   -titledesc STRING - the title for the documentation.
+        #   -title STRING - the title for the documentation.
         #    Used as the title for the document.
         #    If undefined, the string "Reference" is used.
         #   -stylesheet URLLIST - if specified, the stylesheets passed in URLLIST
@@ -854,7 +854,7 @@ oo::class create ruff::formatter::Formatter {
                  -includesource false \
                  -hidenamespace "" \
                  -pagesplit none \
-                 -titledesc "" \
+                 -title "" \
                  -modulename "Reference" \
                  -autopunctuate 0 \
                 ]
