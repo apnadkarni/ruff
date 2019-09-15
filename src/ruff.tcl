@@ -86,8 +86,9 @@ namespace eval ruff {
         ## Downloads and Install
 
 
-        Download Ruff! from
-        <https://sourceforge.net/projects/magicsplat/files/ruff/>.
+        Download the Ruff! distribution from
+        <https://sourceforge.net/projects/magicsplat/files/ruff/>. The
+        source code repository is at <https://github.com/apnadkarni/ruff>.
 
         To install, extract the distribution to a directory listed in your
         Tcl `auto_path` variable.

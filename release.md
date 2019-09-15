@@ -9,10 +9,11 @@ See https://ruff.magicsplat.com for features and reference documentation.
 
 ## Release notes for 1.0b1
 
-**NOTE:** This release is **not** compatible with Ruff! releases prior to 0.9.
+**NOTE:** This release is **not** fully compatible with Ruff! releases prior to 0.9.
 
 ## Changes
 
+* The API has been reduced to a single new command `document`.
 * Support for inline markdown formatting.
 * Optional multifile output to split documentation on a namespace basis.
 * Formatter for markdown output.
