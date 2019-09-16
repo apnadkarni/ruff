@@ -87,7 +87,6 @@ oo::class create ruff::formatter::Markdown {
         set    NavigationLinks [dict create]
         set    Document $Header
         set    DocumentNamespace $ns
-        append Document "<div id='yui-main'><div class='yui-b'>"
 
         return
     }
