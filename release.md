@@ -7,11 +7,14 @@ documentation for Tcl programs with minimal effort on the programmer's part.
 
 See https://ruff.magicsplat.com for features and reference documentation. 
 
-## Release notes for 1.0b1
+## Release notes for 1.0b2
 
 **NOTE:** This release is **not** fully compatible with Ruff! releases prior to 0.9.
+## Changes since 1.0b1
 
-## Changes
+* Added -navigation option to change position and width of navigation pane.
+
+## Changes since 0.6
 
 * The API has been reduced to a single new command `document`.
 * Support for inline markdown formatting.

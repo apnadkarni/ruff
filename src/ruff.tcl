@@ -2093,6 +2093,10 @@ proc ruff::document {namespaces args} {
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
     #  procedure is also included. Default value is false.
+    # -navigation OPTS - `OPTS` must be a list of elements from amongst
+    #  `left`, `right`, `narrow`, `normal` and `wide`. The first two specify
+    #  the position of the navigation pane. The last three specify its width.
+    #  Not supported by all formatters.
     # -output PATH - Specifies the path of the output file.
     #  If the output is to multiple files, this is the path of the
     #  documentation top. Other files will named accordingly by

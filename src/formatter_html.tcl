@@ -95,7 +95,20 @@ oo::class create ruff::formatter::Html {
         append Header "</head>\n<body>"
 
         # YUI stylesheet templates
-        append Header "<div id='doc3' class='yui-t2'>"
+        set navpos left
+        set navwidth normal
+        foreach navopt [my Option -navigation] {
+            if {$navopt in {left right}} {
+                set navpos $navopt
+            } elseif {$navopt in {narrow normal wide}} {
+                set navwidth $navopt
+            }
+        }
+        set layout_class [dict get {
+            left {narrow yui-t1 normal yui-t2 wide yui-t3}
+            right {narrow yui-t3 normal yui-t4 wide yui-t6}
+        } $navpos $navwidth]
+        append Header "<div id='doc3' class='$layout_class'>"
         if {$titledesc ne ""} {
             append Header "<div id='hd' class='banner'>\n<a style='text-decoration:none;' href='[my SymbolReference :: {}]'>$titledesc</a>\n</div>\n"
         }

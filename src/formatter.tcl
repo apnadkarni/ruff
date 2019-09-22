@@ -837,6 +837,10 @@ oo::class create ruff::formatter::Formatter {
         #   -hidenamespace NAMESPACE - if specified as non-empty,
         #    program element names beginning with NAMESPACE are shown
         #    with that namespace component removed.
+        #   -navigation OPTS - `OPTS` must be a list of elements from amongst
+        #    `left`, `right`, `narrow`, `normal` and `wide`. The first two specify
+        #    the position of the navigation pane. The last three specify its width.
+        #    Not supported by all formatters.
         #   -pagesplit SPLIT - if `none`, a single documentation file is produced.
         #    If `namespace`, a separate file is output for every namespace.
         #   -title STRING - the title for the documentation.
@@ -853,6 +857,7 @@ oo::class create ruff::formatter::Formatter {
             [list \
                  -includesource false \
                  -hidenamespace "" \
+                 -navigation {left normal} \
                  -pagesplit none \
                  -title "" \
                  -modulename "Reference" \

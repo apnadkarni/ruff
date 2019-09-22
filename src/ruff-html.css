@@ -71,6 +71,11 @@ div.navbox {
     color: white;
     padding: 3px 4px 2px 4px;
     font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+div.navbox:hover {
+    overflow: visible;
 }
 
 /* Note .navbox header css should be based on $header_levels */
