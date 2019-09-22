@@ -268,7 +268,7 @@ oo::class create ruff::formatter::Formatter {
             my AddReferences $seealso $scope "See also"
         }
 
-        if {[info exists source]} {
+        if {[my Option -includesource 0] && [info exists source]} {
             my AddSource $source $scope
         }
 
