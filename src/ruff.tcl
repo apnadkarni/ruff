@@ -71,10 +71,11 @@ namespace eval ruff {
         and the full API for a class, with inherited and mixed-in methods, is
         flattened and summarized.
 
-        The Ruff! documentation itself is produced with Ruff!.
-        For larger examples (though with older versions)
-        are the reference pages for [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
-        and [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html).
+        The Ruff! documentation itself is produced with Ruff!. For a larger
+        example, see the
+        [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html)
+        reference manual or
+        the reference pages for [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html) (though the latter is with an older version of Ruff!).
 
         ## Documentation
 
@@ -2072,6 +2073,9 @@ proc ruff::document {namespaces args} {
     # -autopunctuate BOOLEAN - If `true`, the first letter of definition
     #  descriptions (including parameter descriptions) is capitalized
     #  and a period added at the end if necessary.
+    # -compact BOOLEAN - If `true`, documentation is generated in a more
+    #  compact form, primarily by omitting headers within procedure and method
+    #  definitions.
     # -excludeclasses REGEXP - If specified, any classes whose names
     #  match `REGEXPR` will not be included in the documentation.
     # -excludeprocs REGEXP - If specified, any procedures whose names
@@ -2126,6 +2130,7 @@ proc ruff::document {namespaces args} {
     #    always included.
 
     array set opts {
+        -compact 0
         -excludeprocs {}
         -excludeclasses {}
         -format html
@@ -2297,6 +2302,7 @@ proc ruff::private::document_self {args} {
                         -pagesplit namespace \
                         -includeprivate false \
                         -outdir [file join $ruff_dir .. doc] \
+                        -compact 0 \
                         -autopunctuate true \
                        ]
     array set opts $args
@@ -2315,6 +2321,7 @@ proc ruff::private::document_self {args} {
     set namespaces [list ::ruff ::ruff::sample]
     set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"
     set common_args [list \
+                         -compact $opts(-compact) \
                          -format $opts(-format) \
                          -recurse $opts(-includeprivate) \
                          -title $title \

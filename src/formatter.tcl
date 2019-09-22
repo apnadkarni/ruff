@@ -126,7 +126,9 @@ oo::class create ruff::formatter::Formatter {
         if {[llength $parameters] == 0} {
             return;             # Do not want even heading if not parameters
         }
-        my AddHeading parameters Parameters $scope
+        if {![my Option -compact 0]} {
+            my AddHeading parameters Parameters $scope
+        }
         # Construct a definition block for the parameters
         set definitions [lmap param $parameters {
             set definition [dict get $param definition]
@@ -173,18 +175,24 @@ oo::class create ruff::formatter::Formatter {
         if {[llength $xrefs] == 0} {
             return
         }
+
         if {$title ne ""} {
-            my AddHeading nonav $title $scope
+            if {[my Option -compact 0]} {
+                set text "$title: "
+            } else {
+                my AddHeading nonav $title $scope
+            }
         }
+        append text [join [lmap xref $xrefs {
+            markup_reference $xref
+        }] ", " ]
 
         # aa bb -> "[aa], [bb]"
         # NOTE: the , in the join is not purely cosmetic. It is also a
         # workaround for Markdown syntax which treats [x] [y] with
         # only intervening whitespace as one text/linkref pair.
         # This Markdown behaviour differs from the CommonMark Markdown spec.
-        my AddParagraphText [join [lmap xref $xrefs {
-            markup_reference $xref
-        }] ", " ] $scope
+        my AddParagraphText $text $scope
         return
     }
 
@@ -193,7 +201,9 @@ oo::class create ruff::formatter::Formatter {
         #  synopsis - List of two elements comprising the command portion
         #             and the parameter list.
         # [Formatter] provides a base implementation that may be overridden.
-        my AddHeading nonav Synopsis $scope
+        if {![my Option -compact 0]} {
+            my AddHeading nonav Synopsis $scope
+        }
         my AddPreformattedText [join $synopsis { }] $scope
         return
     }
@@ -254,14 +264,18 @@ oo::class create ruff::formatter::Formatter {
             my AddParameters $parameters $scope
         }
 
-        if {[info exists returns]} {
-            my AddHeading nonav "Return value" $scope
-            my AddParagraph $returns $scope
+        if {[info exists body] && [llength $body]} {
+            if {![my Option -compact 0]} {
+                my AddHeading nonav Description $scope
+            }
+            my AddParagraphs $body $scope
         }
 
-        if {[info exists body] && [llength $body]} {
-            my AddHeading nonav Description $scope
-            my AddParagraphs $body $scope
+        if {[info exists returns]} {
+            if {![my Option -compact 0]} {
+                my AddHeading nonav "Return value" $scope
+            }
+            my AddParagraph $returns $scope
         }
 
         if {[info exist seealso]} {
@@ -766,7 +780,9 @@ oo::class create ruff::formatter::Formatter {
         my AddProgramElementHeading class $fqn
         set scope $fqn
         if {[info exists method_summaries]} {
-            my AddHeading nonav "Method summary" $scope
+            if {![my Option -compact 0]} {
+                my AddHeading nonav "Method summary" $scope
+            }
             # The method names need to be escaped and linked.
             my AddDefinitions [lmap definition $method_summaries {
                 set term [dict get $definition term]
@@ -855,6 +871,7 @@ oo::class create ruff::formatter::Formatter {
 
         array set Options \
             [list \
+                 -compact 0 \
                  -includesource false \
                  -hidenamespace "" \
                  -navigation {left normal} \
