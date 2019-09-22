@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"/>
-<title>Ruff! - Runtime Formatting Function Reference (V1.0b1)</title>
+<title>Ruff! - Runtime Formatting Function Reference (V1.0b2)</title>
 <style>
 /*
 Copyright (c) 2009, Yahoo! Inc. All rights reserved.
@@ -74,6 +74,11 @@ div.navbox {
     color: white;
     padding: 3px 4px 2px 4px;
     font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+div.navbox:hover {
+    overflow: visible;
 }
 
 /* Note .navbox header css should be based on $header_levels */
@@ -287,7 +292,7 @@ pre {
 }
 </script></head>
 <body><div id='doc3' class='yui-t2'><div id='hd' class='banner'>
-<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.0b1)</a>
+<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.0b2)</a>
 </div>
 <div id='bd'><div id='yui-main'><div class='yui-b'><h1 class='ruff'><a name='::ruff'></a>::ruff<span class='tinylink'><a href='ruff.html'>Main</a></span></h1>
 <div style='clear:both;'></div>
@@ -436,6 +441,7 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
 <tr><td class='ruff_defitem'><code>namespaces</code></td><td class='ruff_defitem'>List of namespaces for which documentation is to be generated.</td></tr>
 <tr><td class='ruff_defitem'><code>args</code></td><td class='ruff_defitem'>Options described below.</td></tr>
 <tr><td class='ruff_defitem'><code>-autopunctuate BOOLEAN</code></td><td class='ruff_defitem'>If <code>true</code>, the first letter of definition descriptions (including parameter descriptions) is capitalized and a period added at the end if necessary.</td></tr>
+<tr><td class='ruff_defitem'><code>-compact BOOLEAN</code></td><td class='ruff_defitem'>If <code>true</code>, documentation is generated in a more compact form, primarily by omitting headers within procedure and method definitions.</td></tr>
 <tr><td class='ruff_defitem'><code>-excludeclasses REGEXP</code></td><td class='ruff_defitem'>If specified, any classes whose names match <code>REGEXPR</code> will not be included in the documentation.</td></tr>
 <tr><td class='ruff_defitem'><code>-excludeprocs REGEXP</code></td><td class='ruff_defitem'>If specified, any procedures whose names match <code>REGEXPR</code> will not be included in the documentation.</td></tr>
 <tr><td class='ruff_defitem'><code>-format FORMAT</code></td><td class='ruff_defitem'>The output format. <code>FORMAT</code> defaults to <code>html</code>.</td></tr>
@@ -443,6 +449,7 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
 <tr><td class='ruff_defitem'><code>-include LIST</code></td><td class='ruff_defitem'>Specifies which program elements are to be documented. <code>LIST</code> must be a list from one or both amongst <code>classes</code> or <code>procs</code>. Defaults to both.</td></tr>
 <tr><td class='ruff_defitem'><code>-includeprivate BOOLEAN</code></td><td class='ruff_defitem'>If true private methods are also included in the generated documentation. Default is false.</td></tr>
 <tr><td class='ruff_defitem'><code>-includesource BOOLEAN</code></td><td class='ruff_defitem'>If true, the source code of the procedure is also included. Default value is false.</td></tr>
+<tr><td class='ruff_defitem'><code>-navigation OPTS</code></td><td class='ruff_defitem'><code>OPTS</code> must be a list of elements from amongst <code>left</code>, <code>right</code>, <code>narrow</code>, <code>normal</code> and <code>wide</code>. The first two specify the position of the navigation pane. The last three specify its width. Not supported by all formatters.</td></tr>
 <tr><td class='ruff_defitem'><code>-output PATH</code></td><td class='ruff_defitem'>Specifies the path of the output file. If the output is to multiple files, this is the path of the documentation top. Other files will named accordingly by appending the namespace. <strong>Existing files are overwritten.</strong> By default, the output file is written to the current directory with a name constructed from the first namespace specified.</td></tr>
 <tr><td class='ruff_defitem'><code>-pagesplit SPLIT</code></td><td class='ruff_defitem'>If <code>none</code>, a single documentation file is produced. If <code>namespace</code>, a separate file is output for every namespace.</td></tr>
 <tr><td class='ruff_defitem'><code>-preamble TEXT</code></td><td class='ruff_defitem'>Any text that should be appear at the beginning outside of any namespace documentation, for example an introduction or overview of a package. <code>TEXT</code> is assumed to be in Ruff! syntax.</td></tr>
@@ -459,6 +466,9 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
     # -autopunctuate BOOLEAN - If `true`, the first letter of definition
     #  descriptions (including parameter descriptions) is capitalized
     #  and a period added at the end if necessary.
+    # -compact BOOLEAN - If `true`, documentation is generated in a more
+    #  compact form, primarily by omitting headers within procedure and method
+    #  definitions.
     # -excludeclasses REGEXP - If specified, any classes whose names
     #  match `REGEXPR` will not be included in the documentation.
     # -excludeprocs REGEXP - If specified, any procedures whose names
@@ -480,6 +490,10 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
     #  procedure is also included. Default value is false.
+    # -navigation OPTS - `OPTS` must be a list of elements from amongst
+    #  `left`, `right`, `narrow`, `normal` and `wide`. The first two specify
+    #  the position of the navigation pane. The last three specify its width.
+    #  Not supported by all formatters.
     # -output PATH - Specifies the path of the output file.
     #  If the output is to multiple files, this is the path of the
     #  documentation top. Other files will named accordingly by
@@ -509,6 +523,7 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
     #    always included.
 
     array set opts {
+        -compact 0
         -excludeprocs {}
         -excludeclasses {}
         -format html
@@ -595,8 +610,8 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
 <div style='clear:both;'></div>
 <p class='ruff'>Gets the available output formatters.</p>
 <div class='ruff_synopsis'><span class='ruff_cmd'>formatters</span> </div>
-<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of available formatters.</p>
 <h5 class='ruff'>Description</h5><p class='ruff'>The returned values can be passed to <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a> to generate documentation in that format.</p>
+<h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of available formatters.</p>
 <div class='ruff_source'><p class='ruff_source_link'><a id='l_2' href="javascript:toggleSource('2')">Show source</a></p>
 <div id='2' class='ruff_dyn_src'><pre>proc ::ruff::formatters {} {
 

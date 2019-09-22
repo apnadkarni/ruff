@@ -13,6 +13,7 @@ See https://ruff.magicsplat.com for features and reference documentation.
 ## Changes since 1.0b1
 
 * Added -navigation option to change position and width of navigation pane.
+* Added -compact option to generate a more compact form of documentation. 
 
 ## Changes since 0.6
 

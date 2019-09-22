@@ -17,7 +17,7 @@ if {[catch {
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 1.0b1
+    variable version 1.0b2
     proc version {} {
         # Returns the Ruff! version.
         variable version
