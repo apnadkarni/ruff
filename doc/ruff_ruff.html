@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"/>
-<title>Ruff! - Runtime Formatting Function Reference (V1.0b2)</title>
+<title>Ruff! - Runtime Formatting Function Reference (V1.0b3)</title>
 <style>
 /*
 Copyright (c) 2009, Yahoo! Inc. All rights reserved.
@@ -292,7 +292,7 @@ pre {
 }
 </script></head>
 <body><div id='doc3' class='yui-t2'><div id='hd' class='banner'>
-<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.0b2)</a>
+<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.0b3)</a>
 </div>
 <div id='bd'><div id='yui-main'><div class='yui-b'><h1 class='ruff'><a name='::ruff'></a>::ruff<span class='tinylink'><a href='ruff.html'>Main</a></span></h1>
 <div style='clear:both;'></div>
@@ -454,6 +454,7 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
 <tr><td class='ruff_defitem'><code>-pagesplit SPLIT</code></td><td class='ruff_defitem'>If <code>none</code>, a single documentation file is produced. If <code>namespace</code>, a separate file is output for every namespace.</td></tr>
 <tr><td class='ruff_defitem'><code>-preamble TEXT</code></td><td class='ruff_defitem'>Any text that should be appear at the beginning outside of any namespace documentation, for example an introduction or overview of a package. <code>TEXT</code> is assumed to be in Ruff! syntax.</td></tr>
 <tr><td class='ruff_defitem'><code>-recurse BOOLEAN</code></td><td class='ruff_defitem'>If true, child namespaces are recursively documented.</td></tr>
+<tr><td class='ruff_defitem'><code>-sortnamespaces BOOLEAN</code></td><td class='ruff_defitem'>If <code>true</code> (default) the namespaces are sorted in the navigation otherwise they are in the order passed in.</td></tr>
 <tr><td class='ruff_defitem'><code>-title STRING</code></td><td class='ruff_defitem'>Specifies the title to use for the page.</td></tr>
 </table>
 <h5 class='ruff'>Description</h5><p class='ruff'>The command generates documentation for one or more namespaces and writes it out to file(s) as per the options shown above. See <a href="ruff_ruff.html#::ruff-Documenting_procedures" title="Documenting procedures" >Documenting procedures</a>, <a href="ruff_ruff.html#::ruff-Documenting_classes" title="Documenting classes" >Documenting classes</a> and <a href="ruff_ruff.html#::ruff-Documenting_namespaces" title="Documenting namespaces" >Documenting namespaces</a> for details of the expected source formats and the generation process.</p>
@@ -507,6 +508,8 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
     #  or overview of a package. `TEXT` is assumed to be in Ruff! syntax.
     # -recurse BOOLEAN - if true, child namespaces are recursively
     #  documented.
+    # -sortnamespaces BOOLEAN - if `true` (default) the namespaces are
+    #  sorted in the navigation otherwise they are in the order passed in.
     # -title STRING - specifies the title to use for the page
     #
     # The command generates documentation for one or more namespaces
@@ -535,6 +538,7 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
         -preamble &quot;&quot;
         -recurse false
         -pagesplit none
+        -sortnamespaces true
         -title &quot;&quot;
     }
 
