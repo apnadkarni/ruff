@@ -490,7 +490,7 @@ oo::class create ruff::formatter::Formatter {
     method SortedNamespaces {} {
         # Returns the list of namespaces being documented.
         if {![info exists SortedNamespaces]} {
-            set SortedNamespaces [lsort $Namespaces]
+            set SortedNamespaces [lsort -dictionary $Namespaces]
         }
         return $SortedNamespaces
     }
@@ -724,7 +724,7 @@ oo::class create ruff::formatter::Formatter {
         }
 
         # Sort the method summary table alphabetically
-        set method_summaries [lsort -index 1 $method_summaries]
+        set method_summaries [lsort -dictionary -index 1 $method_summaries]
 
         # Insert constructor and destructor at the beginning if present.
         set specials {}

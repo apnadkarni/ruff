@@ -1721,7 +1721,8 @@ proc ruff::private::extract_ooclass {classname args} {
     }
     set public_methods [info class methods $classname -all]
     set external_methods {}
-    foreach name $all_methods {
+
+    foreach name [lsort -dictionary $all_methods] {
         set implementing_class [locate_ooclass_method $classname $name]
         if {[lsearch -exact $all_local_methods $name] < 0} {
             # Skip the destroy method which is standard and 
