@@ -334,7 +334,12 @@ oo::class create ruff::formatter::Html {
             } else {
                 append Document "<h1><a style='padding-top:2px;' href='$main_ref'>$main_title</a></h1>\n<hr>\n"
             }
-            foreach ns [my SortedNamespaces] {
+            if {[my Option -sortnamespaces true]} {
+                set ordered_namespaces [my SortedNamespaces]
+            } else {
+                set ordered_namespaces [my Namespaces]
+            }
+            foreach ns $ordered_namespaces {
                 set ref  [ns_file_base $ns]
                 set text [string trimleft $ns :]
                 if {$ns eq $highlight_ns} {

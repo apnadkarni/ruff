@@ -859,6 +859,8 @@ oo::class create ruff::formatter::Formatter {
         #    Not supported by all formatters.
         #   -pagesplit SPLIT - if `none`, a single documentation file is produced.
         #    If `namespace`, a separate file is output for every namespace.
+        #   -sortnamespaces BOOLEAN - if `true` (default) the namespaces are
+        #    sorted in the navigation otherwise they are in the order passed in.
         #   -title STRING - the title for the documentation.
         #    Used as the title for the document.
         #    If undefined, the string "Reference" is used.
@@ -878,6 +880,7 @@ oo::class create ruff::formatter::Formatter {
                  -pagesplit none \
                  -title "" \
                  -modulename "Reference" \
+                 -sortnamespaces 1 \
                  -autopunctuate 0 \
                 ]
 
@@ -913,7 +916,12 @@ oo::class create ruff::formatter::Formatter {
             lappend docs :: [my DocumentEnd]
         }
 
-        foreach ns [my SortedNamespaces] {
+        if {[my Option -sortnamespaces true]} {
+            set ordered_namespaces [my SortedNamespaces]
+        } else {
+            set ordered_namespaces [my Namespaces]
+        }
+        foreach ns $ordered_namespaces {
             if {[my Option -pagesplit none] ne "none"} {
                 my DocumentBegin $ns
             }

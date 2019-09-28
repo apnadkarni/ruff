@@ -17,7 +17,7 @@ if {[catch {
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 1.0b2
+    variable version 1.0b3
     proc version {} {
         # Returns the Ruff! version.
         variable version
@@ -2114,6 +2114,8 @@ proc ruff::document {namespaces args} {
     #  or overview of a package. `TEXT` is assumed to be in Ruff! syntax.
     # -recurse BOOLEAN - if true, child namespaces are recursively
     #  documented.
+    # -sortnamespaces BOOLEAN - if `true` (default) the namespaces are
+    #  sorted in the navigation otherwise they are in the order passed in.
     # -title STRING - specifies the title to use for the page
     #
     # The command generates documentation for one or more namespaces
@@ -2142,6 +2144,7 @@ proc ruff::document {namespaces args} {
         -preamble ""
         -recurse false
         -pagesplit none
+        -sortnamespaces true
         -title ""
     }
 

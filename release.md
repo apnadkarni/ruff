@@ -7,9 +7,14 @@ documentation for Tcl programs with minimal effort on the programmer's part.
 
 See https://ruff.magicsplat.com for features and reference documentation. 
 
-## Release notes for 1.0b2
+## Release notes for 1.0b3
 
-**NOTE:** This release is **not** fully compatible with Ruff! releases prior to 0.9.
+**NOTE:** V1.0 releases are **not** compatible with Ruff! releases prior to 0.9.
+
+## Changes since 1.0b2
+
+* Added -sortnamespaces option
+
 ## Changes since 1.0b1
 
 * Added -navigation option to change position and width of navigation pane.
