@@ -81,13 +81,14 @@ oo::class create ruff::formatter::Html {
         set titledesc [my Option -title]
         append Header "<title>$titledesc</title>\n"
         if {[my Option? -stylesheets stylesheets]} {
-            append Header "<style>\n$yui_style\n</style>\n"
+            append Header "<style>\n[read_ruff_file ruff-yui.css]\n</style>\n"
             foreach url $stylesheets {
                 append Header "<link rel='stylesheet' type='text/css' href='$url' />"
             }
         } else {
             # Use built-in styles
             append Header "<style>\n" \
+                [read_ruff_file ruff-yui.css] \
                 [read_ruff_file ruff-html.css] \
                 "</style>\n"
         }

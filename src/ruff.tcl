@@ -2127,6 +2127,10 @@ proc ruff::document {namespaces args} {
     #  documented.
     # -sortnamespaces BOOLEAN - if `true` (default) the namespaces are
     #  sorted in the navigation otherwise they are in the order passed in.
+    # -stylesheets URLLIST - if specified, the stylesheets passed in URLLIST
+    #  are used instead of the built-in styles. Note the built-in YUI is
+    #  always included as it used for normalization and layout. Not all formatters
+    #  may support this option.
     # -title STRING - specifies the title to use for the page
     #
     # The command generates documentation for one or more namespaces
@@ -2134,8 +2138,6 @@ proc ruff::document {namespaces args} {
     # See [Documenting procedures], [Documenting classes] and
     # [Documenting namespaces] for details of the expected source
     # formats and the generation process.
-
-
 
     # TBD - not documented because not tested
     #   -stylesheet URLLIST - if specified, the stylesheets passed in URLLIST
@@ -2364,6 +2366,9 @@ proc ruff::private::document_self {args} {
                 set ext .html
             } else {
                 set ext .md
+            }
+            if {[info exists opts(-stylesheets)]} {
+                lappend common_args -stylesheets $opts(-stylesheets)
             }
             document $namespaces {*}$common_args \
                 -output [file join $opts(-outdir) ruff$ext] \

@@ -864,7 +864,7 @@ oo::class create ruff::formatter::Formatter {
         #   -title STRING - the title for the documentation.
         #    Used as the title for the document.
         #    If undefined, the string "Reference" is used.
-        #   -stylesheet URLLIST - if specified, the stylesheets passed in URLLIST
+        #   -stylesheets URLLIST - if specified, the stylesheets passed in URLLIST
         #    are used instead of the built-in styles. Note the built-in YUI is
         #    always included.
 
