@@ -335,6 +335,16 @@ namespace eval ruff {
         * `[::ruff::formatters]` is displayed as [::ruff::formatters] if
         referenced from within a section documenting the `::ruff` namespace.
 
+        Alternatively, text different from the section heading or symbol
+        can be shown by putting it in another `[]` pair immediately bfore
+        the symbol or heading reference.
+        For example, `[here][document]` will show as [here][document] and
+        link to `document` as before.
+        *Note: unlike Markdown, there must be no whitespace between the
+        two pairs of `[]` else it will be treated as two separate symbol
+        references. This is intentional.*
+
+
         If the text does not match a section heading or program element name, it
         is treated as a normal Markdown reference but a warning is emitted.
 

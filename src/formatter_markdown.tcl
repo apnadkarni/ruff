@@ -190,7 +190,7 @@ oo::class create ruff::formatter::Markdown {
             foreach item $definitions {
                 set def [join [dict get $item definition] " "]
                 # Note: since we are generating raw HTML here, we have to
-                # use ToHtml and not ToMarkdown here.
+                # use ToHtml and not ToMarkdown here. Huh? TBD
                 if {$preformatted in {none term}} {
                     set def [my ToMarkdown $def $scope]
                 }
@@ -304,7 +304,11 @@ oo::class create ruff::formatter::Markdown {
         set re_backticks   {\A`+}
         set re_whitespace  {\s}
         set re_inlinelink  {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\]\s*\(\s*((?:[^\s\)]+|\([^\s\)]+\))+)?(\s+([\"'])(.*)?\4)?\s*\)}
-        set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\s*\[((?:[^\]]|\[[^\]]*?\])*)\])?}
+        # Changed from markdown to require second optional [] to follow first []
+        # without any intervening space. This is to allow consecutive symbol references
+        # not to be interpreted as [ref] [text] instead of [ref] [ref]
+        # set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\s*\[((?:[^\]]|\[[^\]]*?\])*)\])?}
+        set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\[((?:[^\]]|\[[^\]]*?\])*)\])?}
         set re_htmltag     {\A</?\w+\s*>|\A<\w+(?:\s+\w+=(?:\"[^\"]+\"|\'[^\']+\'))*\s*/?>}
         set re_autolink    {\A<(?:(\S+@\S+)|(\S+://\S+))>}
         set re_comment     {\A<!--.*?-->}
@@ -397,12 +401,17 @@ oo::class create ruff::formatter::Markdown {
                     } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
                         if {$lbl eq {}} {
                             set lbl [regsub -all {\s+} $txt { }]
+                            set display_text_specified 0
+                        } else {
+                            set display_text_specified 1
                         }
 
                         if {[my ResolvableReference? $lbl $scope code_link]} {
                             # RUFF CODE REFERENCE
                             set url [my Escape [dict get $code_link ref]]
-                            set txt [my Escape [dict get $code_link label]]
+                            if {! $display_text_specified} {
+                                set txt [my Escape [dict get $code_link label]]
+                            }
                             if {1} {
                                 append result $pre $txt "\](" $url ")"
                             } else {
