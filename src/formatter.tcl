@@ -893,8 +893,8 @@ oo::class create ruff::formatter::Formatter {
         #
 
         # First collect section links
-        if {[info exists opts(-preamble)]} {
-            foreach {type content} $opts(-preamble) {
+        if {[my Option? -preamble preamble]} {
+            foreach {type content} $preamble {
                 if {$type eq "heading"} {
                     lassign $content level heading
                     my CollectHeadingReference "" $heading
