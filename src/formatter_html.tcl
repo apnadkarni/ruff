@@ -390,7 +390,9 @@ oo::class create ruff::formatter::Html {
         if {[my Option -pagesplit none] eq "none"} {
             append links "<a href='#top'>Top</a>"
         } else {
-            append links "<a href='[my SymbolReference :: {}]'>Main</a>"
+            append links \
+                "<a href='#top'>Top</a>, " \
+                "<a href='[my SymbolReference :: {}]'>Main</a>"
         }
         set links "<span class='tinylink'>$links</span>"
         # NOTE: the div needed to reset the float from links
