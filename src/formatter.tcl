@@ -168,9 +168,12 @@ oo::class create ruff::formatter::Formatter {
 
     method AddReferences {xrefs scope {title {}}} {
         # Adds reference list to document content.
-        #  xrefs - List of cross references.
-        #  scope - The documentation scope of the conent.
+        #  xrefs - List of cross references and links.
+        #  scope - The documentation scope of the content.
         #  title - If not empty, a section title is also added.
+        #
+        # The elements in $xrefs may be plain symbols or Markdown links.
+        #
         # [Formatter] provides a base implementation that may be overridden.
         if {[llength $xrefs] == 0} {
             return
@@ -183,15 +186,30 @@ oo::class create ruff::formatter::Formatter {
                 my AddHeading nonav $title $scope
             }
         }
+
+        set re_inlinelink  {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\]\s*\(\s*((?:[^\s\)]+|\([^\s\)]+\))+)?(\s+([\"'])(.*)?\4)?\s*\)}
+        set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\[((?:[^\]]|\[[^\]]*?\])*)\])?}
+        set re_autolink    {\A<(?:(\S+@\S+)|(\S+://\S+))>}
         append text [join [lmap xref $xrefs {
-            markup_reference $xref
+            # If the xref looks like a markdown link, keep as is, else make it
+            # look like a symbol or heading reference.
+            if {[regexp $re_inlinelink $xref] ||
+                [regexp $re_reflink $xref] ||
+                [regexp $re_autolink $xref]} {
+                set xref
+            } else {
+                markup_reference $xref
+            }
         }] ", " ]
 
         # aa bb -> "[aa], [bb]"
+        # The NOTE below is no longer valid as of Ruff 1.0.4 where intervening space
+        # will be recognized as two separate reflinks.
         # NOTE: the , in the join is not purely cosmetic. It is also a
         # workaround for Markdown syntax which treats [x] [y] with
         # only intervening whitespace as one text/linkref pair.
         # This Markdown behaviour differs from the CommonMark Markdown spec.
+        #
         my AddParagraphText $text $scope
         return
     }

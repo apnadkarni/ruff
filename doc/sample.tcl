@@ -136,8 +136,11 @@ proc ruff::sample::proc_full {arg {optarg AVALUE} args} {
     # * This is also a bullet list item
     #
     # An optional *See also* section may be used to
-    # cross-reference other program elements.
-    # See also: proc_without_docs [Base]
+    # cross-reference other program elements. Each line of this section
+    # must be parsable as a Tcl list.
+    #
+    # See also: proc_without_docs [Base] <https://www.magicsplat.com>
+    #   "ensemble_proc cmdA" {ensemble_proc cmdB}
 
 
     # This paragraph will be ignored by Ruff! as it is not part

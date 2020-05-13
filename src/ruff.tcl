@@ -236,10 +236,11 @@ namespace eval ruff {
 
         * A line beginning with `See also:` (note the colon) is assumed to begin
         a reference block consisting of a list of program element names
-        (such as procedures, classes etc.). These
+        (such as procedures, classes etc.) and Markdown links. These
         are then automatically linked and listed in the **See also** section of a
         procedure documentation. The list may continue over multiple lines
-        following normal paragraph rules. Note the program element names can,
+        following normal paragraph rules. Each line must be parsable as a Tcl list.
+        Note the program element names can,
         but need not be, explicitly marked as a program element reference
         using surrounding square brackets. For example, within a `See also:`
         section, both `document` and `[document]` will generate a cross-reference
@@ -866,10 +867,10 @@ proc ruff::private::parse_fence_state {statevar} {
 proc ruff::private::extract_seealso_symbols {symbols} {
     # symbols - text line with symbols optionally separated by commas and optional
     #   surrounding square brackets
-    return [lmap symbol [string map {, { }} $symbols] {
-        if {[regexp {^\[.*\]$} $symbol]} {
-            # Maybe optionally surrounded by []
-            set symbol [string range $symbol 1 end-1]
+    return [lmap symbol $symbols {
+        set symbol [string trim $symbol ,]; # Permit commas between elements
+        if {$symbol eq ""} {
+            continue
         }
         set symbol
     }]
