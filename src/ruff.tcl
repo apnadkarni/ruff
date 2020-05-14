@@ -2335,6 +2335,7 @@ proc ruff::private::document_self {args} {
                         -outdir [file join $ruff_dir .. doc] \
                         -compact 0 \
                         -autopunctuate true \
+                        -navigation {left sticky}
                        ]
     array set opts $args
 
