@@ -2427,6 +2427,8 @@ proc ruff::private::distribute {{dir {}}} {
         ../doc/ruff.html
         ../doc/ruff_ruff.html
         ../doc/ruff_ruff_sample.html
+        ../LICENSE
+        ../release.md
     }
     file copy -force -- {*}[lmap file $files {file join [ruff_dir] $file}] $dir
     file delete -force -- $zipfile
