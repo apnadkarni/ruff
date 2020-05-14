@@ -325,7 +325,15 @@ oo::class create ruff::formatter::Html {
         set main_title "Start page"
         set main_ref [ns_file_base {}]
 
-        append Document "<div class='yui-b navbox'>"
+        set scrolling ""
+        foreach opt [my Option -navigation {}] {
+            switch -exact -- $opt {
+                scrolled { set scrolling "" }
+                fixed { set scrolling "style='position: fixed;'" }
+                sticky { set scrolling "style='position: sticky; top: 0;'" }
+            }
+        }
+        append Document "<div class='yui-b navbox' $scrolling>"
 
         if {[my Option -pagesplit none] ne "none"} {
             # Split pages. Add navigation to each page.

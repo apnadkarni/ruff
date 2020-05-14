@@ -2109,10 +2109,8 @@ proc ruff::document {namespaces args} {
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
     #  procedure is also included. Default value is false.
-    # -navigation OPTS - `OPTS` must be a list of elements from amongst
-    #  `left`, `right`, `narrow`, `normal` and `wide`. The first two specify
-    #  the position of the navigation pane. The last three specify its width.
-    #  Not supported by all formatters.
+    # -navigation OPTS - Options controlling appearance and position of navigation
+    #  box (see below). Not supported by all formatters.
     # -output PATH - Specifies the path of the output file.
     #  If the output is to multiple files, this is the path of the
     #  documentation top. Other files will named accordingly by
@@ -2139,11 +2137,27 @@ proc ruff::document {namespaces args} {
     # See [Documenting procedures], [Documenting classes] and
     # [Documenting namespaces] for details of the expected source
     # formats and the generation process.
-
-    # TBD - not documented because not tested
-    #   -stylesheet URLLIST - if specified, the stylesheets passed in URLLIST
-    #    are used instead of the built-in styles. Note the built-in YUI is
-    #    always included.
+    #
+    # The `-navigation` option takes as an argument a list of values from the
+    # table below. These control the positioning and appearance of the
+    # navigation box. The list should contain at most one value from each
+    # row.
+    #
+    #  `left`, `right` - Control whether navigation box is on the left or right
+    #      side of the page. (Default `left`)
+    #  `narrow`, `normal`, `wide` - Controls the width of the navigation box.
+    #      (Default `normal`)
+    #  `scrolled`, `sticky`, `fixed` - Controls navigation box behaviour when
+    #      scrolling. If `scrolled`, the navigation box will scroll vertically
+    #      along with the page. Thus it may not visible at all times. If
+    #      `sticky` or `fixed`, the navigation box remains visible at all times.
+    #      However, this requires the number of links in the box to fit on
+    #      the page as they are never scrolled. There is a slight difference
+    #      between the two behaviours. If `fixed`, the navigation box stays
+    #      at its original position. If `sticky`, it will scroll till the top
+    #      of the viewing area and then remain fixed. Note that older browsers
+    #      do not support `sticky` and will resort to scrolling behaviour.
+    #      (Default `scrolled`)
 
     array set opts {
         -compact 0
@@ -2361,18 +2375,22 @@ proc ruff::private::document_self {args} {
                 -keywords [list "documentation generation"] \
                 -modulename ::ruff
         }
-        markdown -
+        markdown {
+            document $namespaces {*}$common_args \
+                -output [file join $opts(-outdir) ruff.md] \
+                -title $title \
+                -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
+                -includesource $opts(-includesource)
+        }
         html {
-            if {$opts(-format) eq "html"} {
-                set ext .html
-            } else {
-                set ext .md
-            }
             if {[info exists opts(-stylesheets)]} {
                 lappend common_args -stylesheets $opts(-stylesheets)
             }
+            if {[info exists opts(-navigation)]} {
+                lappend common_args -navigation $opts(-navigation)
+            }
             document $namespaces {*}$common_args \
-                -output [file join $opts(-outdir) ruff$ext] \
+                -output [file join $opts(-outdir) ruff.html] \
                 -title $title \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
                 -includesource $opts(-includesource)
