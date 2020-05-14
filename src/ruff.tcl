@@ -17,7 +17,7 @@ if {[catch {
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 1.0b3
+    variable version 1.0.4
     proc version {} {
         # Returns the Ruff! version.
         variable version
@@ -2403,6 +2403,7 @@ proc ruff::private::distribute {{dir {}}} {
         ruff-html.js
         ruff-html.css
         ruff-md.css
+        ruff-yui.css
         ../doc/sample.tcl
         ../doc/ruff.html
         ../doc/ruff_ruff.html

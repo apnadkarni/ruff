@@ -203,6 +203,7 @@ oo::class create ruff::sample::Base {
     method <tag> {} {
         # An explicitly exported method 
     }
+    forward fwd_method string range
     export <tag>
 }
 

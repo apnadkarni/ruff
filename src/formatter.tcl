@@ -235,6 +235,23 @@ oo::class create ruff::formatter::Formatter {
         return
     }
 
+    method AddForward {fwdinfo} {
+        # Adds documentation for a class forwarded method.
+        #  fwdinfo - dictionary describing the forwarded method
+        # The passed dictionary holds the following keys:
+        #  name - name of the method
+        #  fqn - Fully qualifed name
+        #  forward - command to which the method is forwarded
+        #
+        # This method may be overridden by the concrete formatter.
+
+        set fqn [dict get $fwdinfo fqn]
+        set scope [namespace qualifiers $fqn]
+        # Forwards are formatted like methods
+        my AddProgramElementHeading method $fqn
+        my AddParagraph "Forwarded to `[dict get $fwdinfo forward]`." $scope
+    }
+
     method AddProcedure {procinfo} {
         # Adds documentation for a procedure or method.
         #  procinfo - dictionary describing the procedure.
@@ -766,10 +783,15 @@ oo::class create ruff::formatter::Formatter {
             set destructor [my TransformProcOrMethod $destructor]
         }
 
+        set forwards [lmap fwd $forwards {
+            # Set the fqn for forwarded methods
+            dict set fwd fqn ${name}::[dict get $fwd name]
+        }]
+
         set result [dict create fqn $fqn display_name $display_name]
         foreach key {
             superclasses subclasses mixins method_summaries mixins
-            filters methods constructor destructor
+            filters methods constructor destructor forwards
         } {
             if {[info exists $key]} {
                 dict set result $key [set $key]
@@ -790,8 +812,10 @@ oo::class create ruff::formatter::Formatter {
         #  method_summaries - Definition list mapping method name to description.
         #  methods - Dictionary of method definitions in the format generated
         #    by [TransformProcOrMethod].
+        #  forwards - forwarded methods
         #  constructor - Constructor definition in the same format.
         #  destructor - Destructor definition in the same format.
+
         dict with classinfo {
             # Creates locals for all the classinfo keys listed above.
         }
@@ -826,9 +850,24 @@ oo::class create ruff::formatter::Formatter {
         if {[info exists destructor]} {
             my AddProcedure $destructor
         }
+        if {[info exists forwards]} {
+            foreach fwd $forwards {
+                lappend methods_and_forwards [list [dict get $fwd name] forward $fwd]
+            }
+        }
         if {[info exists methods]} {
             foreach meth $methods {
-                my AddProcedure $meth
+                lappend methods_and_forwards [list [dict get $meth display_name] method $meth]
+            }
+        }
+        if {[info exists methods_and_forwards]} {
+            set methods_and_forwards [lsort -dictionary -index 0 $methods_and_forwards]
+            foreach rec $methods_and_forwards {
+                if {[lindex $rec 1] eq "method"} {
+                    my AddProcedure [lindex $rec 2]
+                } else {
+                    my AddForward [lindex $rec 2]
+                }
             }
         }
         return
