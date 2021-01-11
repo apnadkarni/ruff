@@ -2467,7 +2467,7 @@ package provide ruff $::ruff::version
 
 # If we are the main script, accept commands.
 if {[info exists argv0] &&
-    [file dirname [file normalize [info script]/..]] eq [file dirname [file normalize $argv0/..]]} {
+    [file dirname [file normalize [info script]/...]] eq [file dirname [file normalize $argv0/...]]} {
     switch -exact -- [lindex $argv 0] {
         document {
             ruff::private::document_self {*}[lrange $argv 1 end]
