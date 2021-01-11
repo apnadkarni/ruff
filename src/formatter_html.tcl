@@ -49,10 +49,9 @@ oo::class create ruff::formatter::Html {
         # Returns an HTML-escaped anchor without the `#` prefix.
         set parts [lmap arg $args {
             if {$arg eq ""} continue
-            set arg
+            my Escape $arg
         }]
-
-        return [regsub -all {[^-:\w_.]} [join $parts -] _]
+        return [join $parts -]
     }
 
     method HeadingReference {ns heading} {
