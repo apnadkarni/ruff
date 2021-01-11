@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"/>
-<title>Ruff! - Runtime Formatting Function Reference (V1.0.4)</title>
+<title>Ruff! - Runtime Formatting Function Reference (V1.0.5)</title>
 <style>
 /*
 Copyright (c) 2009, Yahoo! Inc. All rights reserved.
@@ -292,7 +292,7 @@ pre {
 }
 </script></head>
 <body><div id='doc3' class='yui-t2'><div id='hd' class='banner'>
-<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.0.4)</a>
+<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.0.5)</a>
 </div>
 <div id='bd'><div id='yui-main'><div class='yui-b'><h1 class='ruff'><a name='::ruff'></a>::ruff<span class='tinylink'><a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h1>
 <div style='clear:both;'></div>
@@ -311,7 +311,7 @@ package require ruff
 ::ruff::document {::NS ::NS2} -output docs.html -recurse true -pagesplit namespace
 </pre>
 <p class='ruff'>Refer to <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a> for various other options.</p>
-<h2 class='ruff'><a name='::ruff-Documenting_procedures'></a>Documenting procedures<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h2>
+<h2 class='ruff'><a name='::ruff-Documenting procedures'></a>Documenting procedures<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>Ruff! generates documentation using Tcl's runtime system to gather proc and class definitions. Comments in procedure and method bodies are further parsed to extract the documentation.</p>
 <p class='ruff'>The structure Ruff! expects is described below. In practice, the structure is simple and intuitive though the description may be a bit long winded. You can simply look at the documentation of the <a href="ruff_ruff_sample.html#::ruff::sample" title="sample" class='ruff_cmd'>sample</a> namespace instead, and click on the <strong>Show source</strong> links for each procedure or method there to see the formatting.</p>
@@ -356,7 +356,7 @@ proc ruff::sample::character_at {text {pos 0}} {
 <li>A line beginning with <code>See also:</code> (note the colon) is assumed to begin a reference block consisting of a list of program element names (such as procedures, classes etc.) and Markdown links. These are then automatically linked and listed in the <strong>See also</strong> section of a procedure documentation. The list may continue over multiple lines following normal paragraph rules. Each line must be parsable as a Tcl list. Note the program element names can, but need not be, explicitly marked as a program element reference using surrounding square brackets. For example, within a <code>See also:</code> section, both <code>document</code> and <code>[document]</code> will generate a cross-reference link to the documentation for the <code>document</code> procedure.</li>
 <li>All other lines begin a normal paragraph. The paragraph ends with a line of one of the above types.</li>
 </ul>
-<h3 class='ruff'><a name='::ruff-Differences_from_Markdown'></a>Differences from Markdown<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h3>
+<h3 class='ruff'><a name='::ruff-Differences from Markdown'></a>Differences from Markdown<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>Note that the block level parsing is similar but not identical to Markdown. Amongst other differences, Ruff! has</p>
 <ul class='ruff'>
@@ -368,10 +368,10 @@ proc ruff::sample::character_at {text {pos 0}} {
 <ul class='ruff'>
 <li>definition lists</li>
 </ul>
-<h2 class='ruff'><a name='::ruff-Documenting_classes'></a>Documenting classes<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h2>
+<h2 class='ruff'><a name='::ruff-Documenting classes'></a>Documenting classes<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>Documentation for classes primarily concerns documentation of its methods. The format for method documentation is exactly as described above for procedures. Information about class relationships is automatically collected and need not be explicitly provided. Note that unlike for procedures and methods, Tcl does not provide a means to retrieve the body of the class so that comments can be extracted from them. Thus to document information about the class as a whole, you can either include it in the comments for the constructor, which is often a reasonable place for such information, or include it in the general information section as described in the next section.</p>
-<h2 class='ruff'><a name='::ruff-Documenting_namespaces'></a>Documenting namespaces<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h2>
+<h2 class='ruff'><a name='::ruff-Documenting namespaces'></a>Documenting namespaces<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>In addition to procedures and classes within a namespace, there may be a need to document general information such as the sections you are currently reading. For this purpose, Ruff! looks for a variable <code>_ruff_preamble</code> within each namespace. The indentation of the first line of section content is stripped off from all subsequent lines before processing (This impacts what constitutes a preformatted line). The result is then processed in the same manner as procedure or method bodies except for the following differences:</p>
 <ul class='ruff'>
@@ -381,7 +381,7 @@ proc ruff::sample::character_at {text {pos 0}} {
 <p class='ruff'>The documentation generated from the <code>_ruff_preamble</code> content is placed before the documentation of the commands in classes for that namespace.</p>
 <p class='ruff'><strong>Note</strong>: Older versions supported the <code>_ruffdoc</code> variable. Though this will still work, it is deprecated.</p>
 <p class='ruff'>Content that should lie outside of any namespace can be passed through the <code>-preamble</code> option to <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a>. When generating single page output, this is included at the top of the documentation. When generating multipage output this forms the content of the main documentation page.</p>
-<h2 class='ruff'><a name='::ruff-Inline_formatting'></a>Inline formatting<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h2>
+<h2 class='ruff'><a name='::ruff-Inline formatting'></a>Inline formatting<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h2>
 <div style='clear:both;'></div>
 <p class='ruff'>Once documentation blocks are parsed as above, their content is subject to inline formatting rules using Markdown syntax with some minor extensions. Markdown compatibility is only for inline elements noted below.</p>
 <table class='ruff_deflist'>
@@ -405,11 +405,11 @@ proc ruff::sample::character_at {text {pos 0}} {
 <div style='clear:both;'></div>
 <p class='ruff'>Ruff! is designed to support multiple output formats through pluggable formatters. The command <a href="ruff_ruff.html#::ruff::formatters" title="formatters" class='ruff_cmd'>formatters</a> returns a list of supported formatters. Currently formatters for producing HTML and Markdown are implemented.</p>
 <p class='ruff'>In addition, the output may be produced in single or multipage format.</p>
-<h3 class='ruff'><a name='::ruff-Multipage_output'></a>Multipage output<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h3>
+<h3 class='ruff'><a name='::ruff-Multipage output'></a>Multipage output<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>The generated documentation may be either in a single output file or spread across multiple files. This is controlled by the <code>-pagesplit</code> option to the <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a> command. Some formatters may not support this feature.</p>
 <p class='ruff'>When generating multipage output, the toplevel generated page contains links to the other pages which contain per-namespace documentation. The preamble (passed as the <code>-preamble</code> option to the <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a> command) is also placed in this page.</p>
-<h3 class='ruff'><a name='::ruff-HTML_formatter'></a>HTML formatter<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h3>
+<h3 class='ruff'><a name='::ruff-HTML formatter'></a>HTML formatter<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>The internal HTML formatter offers (in the author's humble opinion) the best cross-linking and navigation support with a table of contents in addition to cosmetic enhancements such as tooltips and optional hiding/display of source code. It is also the simplest to use as no other external tools are required.</p>
 <p class='ruff'>The following is a simple example of generating the documentation for Ruff! itself in a single page format:</p>
@@ -420,7 +420,7 @@ ruff::document ::ruff -title &quot;Ruff! reference&quot;
 <pre class='ruff'>
 ruff::document ::ruff -recurse true -pagesplit namespace -output full/ruff.html -title &quot;Ruff! internal reference&quot;
 </pre>
-<h3 class='ruff'><a name='::ruff-Markdown_formatter'></a>Markdown formatter<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h3>
+<h3 class='ruff'><a name='::ruff-Markdown formatter'></a>Markdown formatter<span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a></span></h3>
 <div style='clear:both;'></div>
 <p class='ruff'>The Markdown formatter generates output in generic Markdown syntax. It includes cross-linking but does not include a table of contents, tooltips or source code display. On the other hand, it allows conversion to other formats using external tools.</p>
 <p class='ruff'>The following generates Ruff! documentation in Markdown format and then uses <code>pandoc</code> to convert it to HTML.</p>
@@ -459,7 +459,7 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
 <tr><td class='ruff_defitem'><code>-stylesheets URLLIST</code></td><td class='ruff_defitem'>If specified, the stylesheets passed in URLLIST are used instead of the built-in styles. Note the built-in YUI is always included as it used for normalization and layout. Not all formatters may support this option.</td></tr>
 <tr><td class='ruff_defitem'><code>-title STRING</code></td><td class='ruff_defitem'>Specifies the title to use for the page.</td></tr>
 </table>
-<h5 class='ruff'>Description</h5><p class='ruff'>The command generates documentation for one or more namespaces and writes it out to file(s) as per the options shown above. See <a href="ruff_ruff.html#::ruff-Documenting_procedures" title="Documenting procedures" >Documenting procedures</a>, <a href="ruff_ruff.html#::ruff-Documenting_classes" title="Documenting classes" >Documenting classes</a> and <a href="ruff_ruff.html#::ruff-Documenting_namespaces" title="Documenting namespaces" >Documenting namespaces</a> for details of the expected source formats and the generation process.</p>
+<h5 class='ruff'>Description</h5><p class='ruff'>The command generates documentation for one or more namespaces and writes it out to file(s) as per the options shown above. See <a href="ruff_ruff.html#::ruff-Documenting procedures" title="Documenting procedures" >Documenting procedures</a>, <a href="ruff_ruff.html#::ruff-Documenting classes" title="Documenting classes" >Documenting classes</a> and <a href="ruff_ruff.html#::ruff-Documenting namespaces" title="Documenting namespaces" >Documenting namespaces</a> for details of the expected source formats and the generation process.</p>
 <p class='ruff'>The <code>-navigation</code> option takes as an argument a list of values from the table below. These control the positioning and appearance of the navigation box. The list should contain at most one value from each row.</p>
 <table class='ruff_deflist'>
 <tr><td class='ruff_defitem'><code>left</code>, <code>right</code></td><td class='ruff_defitem'>Control whether navigation box is on the left or right side of the page. (Default <code>left</code>) <code>narrow</code>, <code>normal</code>, <code>wide</code> - Controls the width of the navigation box. (Default <code>normal</code>) <code>scrolled</code>, <code>sticky</code>, <code>fixed</code> - Controls navigation box behaviour when scrolling. If <code>scrolled</code>, the navigation box will scroll vertically along with the page. Thus it may not visible at all times. If <code>sticky</code> or <code>fixed</code>, the navigation box remains visible at all times. However, this requires the number of links in the box to fit on the page as they are never scrolled. There is a slight difference between the two behaviours. If <code>fixed</code>, the navigation box stays at its original position. If <code>sticky</code>, it will scroll till the top of the viewing area and then remain fixed. Note that older browsers do not support <code>sticky</code> and will resort to scrolling behaviour. (Default <code>scrolled</code>)</td></tr>
@@ -665,8 +665,8 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
 <hr>
 <h1><a style='color: #006666;background-color: white; margin-left:-4px; padding-left:3px;padding-right:2px;' href='ruff_ruff.html'>ruff</a></h1>
 <h1><a href='ruff_ruff_sample.html'>ruff::sample</a></h1>
-<hr><h1><a href='#::ruff'>ruff</a></h1><h2><a href='#::ruff-Usage'>Usage</a></h2><h2><a href='#::ruff-Documenting_procedures'>Documenting procedures</a></h2><h3><a href='#::ruff-Differences_from_Markdown'>Differences from Markdown</a></h3><h2><a href='#::ruff-Documenting_classes'>Documenting classes</a></h2><h2><a href='#::ruff-Documenting_namespaces'>Documenting namespaces</a></h2><h2><a href='#::ruff-Inline_formatting'>Inline formatting</a></h2><h2><a href='#::ruff-Output'>Output</a></h2><h3><a href='#::ruff-Multipage_output'>Multipage output</a></h3><h3><a href='#::ruff-HTML_formatter'>HTML formatter</a></h3><h3><a href='#::ruff-Markdown_formatter'>Markdown formatter</a></h3><h2><a href='#::ruff-Commands'>Commands</a></h2><h4 class='tooltip'><a href='ruff_ruff.html#::ruff::document'>document</a><span class='tooltiptext'>Generates documentation for commands and classes.
+<hr><h1><a href='#::ruff'>ruff</a></h1><h2><a href='#::ruff-Usage'>Usage</a></h2><h2><a href='#::ruff-Documenting procedures'>Documenting procedures</a></h2><h3><a href='#::ruff-Differences from Markdown'>Differences from Markdown</a></h3><h2><a href='#::ruff-Documenting classes'>Documenting classes</a></h2><h2><a href='#::ruff-Documenting namespaces'>Documenting namespaces</a></h2><h2><a href='#::ruff-Inline formatting'>Inline formatting</a></h2><h2><a href='#::ruff-Output'>Output</a></h2><h3><a href='#::ruff-Multipage output'>Multipage output</a></h3><h3><a href='#::ruff-HTML formatter'>HTML formatter</a></h3><h3><a href='#::ruff-Markdown formatter'>Markdown formatter</a></h3><h2><a href='#::ruff-Commands'>Commands</a></h2><h4 class='tooltip'><a href='ruff_ruff.html#::ruff::document'>document</a><span class='tooltiptext'>Generates documentation for commands and classes.
 </span></h4><h4 class='tooltip'><a href='ruff_ruff.html#::ruff::formatters'>formatters</a><span class='tooltiptext'>Gets the available output formatters.
 </span></h4><h4 class='tooltip'><a href='ruff_ruff.html#::ruff::version'>version</a><span class='tooltiptext'>Returns the Ruff! version.
-</span></h4></div></div><div id='ft'><div style='float: right;'>Document generated by <a href='https://ruff.magicsplat.com'>Ruff!</a></div><div>&copy; 2020 Ashok P. Nadkarni</div></div>
+</span></h4></div></div><div id='ft'><div style='float: right;'>Document generated by <a href='https://ruff.magicsplat.com'>Ruff!</a></div><div>&copy; 2021 Ashok P. Nadkarni</div></div>
 </div></body></html>

@@ -201,10 +201,30 @@ oo::class create ruff::sample::Base {
         # Calls [base_method]
     }
     method <tag> {} {
-        # An explicitly exported method 
+        # An explicitly exported method looking like a html tag
     }
     forward fwd_method string range
     export <tag>
+
+    method + {} {
+        # Method to test regexp special chars
+    }
+    method * {} {
+        # Method to test regexp special chars
+    }
+    method > {} {
+        # Method to test > escaping in HTML
+    }
+    method < {} {
+        # Method to test < escaping in HTML
+    }
+    method & {} {
+        # Method to test & escaping in HTML
+    }
+    method _ {} {
+        # Method to test underscores
+    }
+    export + * > < & _
 }
 
 oo::class create ruff::sample::Mixin {
