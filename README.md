@@ -15,9 +15,13 @@ For additional examples of Ruff! generated documentation, see
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
-## Release notes for 1.0.4
+## Release notes for 1.0.5
 
 **NOTE:** V1.0 releases are **not** compatible with Ruff! releases prior to 0.9.
+
+## Changes since 1.0.4
+
+* Bug fix: link collision for non-alphanumeric single character method names.
 
 ## Changes since 1.0b3
 
