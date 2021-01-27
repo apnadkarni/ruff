@@ -17,7 +17,7 @@ if {[catch {
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 1.0.5
+    variable version 1.0.6
     proc version {} {
         # Returns the Ruff! version.
         variable version
@@ -1736,9 +1736,9 @@ proc ruff::private::extract_ooclass {classname args} {
     foreach name [lsort -dictionary $all_methods] {
         set implementing_class [locate_ooclass_method $classname $name]
         if {[lsearch -exact $all_local_methods $name] < 0} {
-            # Skip the destroy method which is standard and 
+            # Skip the destroy method which is standard and
             # appears in all classes.
-            if {$implementing_class ne "::oo::object" ||
+            if {$implementing_class ne "::oo::object" &&
                 $name ne "destroy"} {
                 lappend external_methods [list $name $implementing_class]
             }
@@ -1993,7 +1993,7 @@ proc ruff::private::get_ooclass_method_path {class_name method_name} {
         # class may unexport a method from an inherited class in which
         # case we should not have the inherited classes in the path
         # either.
-        if {[lsearch -exact [info class methods $mixin -all] $method_name] < 0} {
+        if {[lsearch -exact [info class methods $mixin -all -private] $method_name] < 0} {
             continue
         }
 
@@ -2001,14 +2001,14 @@ proc ruff::private::get_ooclass_method_path {class_name method_name} {
     }
 
     #ruff - next in the search path is the class itself
-    if {[lsearch -exact [info class methods $class_name] $method_name] >= 0} {
+    if {[lsearch -exact [info class methods $class_name -private] $method_name] >= 0} {
         lappend method_path $class_name
     }
 
     #ruff - Last in the search order are the superclasses (in recursive fashion)
     foreach super [info class superclasses $class_name] {
         # See comment in mixin code above.
-        if {[lsearch -exact [info class methods $super -all] $method_name] < 0} {
+        if {[lsearch -exact [info class methods $super -all -private] $method_name] < 0} {
             continue
         }
         set method_path [concat $method_path [get_ooclass_method_path $super $method_name]]
@@ -2362,7 +2362,7 @@ proc ruff::private::document_self {args} {
                          -autopunctuate $opts(-autopunctuate) \
                          -version $::ruff::version]
     if {$opts(-includeprivate)} {
-        lappend common_args -recurse 1
+        lappend common_args -recurse 1 -includeprivate 1
     } else {
         lappend common_args -excludeprocs {^[_A-Z]}
     }

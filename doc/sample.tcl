@@ -194,6 +194,10 @@ oo::class create ruff::sample::Base {
         # argb - second argument from
         #
         # This is method m1
+        #
+        # This is a reference to method [<tag>].
+        #
+        # See also: <tag>
     }
     method overridable_method {} {
         # This method will be overridden in the derived class
@@ -202,6 +206,9 @@ oo::class create ruff::sample::Base {
     }
     method <tag> {} {
         # An explicitly exported method looking like a html tag
+        #
+        # Verify it also shows in [base_method] description as well
+        # as See also section.
     }
     forward fwd_method string range
     export <tag>
