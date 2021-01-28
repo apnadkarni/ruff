@@ -15,6 +15,16 @@ For additional examples of Ruff! generated documentation, see
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
+## Release notes for 1.1.0
+
+* Feature: For multipage output an index page is produced which allows for
+a quick search across all documentation pages. Controlled by the 
+`-makeindex` option which defaults to true for multipage output.
+
+* Bug fix: Do not include TclOO built-in methods when -includeprivate option
+is specified.
+
+
 ## Release notes for 1.0.5
 
 **NOTE:** V1.0 releases are **not** compatible with Ruff! releases prior to 0.9.
