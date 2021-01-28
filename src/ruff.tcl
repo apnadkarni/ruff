@@ -17,7 +17,7 @@ if {[catch {
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 1.0.6
+    variable version 1.1.0
     proc version {} {
         # Returns the Ruff! version.
         variable version
@@ -66,6 +66,9 @@ namespace eval ruff {
 
         * Hyperlinks between program elements, and optionally source code,
         make navigation easy and efficient.
+
+        * A searchable index permits quick location of command and class
+        documentation.
 
         * In object oriented code, class relationships are extracted
         and the full API for a class, with inherited and mixed-in methods, is

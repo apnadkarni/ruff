@@ -177,7 +177,23 @@ oo::class create ruff::formatter::Html {
         append Document "<h1 class='ruff'>Index</h1><p>"
         append Document "<div class='ruff_index'>\n"
         append Document {<input style='width:100%;' accesskey='s' type='text' id='filterText' onkeyup='myFilterHook()' placeholder='Enter index term'>}
-        append Document "<div id='indexStatus'></div>"
+        append Document {
+            <div id='indexStatus'>
+            <ul>
+            <li>Type the index terms you want to search for in the text input field.
+            <li>Matching terms will be shown incrementally as you type.
+            <li>Press <kbd>Enter</kbd> to navigate to the target of the first displayed
+            index entry.
+            <li>Alternatively, <kbd>Tab</kbd> to move to the index entry of interest and then press
+            <kbd>Enter</kbd> to navigate to that documentation page.
+            <li>To jump to this page from any other documentation page,
+            press browser-specific shortcut modifiers with <kbd>i</kbd>.
+            For example, on IE and Edge this would be
+            <kbd>Alt-i</kbd> while on Firefox and Chrome <kbd>Alt-Shift-i</kbd>.
+            Other browsers and platforms may differ.
+            </ul>
+            </div>
+        }
         append Document "\n<ul id='indexUL'>\n"
 
         foreach {label link} $entries {

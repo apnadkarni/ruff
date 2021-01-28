@@ -308,44 +308,192 @@ pre {
 <body><div id='doc3' class='yui-t2'><div id='hd' class='banner'>
 <a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.0.6)</a>
 </div>
-<div id='bd'><div id='yui-main'><div class='yui-b'><h2 class='ruff'><a name='Introduction'></a>Introduction<span class='tinylink'><a href='#top'>Top</a>, <a href='ruff.html'>Main</a>, <a href='ruff_docindex.html#'>Index</a></span></h2>
-<div style='clear:both;'></div>
-<p class='ruff'>Ruff! (Runtime function formatter) is a documentation generation system for programs written in the Tcl programming language. Ruff! uses runtime introspection in conjunction with comment analysis to generate reference manuals for Tcl programs.</p>
-<p class='ruff'>Ruff! is covered by a liberal BSD open-source license that permits use for any purpose.</p>
-<h2 class='ruff'><a name='Why Ruff!'></a>Why Ruff!<span class='tinylink'><a href='#top'>Top</a>, <a href='ruff.html'>Main</a>, <a href='ruff_docindex.html#'>Index</a></span></h2>
-<div style='clear:both;'></div>
-<p class='ruff'>In comparison with other source code based documentation generators, Ruff! produces documentation that not only requires less duplication of effort from the programmer, but is also more complete, more accurate and more maintainable.</p>
-<ul class='ruff'>
-<li>Comments in source code do not have to be reproduced for documentation purposes.</li>
-<li>Ruff! requires minimal markup in the comments making it lightweight as well as reducing clutter.</li>
-<li>Supports inline formatting using Markdown syntax.</li>
-<li>Program elements like command arguments, defaults and class relationships like inheritance are automatically derived.</li>
-<li>Maintenance is less of a burden as documentation is automatically updated with source modification such as changes to defaults, addition of mix-ins etc.</li>
+<div id='bd'><div id='yui-main'><div class='yui-b'><h1 class='ruff'>Index</h1><p><div class='ruff_index'>
+<input style='width:100%;' accesskey='s' type='text' id='filterText' onkeyup='myFilterHook()' placeholder='Enter index term'>
+            <div id='indexStatus'>
+            <ul>
+            <li>Type the index terms you want to search for in the text input field.
+            <li>Matching terms will be shown incrementally as you type.
+            <li>Press <kbd>Enter</kbd> to navigate to the target of the first displayed
+            index entry.
+            <li>Alternatively, <kbd>Tab</kbd> to move to the index entry of interest and then press
+            <kbd>Enter</kbd> to navigate to that documentation page.
+            <li>To jump to this page from any other documentation page,
+            browser-specific shortcut modifiers with <kbd>i</kbd>.
+            For example, on IE and Edge this would be
+            <kbd>Alt-i</kbd> while on Firefox and Chrome <kbd>Alt-Shift-i</kbd>.
+            Other browsers and platforms may differ.
+            </ul>
+            </div>
+        
+<ul id='indexUL'>
+<li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::&amp;'>&amp;</a><span class='tooltiptext'>Method to test &amp; escaping in HTML
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::*'>*</a><span class='tooltiptext'>Method to test regexp special chars
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::+'>+</a><span class='tooltiptext'>Method to test regexp special chars
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::&lt;'>&lt;</a><span class='tooltiptext'>Method to test &lt; escaping in HTML
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::&lt;tag&gt;'>&lt;tag&gt;</a><span class='tooltiptext'>An explicitly exported method looking like a html tag
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::&gt;'>&gt;</a><span class='tooltiptext'>Method to test &gt; escaping in HTML
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::_'>_</a><span class='tooltiptext'>Method to test underscores
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Derived::added_method'>added_method</a><span class='tooltiptext'>Method defined only in <a href="ruff_ruff_sample.html#::ruff::sample::Derived" title="Derived" class='ruff_cmd'>Derived</a>.
+</span> ::ruff::sample::Derived</li><li><a href='ruff_ruff_sample.html#::ruff::sample::Base'>Base</a> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::base_method'>base_method</a><span class='tooltiptext'>base_method is defined only in the base class
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::character_at'>character_at</a><span class='tooltiptext'>Get the character from a string.
+</span> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::constructor'>constructor</a><span class='tooltiptext'>Constructs the class
+</span> ::ruff::sample::Base</li><li><a href='ruff_ruff_sample.html#::ruff::sample::Derived'>Derived</a> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::destructor'>destructor</a><span class='tooltiptext'>Releases all resources and destroys the class
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff.html#::ruff::document'>document</a><span class='tooltiptext'>Generates documentation for commands and classes.
+</span> ::ruff</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::ensemble_proc cmdA'>ensemble_proc cmdA</a><span class='tooltiptext'>Implements cmdA for an ensemble procedure
+</span> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::ensemble_proc cmdB'>ensemble_proc cmdB</a><span class='tooltiptext'>Implements cmdB for an ensemble procedure
+</span> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff.html#::ruff::formatters'>formatters</a><span class='tooltiptext'>Gets the available output formatters.
+</span> ::ruff</li><li><a href='ruff_ruff_sample.html#::ruff::sample::Base::fwd_method'>fwd_method</a> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_app.html#::ruff::app::log_error'>log_error</a><span class='tooltiptext'>Stub function to log Ruff! errors.
+</span> ::ruff::app</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Mixin::mixed_in_method'>mixed_in_method</a><span class='tooltiptext'>This method will be mixed into a class.
+</span> ::ruff::sample::Mixin</li><li><a href='ruff_ruff_sample.html#::ruff::sample::Mixin'>Mixin</a> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::overridable_method'>overridable_method</a><span class='tooltiptext'>This method will be overridden in the derived class
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Derived::overridable_method'>overridable_method</a><span class='tooltiptext'>This method overrides the one defined in <a href="ruff_ruff_sample.html#::ruff::sample::Base" title="Base" class='ruff_cmd'>Base</a>.
+</span> ::ruff::sample::Derived</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::proc_full'>proc_full</a><span class='tooltiptext'>This first line is the summary line for documentation.
+</span> ::ruff::sample</li><li><a href='ruff_ruff_sample.html#::ruff::sample::proc_without_docs'>proc_without_docs</a> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff.html#::ruff::version'>version</a><span class='tooltiptext'>Returns the Ruff! version.
+</span> ::ruff</li>
 </ul>
-<p class='ruff'>On the output side,</p>
-<ul class='ruff'>
-<li>Ruff! supports multiple formats (currently HTML and Markdown). Additional formats can be added through subclassing.</li>
-<li>Generated documentation can optionally be split across multiple pages.</li>
-<li>Hyperlinks between program elements, and optionally source code, make navigation easy and efficient.</li>
-<li>In object oriented code, class relationships are extracted and the full API for a class, with inherited and mixed-in methods, is flattened and summarized.</li>
-</ul>
-<p class='ruff'>The Ruff! documentation itself is produced with Ruff!. For a larger example, see the <a href="http://www.cawt.tcl3d.org/download/CawtReference.html" >CAWT</a> reference manual or the reference pages for <a href="http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html" >Woof!</a> (though the latter is with an older version of Ruff!).</p>
-<h2 class='ruff'><a name='Documentation'></a>Documentation<span class='tinylink'><a href='#top'>Top</a>, <a href='ruff.html'>Main</a>, <a href='ruff_docindex.html#'>Index</a></span></h2>
-<div style='clear:both;'></div>
-<p class='ruff'>The <a href="ruff_ruff.html#::ruff" title="::ruff" class='ruff_cmd'>::ruff</a> reference page describes the Ruff! documentation generation API. The <a href="ruff_ruff_sample.html#::ruff::sample" title="::ruff::sample" class='ruff_cmd'>::ruff::sample</a> page shows some sample output for some of the Ruff! features along with the associated source code from which it was generated.</p>
-<h2 class='ruff'><a name='Downloads and Install'></a>Downloads and Install<span class='tinylink'><a href='#top'>Top</a>, <a href='ruff.html'>Main</a>, <a href='ruff_docindex.html#'>Index</a></span></h2>
-<div style='clear:both;'></div>
-<p class='ruff'>Download the Ruff! distribution from <a href="https://sourceforge.net/projects/magicsplat/files/ruff/">https://sourceforge.net/projects/magicsplat/files/ruff/</a>. The source code repository is at <a href="https://github.com/apnadkarni/ruff">https://github.com/apnadkarni/ruff</a>.</p>
-<p class='ruff'>To install, extract the distribution to a directory listed in your Tcl <code>auto_path</code> variable.</p>
-<h2 class='ruff'><a name='Credits'></a>Credits<span class='tinylink'><a href='#top'>Top</a>, <a href='ruff.html'>Main</a>, <a href='ruff_docindex.html#'>Index</a></span></h2>
-<div style='clear:both;'></div>
-<p class='ruff'>Ruff! is authored by <a href="https://www.magicsplat.com" >Ashok P. Nadkarni</a>.</p>
-<p class='ruff'>It uses the <code>textutil</code> package from <a href="https://core.tcl-lang.org/tcllib" >tcllib</a> and a modified version of the Markdown inline parser from the <a href="http://caiusproject.com/" >Caius</a> project.</p>
-</div></div><div class='yui-b navbox' style='position: sticky; top: 0;'><h1><a style='padding-top:2px;color: #006666;background-color: white; margin-left:-4px; padding-left:3px;padding-right:2px;' href='ruff.html'>Start page</a></h1>
-<h1><a href='ruff_docindex.html' accesskey='i'>Index</a></h1>
+</div><script>
+// Hacked from various web sources without any understanding of JS!
+// Improvements with better Javascript most welcomed!
+
+function myIndexInit() {
+    var single, nvisible, urltext, a;
+
+    filterElement = document.getElementById('filterText');
+    urltext = myGetUrlParameter('lookup');
+    if (urltext == '') {
+        urltext = myGetUrlParameter('search');
+    }
+    if (urltext != '') {
+        filterElement.value = urltext;
+        myRunFilter();
+    }
+    filterElement.focus();
+}
+
+function myGetUrlParameter(name) {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    var results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+};
+
+var myDebounceDelay;
+var myUserAgent = navigator.userAgent.toUpperCase();
+if (myUserAgent.indexOf("MSIE") != -1 || myUserAgent.indexOf("TRIDENT") != -1 ) {
+    //console.log("Internet Explorer");
+    myDebounceDelay = 300;
+}
+else if (myUserAgent.indexOf("EDGE") != -1 ) {
+    //console.log("Edge");
+    myDebounceDelay = 300;
+} else {
+    //console.log(navigator.userAgent);
+    myDebounceDelay = 100;
+}
+
+// From underscore.js
+// See https://davidwalsh.name/javascript-debounce-function
+// Returns a function, that, as long as it continues to be invoked, will not
+// be triggered. The function will be called after it stops being called for
+// N milliseconds. If `immediate` is passed, trigger the function on the
+// leading edge, instead of the trailing.
+function myDebounce(func, wait, immediate) {
+    var timeout;
+    return function() {
+	var context = this, args = arguments;
+	var later = function() {
+	    timeout = null;
+	    if (!immediate) func.apply(context, args);
+	};
+	var callNow = immediate && !timeout;
+	clearTimeout(timeout);
+	timeout = setTimeout(later, wait);
+	if (callNow) func.apply(context, args);
+    };
+};
+
+function mySetStatus(text) {
+    var status;
+    status    = document.getElementById("indexStatus");
+    status.innerText = text;
+}
+
+function myResetStatus() {
+    var status;
+    status    = document.getElementById("indexStatus");
+    // Set to &nbsp because blank space or empty string causes layout to change.
+    status.innerText = "\xa0";
+}
+
+function myRunFilter() {
+    // Declare variables
+    var input, filter, filter0, ul, li, a, i, txtValue, matchSeen, firstMatch;
+    input = document.getElementById('filterText');
+    filter = input.value.toUpperCase();
+    filter0 = filter.charAt(0);
+    ul = document.getElementById("indexUL");
+    li = ul.getElementsByTagName('li');
+    if (filter == "") {
+        myResetStatus();
+        for (i = 0; i < li.length; i++) {
+            li[i].style.display = "";
+        }
+    } else {
+        // Loop through all list items, and hide those who don't match the search query
+        matchSeen = 0;
+        firstMatch = -1;
+        for (i = 0; i < li.length; i++) {
+            a = li[i].getElementsByTagName('a')[0];
+            txtValue = a.textContent || a.innerText;
+            txtValue = txtValue.toUpperCase();
+            if ((txtValue.charAt(0) == filter0) && (txtValue.startsWith(filter))) {
+                if (myLastKey == 13) {
+                    myResetStatus();
+                    //window.open(a.href, 'CF');
+                    document.location.href = a.href;
+                    return;
+                } else {
+                    li[i].style.display = "";
+                    matchSeen++;
+                    if (firstMatch == -1)
+                        firstMatch = i;
+                }
+            } else {
+                // Because index terms are sorted, if we previously saw a match
+                // but this term did not match, then no more terms can match.
+                if (matchSeen) {
+                    break;
+                }
+                li[i].style.display = "none";
+            }
+        }
+        for (; i < li.length; i++) {
+            li[i].style.display = "none";
+        }
+        myResetStatus();
+        if (matchSeen == 1) {
+            //a = li[firstMatch].getElementsByTagName('a')[0];
+            //window.open(a.href, 'CF');
+        }
+    }
+}
+
+var myFilterFunction = myDebounce(myRunFilter, myDebounceDelay);
+
+var myLastKey = 0;
+function myFilterHook() {
+    myLastKey = event.keyCode;
+    mySetStatus("Searching...");
+    myFilterFunction();
+}
+
+
+myIndexInit();</script>
+</div></div><div class='yui-b navbox' style='position: sticky; top: 0;'><h1><a style='padding-top:2px;' href='ruff.html'>Start page</a></h1>
+<h1><a style='color: #006666;background-color: white; margin-left:-4px; padding-left:3px;padding-right:2px;' href='ruff_docindex.html'>Index</a></h1>
 <hr>
 <h1><a href='ruff_ruff.html'>ruff</a></h1>
 <h1><a href='ruff_ruff_app.html'>ruff::app</a></h1>
 <h1><a href='ruff_ruff_sample.html'>ruff::sample</a></h1>
-<hr><h2><a href='#Introduction'>Introduction</a></h2><h2><a href='#Why Ruff!'>Why Ruff!</a></h2><h2><a href='#Documentation'>Documentation</a></h2><h2><a href='#Downloads and Install'>Downloads and Install</a></h2><h2><a href='#Credits'>Credits</a></h2></div></div><div id='ft'><div style='float: right;'>Document generated by <a href='https://ruff.magicsplat.com'>Ruff!</a></div><div>&copy; 2021 Ashok P. Nadkarni</div></div>
+<hr></div></div><div id='ft'><div style='float: right;'>Document generated by <a href='https://ruff.magicsplat.com'>Ruff!</a></div><div>&copy; 2021 Ashok P. Nadkarni</div></div>
 </div></body></html>
