@@ -910,6 +910,7 @@ oo::class create ruff::formatter::Formatter {
         #   -hidenamespace NAMESPACE - if specified as non-empty,
         #    program element names beginning with NAMESPACE are shown
         #    with that namespace component removed.
+        #   -makeindex BOOL - if true, include an index. Ignored for single page
         #   -navigation OPTS - `OPTS` must be a list of elements from amongst
         #    `left`, `right`, `narrow`, `normal` and `wide`. The first two specify
         #    the position of the navigation pane. The last three specify its width.
@@ -939,9 +940,15 @@ oo::class create ruff::formatter::Formatter {
                  -modulename "Reference" \
                  -sortnamespaces 1 \
                  -autopunctuate 0 \
+                 -makeindex 1 \
                 ]
 
         array set Options $args
+
+        if {$Options(-pagesplit) eq "none" && $Options(-makeindex)} {
+            app::log_error "Option -makeindex ignored if -pagesplit is specified as none."
+            set Options(-makeindex) false
+        }
 
         # First collect all "important" names so as to build a list of
         # linkable targets. These will be used for cross-referencing and
@@ -1007,6 +1014,28 @@ oo::class create ruff::formatter::Formatter {
         }
 
         return $docs
+    }
+
+    method generate_document_index {} {
+        # Generates a index document for the entire documentation.
+        #
+        # The [generate_document] method must have been called before
+        # calling this method.
+        #
+        # Returns the generated documentation index or an empty string
+        # if the formatter does not support indexes.
+        return [my DocumentIndex]
+    }
+
+    method DocumentIndex {} {
+        # Returns a index document for the entire documentation.
+        #   references - dictionary keyed by namespace at first level,
+        #                and `type` and `ref` keys at second level indicating
+        #                type of reference and the reference target
+        #                respectively.
+        # The default implementation does not support index generation and
+        # returns an empty string. Formatters should override if they wish.
+        return ""
     }
 
     method FormatInline {text {scope {}}} {

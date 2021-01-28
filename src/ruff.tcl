@@ -2109,6 +2109,8 @@ proc ruff::document {namespaces args} {
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
     #  procedure is also included. Default value is false.
+    # -makeindex BOOLEAN - if true, an index page is generated for classes
+    #  and methods. Default value is true. Not supported by all formatters.
     # -navigation OPTS - Options controlling appearance and position of navigation
     #  box (see below). Not supported by all formatters.
     # -output PATH - Specifies the path of the output file.
@@ -2143,21 +2145,21 @@ proc ruff::document {namespaces args} {
     # navigation box. The list should contain at most one value from each
     # row.
     #
-    #  `left`, `right` - Control whether navigation box is on the left or right
-    #      side of the page. (Default `left`)
-    #  `narrow`, `normal`, `wide` - Controls the width of the navigation box.
-    #      (Default `normal`)
-    #  `scrolled`, `sticky`, `fixed` - Controls navigation box behaviour when
-    #      scrolling. If `scrolled`, the navigation box will scroll vertically
-    #      along with the page. Thus it may not visible at all times. If
-    #      `sticky` or `fixed`, the navigation box remains visible at all times.
-    #      However, this requires the number of links in the box to fit on
-    #      the page as they are never scrolled. There is a slight difference
-    #      between the two behaviours. If `fixed`, the navigation box stays
-    #      at its original position. If `sticky`, it will scroll till the top
-    #      of the viewing area and then remain fixed. Note that older browsers
-    #      do not support `sticky` and will resort to scrolling behaviour.
-    #      (Default `scrolled`)
+    # `left`,`right` - Controls whether navigation box is on the left or right
+    #   side of the page. (Default `left`)
+    # `narrow`,`normal`,`wide` - Controls the width of the navigation box.
+    #   (Default `normal`)
+    # `scrolled`,`sticky`,`fixed` - Controls navigation box behaviour when
+    #   scrolling. If `scrolled`, the navigation box will scroll vertically
+    #   along with the page. Thus it may not visible at all times. If
+    #   `sticky` or `fixed`, the navigation box remains visible at all times.
+    #   However, this requires the number of links in the box to fit on
+    #   the page as they are never scrolled. There is a slight difference
+    #   between the two behaviours. If `fixed`, the navigation box stays
+    #   at its original position. If `sticky`, it will scroll till the top
+    #   of the viewing area and then remain fixed. Note that older browsers
+    #   do not support `sticky` and will resort to scrolling behaviour.
+    #   (Default `scrolled`)
 
     array set opts {
         -compact 0
@@ -2168,6 +2170,7 @@ proc ruff::document {namespaces args} {
         -include {procs classes}
         -includeprivate false
         -includesource false
+        -makeindex true
         -output ""
         -preamble ""
         -recurse false
@@ -2177,12 +2180,18 @@ proc ruff::document {namespaces args} {
     }
 
     array set opts $args
+    if {$opts(-pagesplit) eq "none" && $opts(-makeindex)} {
+        app::log_error "Option -makeindex ignored if -pagesplit is specified as none."
+        set opts(-makeindex) false
+    }
+
     namespace upvar private ProgramOptions ProgramOptions
     set ProgramOptions(-hidesourcecomments) $opts(-hidesourcecomments)
     if {$opts(-pagesplit) ni {none namespace}} {
         error "Option -pagesplit must be \"none\" or \"namespace\" "
     }
     set ProgramOptions(-pagesplit) $opts(-pagesplit)
+    set ProgramOptions(-makeindex) $opts(-makeindex)
 
     # Fully qualify namespaces
     set namespaces [lmap ns $namespaces {
@@ -2230,6 +2239,10 @@ proc ruff::document {namespaces args} {
                                -includeprivate $opts(-includeprivate)]
 
     set docs [$formatter generate_document $classprocinfodict {*}$args]
+    if {$opts(-makeindex)} {
+        lappend docs _docindex [$formatter generate_document_index]
+    }
+
     $formatter destroy
 
     set dir [file dirname $opts(-output)]
@@ -2331,6 +2344,7 @@ proc ruff::private::document_self {args} {
                         -format html \
                         -includesource true \
                         -pagesplit namespace \
+                        -makeindex true \
                         -includeprivate false \
                         -outdir [file join $ruff_dir .. doc] \
                         -compact 0 \
@@ -2346,17 +2360,18 @@ proc ruff::private::document_self {args} {
             uplevel #0 [list source [file join $ruff_dir .. doc sample.tcl]]
         }
     }
- 
+
     load_formatters
 
     file mkdir $opts(-outdir)
-    set namespaces [list ::ruff ::ruff::sample]
+    set namespaces [list ::ruff ::ruff::app ::ruff::sample]
     set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"
     set common_args [list \
                          -compact $opts(-compact) \
                          -format $opts(-format) \
                          -recurse $opts(-includeprivate) \
                          -title $title \
+                         -makeindex $opts(-makeindex) \
                          -pagesplit $opts(-pagesplit) \
                          -preamble $::ruff::_ruff_intro \
                          -autopunctuate $opts(-autopunctuate) \

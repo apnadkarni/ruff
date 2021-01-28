@@ -15,6 +15,7 @@ oo::class create ruff::formatter::Html {
     variable NavigationLinks; # Navigation links forming ToC
     variable HeaderLevels;    # Header levels for various headers
     variable CssClasses;      # CSS classes for various elements
+    variable GlobalIndex;     # Like NavigationLinks but across *all* documents
 
     constructor args {
         set HeaderLevels {
@@ -29,6 +30,7 @@ oo::class create ruff::formatter::Html {
             proc  ruffproc
             method ruffmethod
         }
+        set GlobalIndex [dict create]
         next {*}$args
     }
 
@@ -160,6 +162,49 @@ oo::class create ruff::formatter::Html {
         return $doc
     }
 
+    method DocumentIndex {} {
+        # See [Formatter.DocumentIndex]
+        #   references - namespace keyed nested dictionary
+        #
+        my DocumentBegin Index
+
+        set entries {}
+        dict for {key link} $GlobalIndex {
+            lappend entries [dict get $link label] $link
+        }
+        set entries [lsort -stride 2 -dictionary $entries]
+
+        append Document "<h1 class='ruff'>Index</h1><p>"
+        append Document "<div class='ruff_index'>\n"
+        append Document {<input style='width:100%;' accesskey='s' type='text' id='filterText' onkeyup='myFilterHook()' placeholder='Enter index term'>}
+        append Document "<div id='indexStatus'></div>"
+        append Document "\n<ul id='indexUL'>\n"
+
+        foreach {label link} $entries {
+            set label [my Escape [string trimleft $label :]]
+            # set tag  [dict get $link tag]
+            set tag li
+            set href [dict get $link href]
+            set ns ""
+            if {[dict exists $link ns]} {
+                set ns [dict get $link ns]
+                if {$ns ne ""} {
+                    set ns " [my Escape $ns]"
+                }
+            }
+            if {[dict exists $link tip]} {
+                append Document "<$tag class='tooltip'><a href='$href'>$label</a><span class='tooltiptext'>[dict get $link tip]</span>$ns</$tag>"
+            } else {
+                append Document "<$tag><a href='$href'>$label</a>$ns</$tag>"
+            }
+        }
+        append Document "\n</ul>\n"
+        append Document "</div>"
+        append Document "<script>\n[read_ruff_file ruff-index.js]\nmyIndexInit();</script>\n"
+
+        return [my DocumentEnd]
+    }
+
     method AddProgramElementHeading {type fqn {tooltip {}}} {
         # Adds heading for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
@@ -172,7 +217,7 @@ oo::class create ruff::formatter::Html {
         set ns       [namespace qualifiers $fqn]
         set anchor   [my Anchor $fqn]
         set href     [my SymbolReference $ns $fqn]
-        set linkinfo [dict create tag h$level href $href]
+        set linkinfo [dict create tag h$level href $href ns $ns]
         if {[llength $tooltip]} {
             set tip "[my ToHtml [string trim [join $tooltip { }]] $ns]\n"
             dict set linkinfo tip $tip
@@ -180,6 +225,7 @@ oo::class create ruff::formatter::Html {
         set name [namespace tail $fqn]
         dict set linkinfo label $name
         dict set NavigationLinks $anchor $linkinfo
+        dict set GlobalIndex $anchor $linkinfo
         if {[string length $ns]} {
             set ns_link [my ToHtml [markup_reference $ns]]
             set heading "<a name='$anchor'>[my Escape $name]</a><span class='ns_scope'> \[${ns_link}\]</span>"
@@ -323,6 +369,7 @@ oo::class create ruff::formatter::Html {
         set highlight_style "color: #006666;background-color: white; margin-left:-4px; padding-left:3px;padding-right:2px;"
         set main_title "Start page"
         set main_ref [ns_file_base {}]
+        set index_ref [ns_file_base _docindex]
 
         set scrolling ""
         foreach opt [my Option -navigation {}] {
@@ -338,10 +385,19 @@ oo::class create ruff::formatter::Html {
             # Split pages. Add navigation to each page.
             # If highlight_ns is empty, assume main page. Hack hack hack
             if {$highlight_ns eq ""} {
-                append Document "<h1><a style='padding-top:2px;$highlight_style' href='$main_ref'>$main_title</a></h1>\n<hr>\n"
+                append Document "<h1><a style='padding-top:2px;$highlight_style' href='$main_ref'>$main_title</a></h1>\n"
             } else {
-                append Document "<h1><a style='padding-top:2px;' href='$main_ref'>$main_title</a></h1>\n<hr>\n"
+                append Document "<h1><a style='padding-top:2px;' href='$main_ref'>$main_title</a></h1>\n"
             }
+            if {[my Option -makeindex 1]} {
+                # Another hack hack - Index page namespaced as Index
+                if {$highlight_ns eq "Index"} {
+                    append Document "<h1><a style='$highlight_style' href='$index_ref'>Index</a></h1>\n"
+                } else {
+                    append Document "<h1><a href='$index_ref' accesskey='i'>Index</a></h1>\n"
+                }
+            }
+            append Document "<hr>\n"
             if {[my Option -sortnamespaces true]} {
                 set ordered_namespaces [my SortedNamespaces]
             } else {
@@ -401,6 +457,9 @@ oo::class create ruff::formatter::Html {
             append links \
                 "<a href='#top'>Top</a>, " \
                 "<a href='[my SymbolReference :: {}]'>Main</a>"
+            if {[my Option -makeindex true]} {
+                append links ", <a href='[my SymbolReference _docindex {}]'>Index</a>"
+            }
         }
         set links "<span class='tinylink'>$links</span>"
         # NOTE: the div needed to reset the float from links

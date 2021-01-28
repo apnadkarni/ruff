@@ -245,3 +245,17 @@ pre {
 .ruff_source_link {
     font-size: smaller;
 }
+
+.ruff_index {
+    font-size: small;
+    color: grey;
+    line-height: 1;
+}
+
+.ruff_index ul li {
+    list-style-type: none;
+}
+
+.ruff_index ul li a {
+    text-decoration: none;
+}
