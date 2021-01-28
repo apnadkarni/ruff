@@ -2438,6 +2438,7 @@ proc ruff::private::distribute {{dir {}}} {
         formatter_html.tcl
         formatter_markdown.tcl
         ruff-html.js
+        ruff-index.js
         ruff-html.css
         ruff-md.css
         ruff-yui.css
