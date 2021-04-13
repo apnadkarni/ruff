@@ -216,7 +216,7 @@ pre {
     margin-left: 1em;
     padding: 5px;
     font-family: Consolas, "Courier New", monospace;
-    width: max-content;
+    //width: max-content;
     font-size: smaller;
     line-height: 1.2em;
 }
