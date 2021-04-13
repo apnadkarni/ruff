@@ -20,6 +20,8 @@ and
 * Feature: For multipage output an index page is produced which allows for
 a quick search across all documentation pages. Controlled by the 
 `-makeindex` option which defaults to true for multipage output.
+See 
+[this](https://iocp.magicsplat.com/iocp_docindex.html) for an example.
 
 * Bug fix: Do not include TclOO built-in methods when -includeprivate option
 is specified.
