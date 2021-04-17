@@ -621,7 +621,7 @@ oo::class create ruff::formatter::Formatter {
         } else {
             switch -exact -- $proc_name {
                 constructor {
-                    set synopsis [list "[namespace tail $class] create" $arglist]
+                    set synopsis [list "[namespace tail $class] create OBJNAME" $arglist]
                 }
                 destructor  {set synopsis [list "OBJECT destroy"]}
                 default  {
