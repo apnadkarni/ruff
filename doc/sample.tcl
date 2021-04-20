@@ -216,6 +216,30 @@ oo::class create ruff::sample::Base {
     forward fwd_method string range
     export <tag>
 
+}
+
+oo::class create ruff::sample::Mixin {
+    method mixed_in_method {arg} {
+        # This method will be mixed into a class.
+        # arg - an argument to the method
+    }
+}
+
+oo::class create ruff::sample::Derived {
+    superclass ::ruff::sample::Base
+    mixin ::ruff::sample::Mixin
+    method overridable_method {} {
+        # This method overrides the one defined in [Base].
+    }
+    method added_method {} {
+        # Method defined only in [Derived].
+    }
+}
+
+oo::class create ruff::sample::FunnyMethods {
+    constructor {} {
+        # Class for testing special characters in method names
+    }
     method + {} {
         # Method to test regexp special chars
     }
@@ -235,22 +259,5 @@ oo::class create ruff::sample::Base {
         # Method to test underscores
     }
     export + * > < & _
-}
 
-oo::class create ruff::sample::Mixin {
-    method mixed_in_method {arg} {
-        # This method will be mixed into a class.
-        # arg - an argument to the method
-    }
-}
-
-oo::class create ruff::sample::Derived {
-    superclass ::ruff::sample::Base
-    mixin ::ruff::sample::Mixin
-    method overridable_method {} {
-        # This method overrides the one defined in [Base].
-    }
-    method added_method {} {
-        # Method defined only in [Derived].
-    }
 }
