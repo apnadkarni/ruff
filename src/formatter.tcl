@@ -216,13 +216,15 @@ oo::class create ruff::formatter::Formatter {
 
     method AddSynopsis {synopsis scope} {
         # Adds a Synopsis section to the document content.
-        #  synopsis - List of two elements comprising the command portion
-        #             and the parameter list.
+        #  synopsis - List of alternating elements comprising, in turn,
+        #             the command portion and the parameter list.
         # [Formatter] provides a base implementation that may be overridden.
         if {![my Option -compact 0]} {
             my AddHeading nonav Synopsis $scope
         }
-        my AddPreformattedText [join $synopsis { }] $scope
+        my AddPreformatted [lmap {cmd params} $synopsis {
+            concat $cmd $params
+        }] $scope
         return
     }
 
@@ -259,8 +261,8 @@ oo::class create ruff::formatter::Formatter {
         #  proctype     - `proc` or `method`
         #  display_name - The name to be displayed.
         #  fqn          - The fully qualified name used to construct references.
-        #  synopsis     - Procedure synopsis as a 2-element list comprising
-        #                 the command portion and the list of arguments.
+        #  synopsis     - Procedure synopsis as a alternating list comprising
+        #                 the command portion and the list of arguments for it.
         #  parameters   - List of parameters in the form of a definition
         #                 list.
         #  summary      - The summary text.
@@ -621,7 +623,12 @@ oo::class create ruff::formatter::Formatter {
         } else {
             switch -exact -- $proc_name {
                 constructor {
-                    set synopsis [list "[namespace tail $class] create OBJNAME" $arglist]
+                    set unqual_name [namespace tail $class]
+                    set synopsis [list \
+                                      "$unqual_name create OBJNAME" \
+                                      $arglist \
+                                      "$unqual_name new" \
+                                      $arglist]
                 }
                 destructor  {set synopsis [list "OBJECT destroy"]}
                 default  {

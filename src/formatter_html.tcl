@@ -347,19 +347,21 @@ oo::class create ruff::formatter::Html {
 
     method AddSynopsis {synopsis scope} {
         # Adds a Synopsis section to the document content.
-        #  synopsis - List of two elements comprising the command portion
-        #             and the parameter list.
+        #  synopsis - List of alternating elements comprising the command portion
+        #             and the parameter list for it.
         #  scope  - The documentation scope of the content.
 
-        # my AddHeading nonav Synopsis $scope
-        lassign $synopsis cmds params
-        set cmds   "<span class='ruff_cmd'>[my Escape [join $cmds { }]]</span>"
-        if {[llength $params]} {
-            set params "<span class='ruff_arg'>[my Escape [join $params { }]]</span>"
-        } else {
-            set params ""
+        set text ""
+        foreach {cmds params} $synopsis {
+            set cmds   "<span class='ruff_cmd'>[my Escape [join $cmds { }]]</span>"
+            if {[llength $params]} {
+                set params "<span class='ruff_arg'>[my Escape [join $params { }]]</span>"
+            } else {
+                set params ""
+            }
+            append text "$cmds $params<br>"
         }
-        append Document "<div class='ruff_synopsis'>$cmds $params</div>\n"
+        append Document "<div class='ruff_synopsis'>$text</div>\n"
         return
     }
 

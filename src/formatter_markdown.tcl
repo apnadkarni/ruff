@@ -253,13 +253,15 @@ oo::class create ruff::formatter::Markdown {
 
     method AddSynopsis {synopsis scope} {
         # Adds a Synopsis section to the document content.
-        #  synopsis - List of two elements comprising the command portion
-        #             and the parameter list.
+        #  synopsis - List of alternating elements comprising the command portion
+        #             and the parameter list for it.
         #  scope  - The documentation scope of the content.
 
-        # my AddHeading nonav Synopsis $scope
-        lassign $synopsis cmds params
-        append Document "\n> `[join $cmds { }]` *`[join $params { }]`*\n"
+        append Document \n
+        foreach {cmds params} $synopsis {
+            append Document "\n> `[join $cmds { }]` *`[join $params { }]`*<br>"
+        }
+        append Document \n
         return
     }
 
