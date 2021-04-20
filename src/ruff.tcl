@@ -2471,6 +2471,7 @@ proc ruff::private::distribute {{dir {}}} {
         ../doc/ruff_ruff_sample.html
         ../LICENSE
         ../README.md
+        ../ruff_logo.png
     }
     file copy -force -- {*}[lmap file $files {file join [ruff_dir] $file}] $dir
     file copy -force -- [file join [ruff_dir] msgs] $dir

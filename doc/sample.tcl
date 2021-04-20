@@ -87,6 +87,13 @@ namespace eval ruff::sample {
         The remaining sections show how commands and classes are documented.
         Click on the *Show source* link to see the underlying source code
         for the procedure or method from which the documentation was generated.
+
+        ### Images
+
+        Images can be specified using either Markdown or HTML:
+
+        * ![alt img](ruff_logo.png) `![alt img](ruff_logo.png)`
+        * <img src='ruff_logo.png'/> `<img src='ruff_logo.png'/>`
     }
 
     namespace eval ensemble_proc {
