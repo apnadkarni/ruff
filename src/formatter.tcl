@@ -127,7 +127,7 @@ oo::class create ruff::formatter::Formatter {
             return;             # Do not want even heading if not parameters
         }
         if {![my Option -compact 0]} {
-            my AddHeading parameters Parameters $scope
+            my AddHeading parameters [::msgcat::mc Parameters] $scope
         }
         # Construct a definition block for the parameters
         set definitions [lmap param $parameters {
@@ -301,20 +301,20 @@ oo::class create ruff::formatter::Formatter {
 
         if {[info exists body] && [llength $body]} {
             if {![my Option -compact 0]} {
-                my AddHeading nonav Description $scope
+                my AddHeading nonav [::msgcat::mc Description] $scope
             }
             my AddParagraphs $body $scope
         }
 
         if {[info exists returns]} {
             if {![my Option -compact 0]} {
-                my AddHeading nonav "Return value" $scope
+                my AddHeading nonav [::msgcat::mc "Return value"] $scope
             }
             my AddParagraph $returns $scope
         }
 
         if {[info exist seealso]} {
-            my AddReferences $seealso $scope "See also"
+            my AddReferences $seealso $scope [::msgcat::mc "See also"]
         }
 
         if {[my Option -includesource 0] && [info exists source]} {
@@ -996,12 +996,12 @@ oo::class create ruff::formatter::Formatter {
             my AddParagraphs [dict get $ns_info $ns preamble] $ns
 
             if {[dict size [dict get $ns_info $ns procs]]} {
-                my AddHeading 2 Commands $ns
+                my AddHeading 2 [::msgcat::mc Commands] $ns
                 my AddProcedures [dict get $ns_info $ns procs]
             }
 
             if {[dict size [dict get $ns_info $ns classes]]} {
-                my AddHeading 2 Classes $ns
+                my AddHeading 2 [::msgcat::mc Classes] $ns
                 my AddClasses [dict get $ns_info $ns classes]
             }
 

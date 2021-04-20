@@ -14,6 +14,8 @@ if {[catch {
     puts stderr "Ruff! needs packages textutil::adjust and textutil::tabify from tcllib."
     return -options $ropts $msg
 }
+package require msgcat
+msgcat::mcload [file join [file dirname [info script]] msgs]
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
@@ -233,9 +235,14 @@ namespace eval ruff {
         preformatted line and passed through to the output with the
         the first 4 spaces stripped. No other processing is done on the line.
 
-        * Any line beginning with the word `Returns` is treated as
-        description of the return value. It follows the same rules as normal
-        paragraphs below.
+        * Any line beginning with the word `Returns` is treated as description
+        of the return value. It follows the same rules as normal paragraphs
+        below with one special case: if the `Returns` is followed by a colon,
+        the word `Returns` is not treated as part of the text to be output. Only
+        the rest of the text, which must be separated from the colon by at least
+        one space, is treated as the paragraph content. The `Returns` is then
+        treated only as a marker for the `Returns` section. This is primarily
+        to aid in non-English documentation.
 
         * A line beginning with `See also:` (note the colon) is assumed to begin
         a reference block consisting of a list of program element names
@@ -768,8 +775,15 @@ proc ruff::private::parse_line {line mode current_indent}  {
                 if {[regexp {^See also\s*:\s*(.*)$} $line -> match]} {
                     return [list Type seealso Indent $indent Text $match]
                 }
-                if {[regexp {^Returns($|\s.*$)} $line]} {
-                    return [list Type returns Indent $indent Text $text]
+                if {[regexp {^Returns(\s*:)?($|\s.*$)} $line -> colon match]} {
+                    if {$colon eq ""} {
+                        # English text like
+                        #   Returns some value
+                        return [list Type returns Indent $indent Text $text]
+                    } else {
+                        # Possibly localized. The "Return" should not be part of text
+                        return [list Type returns Indent $indent Text $match]
+                    }
                 }
             }
             if {$indent > $current_indent} {
@@ -2136,6 +2150,10 @@ proc ruff::document {namespaces args} {
     #  always included as it used for normalization and layout. Not all formatters
     #  may support this option.
     # -title STRING - specifies the title to use for the page
+    # -locale STRING - sets the locale of the pre-defined texts in the generated outputs
+    #  such as 'Description' or 'Return value' (Default `en`). To add
+    #  a locale for a language, create a message catalog file in the
+    #  `msgs` directory using the provided `de.msg` as a template.
     #
     # The command generates documentation for one or more namespaces
     # and writes it out to file(s) as per the options shown above.
@@ -2180,6 +2198,7 @@ proc ruff::document {namespaces args} {
         -pagesplit none
         -sortnamespaces true
         -title ""
+        -locale en
     }
 
     array set opts $args
@@ -2187,6 +2206,8 @@ proc ruff::document {namespaces args} {
         app::log_error "Option -makeindex ignored if -pagesplit is specified as none."
         set opts(-makeindex) false
     }
+
+    ::msgcat::mclocale $opts(-locale)
 
     namespace upvar private ProgramOptions ProgramOptions
     set ProgramOptions(-hidesourcecomments) $opts(-hidesourcecomments)
@@ -2351,6 +2372,7 @@ proc ruff::private::document_self {args} {
                         -includeprivate false \
                         -outdir [file join $ruff_dir .. doc] \
                         -compact 0 \
+                        -locale en \
                         -autopunctuate true \
                         -navigation {left sticky}
                        ]
@@ -2378,6 +2400,7 @@ proc ruff::private::document_self {args} {
                          -pagesplit $opts(-pagesplit) \
                          -preamble $::ruff::_ruff_intro \
                          -autopunctuate $opts(-autopunctuate) \
+                         -locale $opts(-locale) \
                          -version $::ruff::version]
     if {$opts(-includeprivate)} {
         lappend common_args -recurse 1 -includeprivate 1
@@ -2450,6 +2473,7 @@ proc ruff::private::distribute {{dir {}}} {
         ../README.md
     }
     file copy -force -- {*}[lmap file $files {file join [ruff_dir] $file}] $dir
+    file copy -force -- [file join [ruff_dir] msgs] $dir
     file delete -force -- $zipfile
     set curdir [pwd]
     try {

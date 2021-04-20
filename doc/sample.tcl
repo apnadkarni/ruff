@@ -164,7 +164,10 @@ proc ruff::sample::character_at {text {pos 0}} {
     # The command will treat negative values of $pos as offset from
     # the end of the string.
     #
-    # Returns the character at index $pos in string $text.
+    # Note the use of `Returns:` as opposed to `Returns` (i.e. with a colon) in
+    # the source comments. See docs for the difference.
+    #
+    # Returns: The character at index $pos in string $text.
     set n [string length $text]
     if {[tcl::mathfunc::abs $pos] >= [string length $text]} {
         #ruff
