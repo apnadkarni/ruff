@@ -19,7 +19,7 @@ msgcat::mcload [file join [file dirname [info script]] msgs]
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 1.1.0
+    variable version 1.2.0
     proc version {} {
         # Returns the Ruff! version.
         variable version
@@ -52,7 +52,7 @@ namespace eval ruff {
 
         * Supports inline formatting using Markdown syntax.
 
-        * Program elements like command arguments, defaults and 
+        * Program elements like command arguments, defaults and
         class relationships like inheritance are automatically derived.
 
         * Maintenance is less of a burden as documentation is automatically

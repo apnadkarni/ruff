@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"/>
-<title>Ruff! - Runtime Formatting Function Reference (V1.1.0)</title>
+<title>Ruff! - Runtime Formatting Function Reference (V1.2.0)</title>
 <style>
 /*
 Copyright (c) 2009, Yahoo! Inc. All rights reserved.
@@ -230,7 +230,7 @@ pre {
     margin-left: 1em;
     padding: 5px;
     font-family: Consolas, "Courier New", monospace;
-    width: max-content;
+    //width: max-content;
     font-size: smaller;
     line-height: 1.2em;
 }
@@ -306,7 +306,7 @@ pre {
 }
 </script></head>
 <body><div id='doc3' class='yui-t2'><div id='hd' class='banner'>
-<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.1.0)</a>
+<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.2.0)</a>
 </div>
 <div id='bd'><div id='yui-main'><div class='yui-b'><h1 class='ruff'>Index</h1><p><div class='ruff_index'>
 <input style='width:100%;' accesskey='s' type='text' id='filterText' onkeyup='myFilterHook()' placeholder='Enter index term'>
@@ -327,23 +327,24 @@ pre {
             </div>
         
 <ul id='indexUL'>
-<li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::&amp;'>&amp;</a><span class='tooltiptext'>Method to test &amp; escaping in HTML
-</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::*'>*</a><span class='tooltiptext'>Method to test regexp special chars
-</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::+'>+</a><span class='tooltiptext'>Method to test regexp special chars
-</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::&lt;'>&lt;</a><span class='tooltiptext'>Method to test &lt; escaping in HTML
-</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::&lt;tag&gt;'>&lt;tag&gt;</a><span class='tooltiptext'>An explicitly exported method looking like a html tag
-</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::&gt;'>&gt;</a><span class='tooltiptext'>Method to test &gt; escaping in HTML
-</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::_'>_</a><span class='tooltiptext'>Method to test underscores
-</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Derived::added_method'>added_method</a><span class='tooltiptext'>Method defined only in <a href="ruff_ruff_sample.html#::ruff::sample::Derived" title="Derived" class='ruff_cmd'>Derived</a>.
+<li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::FunnyMethods::&amp;'>&amp;</a><span class='tooltiptext'>Method to test &amp; escaping in HTML
+</span> ::ruff::sample::FunnyMethods</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::FunnyMethods::*'>*</a><span class='tooltiptext'>Method to test regexp special chars
+</span> ::ruff::sample::FunnyMethods</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::FunnyMethods::+'>+</a><span class='tooltiptext'>Method to test regexp special chars
+</span> ::ruff::sample::FunnyMethods</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::FunnyMethods::&lt;'>&lt;</a><span class='tooltiptext'>Method to test &lt; escaping in HTML
+</span> ::ruff::sample::FunnyMethods</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::&lt;tag&gt;'>&lt;tag&gt;</a><span class='tooltiptext'>An explicitly exported method looking like a html tag
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::FunnyMethods::&gt;'>&gt;</a><span class='tooltiptext'>Method to test &gt; escaping in HTML
+</span> ::ruff::sample::FunnyMethods</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::FunnyMethods::_'>_</a><span class='tooltiptext'>Method to test underscores
+</span> ::ruff::sample::FunnyMethods</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Derived::added_method'>added_method</a><span class='tooltiptext'>Method defined only in <a href="ruff_ruff_sample.html#::ruff::sample::Derived" title="Derived" class='ruff_cmd'>Derived</a>.
 </span> ::ruff::sample::Derived</li><li><a href='ruff_ruff_sample.html#::ruff::sample::Base'>Base</a> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::base_method'>base_method</a><span class='tooltiptext'>base_method is defined only in the base class
 </span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::character_at'>character_at</a><span class='tooltiptext'>Get the character from a string.
 </span> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::constructor'>constructor</a><span class='tooltiptext'>Constructs the class
-</span> ::ruff::sample::Base</li><li><a href='ruff_ruff_sample.html#::ruff::sample::Derived'>Derived</a> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::destructor'>destructor</a><span class='tooltiptext'>Releases all resources and destroys the class
+</span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::FunnyMethods::constructor'>constructor</a><span class='tooltiptext'>Class for testing special characters in method names
+</span> ::ruff::sample::FunnyMethods</li><li><a href='ruff_ruff_sample.html#::ruff::sample::Derived'>Derived</a> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::destructor'>destructor</a><span class='tooltiptext'>Releases all resources and destroys the class
 </span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff.html#::ruff::document'>document</a><span class='tooltiptext'>Generates documentation for commands and classes.
 </span> ::ruff</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::ensemble_proc cmdA'>ensemble_proc cmdA</a><span class='tooltiptext'>Implements cmdA for an ensemble procedure
 </span> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::ensemble_proc cmdB'>ensemble_proc cmdB</a><span class='tooltiptext'>Implements cmdB for an ensemble procedure
 </span> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff.html#::ruff::formatters'>formatters</a><span class='tooltiptext'>Gets the available output formatters.
-</span> ::ruff</li><li><a href='ruff_ruff_sample.html#::ruff::sample::Base::fwd_method'>fwd_method</a> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_app.html#::ruff::app::log_error'>log_error</a><span class='tooltiptext'>Stub function to log Ruff! errors.
+</span> ::ruff</li><li><a href='ruff_ruff_sample.html#::ruff::sample::FunnyMethods'>FunnyMethods</a> ::ruff::sample</li><li><a href='ruff_ruff_sample.html#::ruff::sample::Base::fwd_method'>fwd_method</a> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_app.html#::ruff::app::log_error'>log_error</a><span class='tooltiptext'>Stub function to log Ruff! errors.
 </span> ::ruff::app</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Mixin::mixed_in_method'>mixed_in_method</a><span class='tooltiptext'>This method will be mixed into a class.
 </span> ::ruff::sample::Mixin</li><li><a href='ruff_ruff_sample.html#::ruff::sample::Mixin'>Mixin</a> ::ruff::sample</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Base::overridable_method'>overridable_method</a><span class='tooltiptext'>This method will be overridden in the derived class
 </span> ::ruff::sample::Base</li><li class='tooltip'><a href='ruff_ruff_sample.html#::ruff::sample::Derived::overridable_method'>overridable_method</a><span class='tooltiptext'>This method overrides the one defined in <a href="ruff_ruff_sample.html#::ruff::sample::Base" title="Base" class='ruff_cmd'>Base</a>.

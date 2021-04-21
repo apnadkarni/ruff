@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"/>
-<title>Ruff! - Runtime Formatting Function Reference (V1.1.0)</title>
+<title>Ruff! - Runtime Formatting Function Reference (V1.2.0)</title>
 <style>
 /*
 Copyright (c) 2009, Yahoo! Inc. All rights reserved.
@@ -230,7 +230,7 @@ pre {
     margin-left: 1em;
     padding: 5px;
     font-family: Consolas, "Courier New", monospace;
-    width: max-content;
+    //width: max-content;
     font-size: smaller;
     line-height: 1.2em;
 }
@@ -306,7 +306,7 @@ pre {
 }
 </script></head>
 <body><div id='doc3' class='yui-t2'><div id='hd' class='banner'>
-<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.1.0)</a>
+<a style='text-decoration:none;' href='ruff.html'>Ruff! - Runtime Formatting Function Reference (V1.2.0)</a>
 </div>
 <div id='bd'><div id='yui-main'><div class='yui-b'><h1 class='ruff'><a name='::ruff'></a>::ruff<span class='tinylink'><a href='#top'>Top</a>, <a href='ruff.html'>Main</a>, <a href='ruff_docindex.html#'>Index</a></span></h1>
 <div style='clear:both;'></div>
@@ -366,7 +366,7 @@ proc ruff::sample::character_at {text {pos 0}} {
 <li>Lines containing a <code>-</code> surrounded by whitespace begins a definition list element. The text before the <code>-</code> separator is the definition term and the text after is the description. Both the term and description are subject to inline formatting. Definition blocks follow the same rules for termination as bullet lists described above.</li>
 <li>Parameter blocks have the same format as definition lists and are distinguished from them only by their presence in the lead block. Unlike definition blocks, the term is assumed to be the name of an argument and is automatically formatted and not subject to inline formatting.</li>
 <li>If the line is indented 4 or more spaces, it is treated a preformatted line and passed through to the output with the the first 4 spaces stripped. No other processing is done on the line.</li>
-<li>Any line beginning with the word <code>Returns</code> is treated as description of the return value. It follows the same rules as normal paragraphs below.</li>
+<li>Any line beginning with the word <code>Returns</code> is treated as description of the return value. It follows the same rules as normal paragraphs below with one special case: if the <code>Returns</code> is followed by a colon, the word <code>Returns</code> is not treated as part of the text to be output. Only the rest of the text, which must be separated from the colon by at least one space, is treated as the paragraph content. The <code>Returns</code> is then treated only as a marker for the <code>Returns</code> section. This is primarily to aid in non-English documentation.</li>
 <li>A line beginning with <code>See also:</code> (note the colon) is assumed to begin a reference block consisting of a list of program element names (such as procedures, classes etc.) and Markdown links. These are then automatically linked and listed in the <strong>See also</strong> section of a procedure documentation. The list may continue over multiple lines following normal paragraph rules. Each line must be parsable as a Tcl list. Note the program element names can, but need not be, explicitly marked as a program element reference using surrounding square brackets. For example, within a <code>See also:</code> section, both <code>document</code> and <code>[document]</code> will generate a cross-reference link to the documentation for the <code>document</code> procedure.</li>
 <li>All other lines begin a normal paragraph. The paragraph ends with a line of one of the above types.</li>
 </ul>
@@ -451,7 +451,7 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
 <h4 class='ruffproc'><a name='::ruff::document'>document</a><span class='ns_scope'> [<a href="ruff_ruff.html#::ruff" title="::ruff" class='ruff_cmd'>::ruff</a>]</span><span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a>, <a href='ruff_docindex.html#'>Index</a></span></h4>
 <div style='clear:both;'></div>
 <p class='ruff'>Generates documentation for commands and classes.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>document</span> <span class='ruff_arg'>namespaces ?args?</span></div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>document</span> <span class='ruff_arg'>namespaces ?args?</span><br></div>
 <h5 class='ruff'>Parameters</h5><table class='ruff_deflist'>
 <tr><td class='ruff_defitem'><code>namespaces</code></td><td class='ruff_defitem'>List of namespaces for which documentation is to be generated.</td></tr>
 <tr><td class='ruff_defitem'><code>args</code></td><td class='ruff_defitem'>Options described below.</td></tr>
@@ -464,6 +464,7 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
 <tr><td class='ruff_defitem'><code>-include LIST</code></td><td class='ruff_defitem'>Specifies which program elements are to be documented. <code>LIST</code> must be a list from one or both amongst <code>classes</code> or <code>procs</code>. Defaults to both.</td></tr>
 <tr><td class='ruff_defitem'><code>-includeprivate BOOLEAN</code></td><td class='ruff_defitem'>If true private methods are also included in the generated documentation. Default is false.</td></tr>
 <tr><td class='ruff_defitem'><code>-includesource BOOLEAN</code></td><td class='ruff_defitem'>If true, the source code of the procedure is also included. Default value is false.</td></tr>
+<tr><td class='ruff_defitem'><code>-locale STRING</code></td><td class='ruff_defitem'>Sets the locale of the pre-defined texts in the generated outputs such as 'Description' or 'Return value' (Default <code>en</code>). To add a locale for a language, create a message catalog file in the <code>msgs</code> directory using the provided <code>de.msg</code> as a template.</td></tr>
 <tr><td class='ruff_defitem'><code>-makeindex BOOLEAN</code></td><td class='ruff_defitem'>If true, an index page is generated for classes and methods. Default value is true. Not supported by all formatters.</td></tr>
 <tr><td class='ruff_defitem'><code>-navigation OPTS</code></td><td class='ruff_defitem'>Options controlling appearance and position of navigation box (see below). Not supported by all formatters.</td></tr>
 <tr><td class='ruff_defitem'><code>-output PATH</code></td><td class='ruff_defitem'>Specifies the path of the output file. If the output is to multiple files, this is the path of the documentation top. Other files will named accordingly by appending the namespace. <strong>Existing files are overwritten.</strong> By default, the output file is written to the current directory with a name constructed from the first namespace specified.</td></tr>
@@ -538,6 +539,10 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
     #  always included as it used for normalization and layout. Not all formatters
     #  may support this option.
     # -title STRING - specifies the title to use for the page
+    # -locale STRING - sets the locale of the pre-defined texts in the generated outputs
+    #  such as 'Description' or 'Return value' (Default `en`). To add
+    #  a locale for a language, create a message catalog file in the
+    #  `msgs` directory using the provided `de.msg` as a template.
     #
     # The command generates documentation for one or more namespaces
     # and writes it out to file(s) as per the options shown above.
@@ -582,6 +587,7 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
         -pagesplit none
         -sortnamespaces true
         -title &quot;&quot;
+        -locale en
     }
 
     array set opts $args
@@ -589,6 +595,8 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
         app::log_error &quot;Option -makeindex ignored if -pagesplit is specified as none.&quot;
         set opts(-makeindex) false
     }
+
+    ::msgcat::mclocale $opts(-locale)
 
     namespace upvar private ProgramOptions ProgramOptions
     set ProgramOptions(-hidesourcecomments) $opts(-hidesourcecomments)
@@ -665,7 +673,7 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
 </div><h4 class='ruffproc'><a name='::ruff::formatters'>formatters</a><span class='ns_scope'> [<a href="ruff_ruff.html#::ruff" title="::ruff" class='ruff_cmd'>::ruff</a>]</span><span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a>, <a href='ruff_docindex.html#'>Index</a></span></h4>
 <div style='clear:both;'></div>
 <p class='ruff'>Gets the available output formatters.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>formatters</span> </div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>formatters</span> <br></div>
 <h5 class='ruff'>Description</h5><p class='ruff'>The returned values can be passed to <a href="ruff_ruff.html#::ruff::document" title="document" class='ruff_cmd'>document</a> to generate documentation in that format.</p>
 <h5 class='ruff'>Return value</h5><p class='ruff'>Returns a list of available formatters.</p>
 <div class='ruff_source'><p class='ruff_source_link'><a id='l_2' href="javascript:toggleSource('2')">Show source</a></p>
@@ -682,7 +690,7 @@ pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle=&quot;My package&q
 </div><h4 class='ruffproc'><a name='::ruff::version'>version</a><span class='ns_scope'> [<a href="ruff_ruff.html#::ruff" title="::ruff" class='ruff_cmd'>::ruff</a>]</span><span class='tinylink'><a href='ruff_ruff.html#::ruff'>ruff</a>, <a href='#top'>Top</a>, <a href='ruff.html'>Main</a>, <a href='ruff_docindex.html#'>Index</a></span></h4>
 <div style='clear:both;'></div>
 <p class='ruff'>Returns the Ruff! version.</p>
-<div class='ruff_synopsis'><span class='ruff_cmd'>version</span> </div>
+<div class='ruff_synopsis'><span class='ruff_cmd'>version</span> <br></div>
 <h5 class='ruff'>Return value</h5><p class='ruff'>Returns the Ruff! version.</p>
 <div class='ruff_source'><p class='ruff_source_link'><a id='l_3' href="javascript:toggleSource('3')">Show source</a></p>
 <div id='3' class='ruff_dyn_src'><pre>proc ::ruff::version {} {
