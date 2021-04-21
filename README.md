@@ -15,6 +15,15 @@ For additional examples of Ruff! generated documentation, see
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
+## Release notes for 1.2.0
+
+* Feature: The -locale option will look up message catalogs for built-in
+section headings.
+
+* Bug fix: Fixed OO constructor synopsis.
+
+* Bug fix: Fixed background color width for <pre> sections.
+
 ## Release notes for 1.1.0
 
 * Feature: For multipage output an index page is produced which allows for
