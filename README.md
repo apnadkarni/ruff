@@ -22,7 +22,7 @@ section headings.
 
 * Bug fix: Fixed OO constructor synopsis.
 
-* Bug fix: Fixed background color width for <pre> sections.
+* Bug fix: Fixed background color width for pre-formatted sections.
 
 ## Release notes for 1.1.0
 
