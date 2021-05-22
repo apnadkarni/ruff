@@ -1005,7 +1005,9 @@ oo::class create ruff::formatter::Formatter {
             if {$nprocs == 0 && $nclasses == 0} {
                 my AddHeading 1 [string trimleft $ns :] ""
             } else {
-                my AddHeading 1 "$ns Reference" ""
+                # Adding "Reference" breaks the link anchor
+                #my AddHeading 1 "$ns Reference" ""
+                my AddHeading 1 "$ns" ""
             }
 
             # Print the preamble for this namespace
