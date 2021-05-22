@@ -997,17 +997,26 @@ oo::class create ruff::formatter::Formatter {
                 my DocumentBegin $ns
             }
 
-            my AddHeading 1 $ns ""
+            set nprocs [dict size [dict get $ns_info $ns procs]]
+            set nclasses [dict size [dict get $ns_info $ns classes]]
+            # Horrible hack. Some namespaces are not really namespaces but are there
+            # just as documentation sections and do not contain actual commands.
+            # Strip the leading :: from them for display purposes.
+            if {$nprocs == 0 && $nclasses == 0} {
+                my AddHeading 1 [string trimleft $ns :] ""
+            } else {
+                my AddHeading 1 "$ns Reference" ""
+            }
 
             # Print the preamble for this namespace
             my AddParagraphs [dict get $ns_info $ns preamble] $ns
 
-            if {[dict size [dict get $ns_info $ns procs]]} {
+            if {$nprocs != 0} {
                 my AddHeading 2 [::msgcat::mc Commands] $ns
                 my AddProcedures [dict get $ns_info $ns procs]
             }
 
-            if {[dict size [dict get $ns_info $ns classes]]} {
+            if {$nclasses != 0} {
                 my AddHeading 2 [::msgcat::mc Classes] $ns
                 my AddClasses [dict get $ns_info $ns classes]
             }
