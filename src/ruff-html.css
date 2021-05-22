@@ -49,6 +49,16 @@ h1 .tinylink a {
     color: white;
 }
 
+a {
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+.tinylink a {
+    //text-decoration: underline;
+}
+
 #bd {
 font-family: Arial, sans-serif;
 font-size: 108%;
@@ -194,7 +204,10 @@ h2.ruff {
 
 h3.ruff, h4.ruff, h5.ruff, h6.ruff {
     color: #006666;
+    margin-bottom: 0.2em;
 }
+
+
 h5.ruff {
     font-style: italic;
     font-weight: normal;
@@ -228,18 +241,29 @@ pre {
 .ruff_synopsis {
     border: thin solid #cccccc;
     background: #eeeeee;
-    font-size: smaller;
+    //font-size: smaller;
     font-family: Consolas, "Courier New", monospace;
-    padding: 5px;
+    padding: 3px;
     margin: 0em 2em 1em;
 }
-.ruff_const, .ruff_cmd, ruff_defitem {
+
+.ruff_const, .ruff_cmd, code {
+    font-family: Consolas, "Courier New", monospace;
+    font-weight: bold;
+    font-size: smaller;
+    //background-color: #eeeeee;
+    //padding: 0px 2px;
+    //border-radius: 3px;
+}
+
+ruff_defitem {
     font-weight: bold;
     font-family: Consolas, "Courier New", monospace;
 }
 .ruff_arg {
     font-style: italic;
     font-family: Consolas, "Courier New", monospace;
+    font-size: smaller;
 }
 
 .ruff_source_link {
