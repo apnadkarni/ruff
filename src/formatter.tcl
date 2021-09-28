@@ -947,10 +947,13 @@ oo::class create ruff::formatter::Formatter {
                  -modulename "Reference" \
                  -sortnamespaces 1 \
                  -autopunctuate 0 \
-                 -makeindex 1 \
                 ]
 
         array set Options $args
+
+        if {![info exists Options(-makeindex)]} {
+            set Options(-makeindex) [expr {$Options(-pagesplit) ne "none"}]
+        }
 
         if {$Options(-pagesplit) eq "none" && $Options(-makeindex)} {
             app::log_error "Option -makeindex ignored if -pagesplit is specified as none."

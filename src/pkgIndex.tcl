@@ -1,1 +1,2 @@
-package ifneeded ruff 1.2.0 [list source [file join $dir ruff.tcl]]
+# If you change version here, change in ruff.tcl as well
+package ifneeded ruff 1.2.1 [list source [file join $dir ruff.tcl]]

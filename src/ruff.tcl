@@ -19,7 +19,7 @@ msgcat::mcload [file join [file dirname [info script]] msgs]
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 1.2.0
+    variable version 1.2.1
     proc version {} {
         # Returns the Ruff! version.
         variable version
@@ -446,7 +446,7 @@ namespace eval ruff {
         variable output_file_base ""
         # Extension of base output file
         variable output_file_ext ""
-    } 
+    }
     namespace path private
 }
 
@@ -458,7 +458,7 @@ proc ruff::private::identity {s} {
 }
 
 proc ruff::private::ns_canonicalize {name} {
-    return [regsub {:::*} $name ::]
+    return [regsub -all {:::*} $name ::]
 }
 
 proc ruff::private::fqn? {name} {
@@ -473,8 +473,24 @@ proc ruff::private::fqn! {name} {
     }
 }
 
+proc ruff::private::ns_qualifiers {fqn} {
+    # This differs from namespace qualifiers in that
+    # - it expects fully qualified names
+    # - for globals it returns "::", not "" 
+    fqn! $fqn
+    set fqn [ns_canonicalize $fqn]
+    set quals [namespace qualifiers $fqn]
+    if {$quals ne "" || $fqn eq "::"} {
+        return $quals
+    }
+    return ::
+}
+
 proc ruff::private::ns_member! {fqns name} {
-    if {[namespace qualifiers [ns_canonicalize $name]] ne [ns_canonicalize $fqns]} {
+    fqn! $fqns
+    fqn! $name
+    set parent [ns_qualifiers $name]
+    if {$parent ne [ns_canonicalize $fqns]} {
         error "Name \"$name\" does not belong to the \"$fqns\" namespace."
     }
 }
@@ -1942,7 +1958,10 @@ proc ruff::private::extract_namespace {ns args} {
     # See [extract_docstring] for format of the `preamble` value
     # and [extract_procs_and_classes] for the others.
 
-    set result [extract_procs_and_classes ${ns}::* {*}$args]
+    # Note the canonicalize is required to handle ns == "::" which
+    # will create :::: in matching pattern otherwise
+    set pattern [ns_canonicalize ${ns}::*]
+    set result [extract_procs_and_classes $pattern {*}$args]
     set preamble [list ]
     if {[info exists ${ns}::_ruff_preamble]} {
         set preamble [extract_docstring [set ${ns}::_ruff_preamble]]
@@ -2191,7 +2210,6 @@ proc ruff::document {namespaces args} {
         -include {procs classes}
         -includeprivate false
         -includesource false
-        -makeindex true
         -output ""
         -preamble ""
         -recurse false
@@ -2202,6 +2220,9 @@ proc ruff::document {namespaces args} {
     }
 
     array set opts $args
+    if {![info exists opts(-makeindex)]} {
+        set opts(-makeindex) [expr {$opts(-pagesplit) ne "none"}]
+    }
     if {$opts(-pagesplit) eq "none" && $opts(-makeindex)} {
         app::log_error "Option -makeindex ignored if -pagesplit is specified as none."
         set opts(-makeindex) false
