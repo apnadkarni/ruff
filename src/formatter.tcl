@@ -558,6 +558,7 @@ oo::class create ruff::formatter::Formatter {
             # summary - summary text
             # returns - return value text
             # seealso - cross references
+            # synopsis - parameter names for synopsis
             # class - class (for methods)
         }
 
@@ -619,20 +620,34 @@ oo::class create ruff::formatter::Formatter {
         }
 
         if {$proctype ne "method"} {
-            set synopsis [list [namespace tail $display_name] $arglist]
-        } else {
-            switch -exact -- $proc_name {
-                constructor {
-                    set unqual_name [namespace tail $class]
-                    set synopsis [list \
-                                      "$unqual_name create OBJNAME" \
-                                      $arglist \
-                                      "$unqual_name new" \
-                                      $arglist]
+            if {[info exists synopsis] && [llength $synopsis]} {
+                # Customized parameter list
+                foreach param_names $synopsis[set synopsis ""] {
+                    lappend synopsis [namespace tail $display_name] $param_names
                 }
-                destructor  {set synopsis [list "OBJECT destroy"]}
-                default  {
-                    set synopsis [list "OBJECT $display_name" $arglist]
+            } else {
+                set synopsis [list [namespace tail $display_name] $arglist]
+            }
+        } else {
+            if {[info exists synopsis] && [llength $synopsis]} {
+                # Customized parameter list
+                foreach param_names $synopsis[set synopsis ""] {
+                    lappend synopsis "OBJECT $display_name" $param_names
+                }
+            } else {
+                switch -exact -- $proc_name {
+                    constructor {
+                        set unqual_name [namespace tail $class]
+                        set synopsis [list \
+                                          "$unqual_name create OBJNAME" \
+                                          $arglist \
+                                          "$unqual_name new" \
+                                          $arglist]
+                    }
+                    destructor  {set synopsis [list "OBJECT destroy"]}
+                    default  {
+                        set synopsis [list "OBJECT $display_name" $arglist]
+                    }
                 }
             }
         }

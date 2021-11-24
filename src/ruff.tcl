@@ -19,7 +19,7 @@ msgcat::mcload [file join [file dirname [info script]] msgs]
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 1.2.1
+    variable version 1.3.0
     proc version {} {
         # Returns the Ruff! version.
         variable version
@@ -255,6 +255,15 @@ namespace eval ruff {
         using surrounding square brackets. For example, within a `See also:`
         section, both `document` and `[document]` will generate a cross-reference
         link to the documentation for the `document` procedure.
+
+        * A line beginning with `Synopsis:` (note the colon) is assumed to be
+        the parameter list in the synopsis to be documented for the procedure or
+        method in lieu of the generated argument list. There may be multiple such
+        synopses defined. Each synopsis may continue over multiple lines
+        following normal paragraph rules. Each synopsis line must be parsable as
+        a Tcl list. See the example at [sample::proc_with_custom_synopsis]. A
+        custom synopsis is useful when a command takes several different
+        argument list forms. The Tcl `socket` command is an example of this.
 
         * All other lines begin a normal paragraph. The paragraph ends with
         a line of one of the above types.
@@ -801,6 +810,9 @@ proc ruff::private::parse_line {line mode current_indent}  {
                         return [list Type returns Indent $indent Text $match]
                     }
                 }
+                if {[regexp {^Synopsis\s*:\s*(.*)$} $line -> match]} {
+                    return [list Type synopsis Indent $indent Text $match]
+                }
             }
             if {$indent > $current_indent} {
                 return [list Type continuation \
@@ -929,6 +941,8 @@ proc ruff::private::parse_seealso_state {statevar} {
             bullet -
             definition -
             blank -
+            synopsis -
+            seealso -
             returns {
                 break
             }
@@ -953,6 +967,58 @@ proc ruff::private::parse_seealso_state {statevar} {
     set state(state) body
 }
 
+proc ruff::private::parse_synopsis_state {statevar} {
+    upvar 1 $statevar state
+
+    if {$state(mode) eq "docstring"} {
+        # parse_line should not have returned this for docstrings
+        error "Internal error: Got synopsis in docstring mode."
+    }
+    set block_indent [dict get $state(parsed) Indent]
+    # The text is a list of parameter names separated by spaces.
+    set param_names [dict get $state(parsed) Text]
+    while {[incr state(index)] < $state(nlines)} {
+        set line [lindex $state(lines) $state(index)]
+        set state(parsed) [parse_line $line $state(mode) $block_indent]
+        switch -exact -- [dict get $state(parsed) Type] {
+            heading -
+            fence -
+            bullet -
+            definition -
+            blank -
+            synopsis -
+            seealso -
+            returns {
+                break
+            }
+            normal {
+                # If the indent is less than the block indent,
+                # treat as a new paragraph.
+                if {[dict get $state(parsed) Indent] < $block_indent} {
+                    break
+                }
+                # Append symbols at bottom of loop
+            }
+            preformatted -
+            continuation {
+                # Append symbols at bottom of loop
+            }
+            default {
+                error "Unexpected type [dict get $state(parsed) Type]"
+            }
+        }
+        set text [dict get $state(parsed) Text]
+        if {[llength $text]} {
+            lappend param_names {*}$text
+        }
+    }
+    if {[llength $param_names]} {
+        lappend state(synopsis) $param_names
+    }
+    set state(state) body
+}
+
+
 proc ruff::private::parse_returns_state {statevar} {
     upvar 1 $statevar state
 
@@ -969,6 +1035,7 @@ proc ruff::private::parse_returns_state {statevar} {
             definition -
             blank -
             seealso -
+            synopsis -
             preformatted -
             returns {
                 # All special lines terminate normal paragraphs
@@ -1025,6 +1092,7 @@ proc ruff::private::parse_bullets_state {statevar} {
             returns -
             fence -
             definition -
+            synopsis -
             seealso {
                 # If we are between bullets, this does not continue the list.
                 if {$between_bullets} {
@@ -1126,6 +1194,7 @@ proc ruff::private::parse_definitions_state {statevar} {
             returns -
             fence -
             bullet -
+            synopsis -
             seealso {
                 if {[dict get $state(parsed) Indent] <= $block_indent} {
                     # List element and list terminated if a block starter
@@ -1203,6 +1272,7 @@ proc ruff::private::parse_normal_state {statevar} {
             bullet -
             definition -
             blank -
+            synopsis -
             seealso -
             preformatted -
             returns {
@@ -1247,7 +1317,10 @@ proc ruff::private::parse_lines {lines {mode proc}} {
     #           references. Not applicable if $mode is `docstring`.
     # returns - A paragraph describing the return value.
     #           Not applicable if $mode is `docstring`.
-    #
+    # synopsis - a list of alternating procname and parameter list
+    #           definitions to be used as synopsis instead of the generated
+    #           one.
+    #            
     # Not all elements may be present in the dictionary.
     # A paragraph is returned as a list of lines.
 
@@ -1262,8 +1335,9 @@ proc ruff::private::parse_lines {lines {mode proc}} {
     set state(body)  {};        # list of alternating type and content
     # Following may be set during parsing
     # set state(summary) {};      # Summary paragraph
-    # set state(returns)  {};      # list of paragraphs
+    # set state(returns)  {};     # list of paragraphs
     # set state(seealso) {};      # list of symbol references
+    # set state(synopsis) {};     # list of command and param list elements
     # set state(parameters) {};   # Parameter definition list
 
     while {$state(index) < $state(nlines)} {
@@ -1296,6 +1370,7 @@ proc ruff::private::parse_lines {lines {mode proc}} {
             definition   { parse_definitions_state state }
             returns      { parse_returns_state state }
             seealso      { parse_seealso_state state }
+            synopsis      { parse_synopsis_state state }
             continuation {
                 # TBD - See if we can get rid of continuation state
                 # we do not really use this state.
@@ -1313,7 +1388,7 @@ proc ruff::private::parse_lines {lines {mode proc}} {
     }
 
     set result [dict create body $state(body)]
-    foreach elem {summary parameters seealso returns} {
+    foreach elem {summary parameters seealso synopsis returns} {
         if {[info exists state($elem)]} {
             dict set result $elem $state($elem)
         }
@@ -1630,7 +1705,7 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names
     #  summary - a copy of the first paragraph if it was present (optional)
     #  source - the source code of the command (optional)
     #  seealso - the corresponding value is a list of symbols (optional).
-    #
+    #  synopsis - the synopsis to use instead of the generated one for the proc
 
     variable ProgramOptions
 
@@ -1641,6 +1716,7 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names
 
     set doc [parse_lines [distill_body $body] $proctype]
     # doc -> dictionary with keys summary, body, parameters, returns, seealso
+    # and synopsis
     dict set doc name $procname
     dict set doc class $class
     dict set doc proctype $proctype

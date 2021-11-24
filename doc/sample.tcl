@@ -101,8 +101,10 @@ namespace eval ruff::sample {
             # Implements cmdA for an ensemble procedure
         }
     
-        proc cmdB {} {
+        proc cmdB {args} {
             # Implements cmdB for an ensemble procedure
+            # Synopsis: paramA paramB
+            # Synopsis: paramX
 
         }
         namespace export *
@@ -148,6 +150,8 @@ proc ruff::sample::proc_full {arg {optarg AVALUE} args} {
     #
     # See also: proc_without_docs [Base] <https://www.magicsplat.com>
     #   "ensemble_proc cmdA" {ensemble_proc cmdB}
+    # See also: proc_full
+    # See also: character_at
 
 
     # This paragraph will be ignored by Ruff! as it is not part
@@ -164,10 +168,23 @@ proc ruff::sample::proc_full {arg {optarg AVALUE} args} {
     some more code.
 }
 
+proc ruff::sample::proc_with_custom_synopsis {args} {
+    # This is a proc with a custom synopsis
+    #  A - arg A for first synopsis
+    #  B - arg V for first synopsis
+    #  DIFFERENT_PARAM_SIG - arg for another synopsis
+    # A custom synopsis is useful when a command takes several
+    # different argument structures.
+    # Synopsis: A B
+    #   C D
+    # Synopsis: DIFFERENT_PARAM_SIG
+    # Synopsis: X Y args
+}
+
 proc ruff::sample::character_at {text {pos 0}} {
     # Get the character from a string.
     #  text - Text string.
-    #  pos  - Character position. 
+    #  pos  - Character position.
     # The command will treat negative values of $pos as offset from
     # the end of the string.
     #
@@ -208,6 +225,13 @@ oo::class create ruff::sample::Base {
         # This is a reference to method [<tag>].
         #
         # See also: <tag>
+    }
+    method property args {
+        # Method with custom synopsis
+        #  PROPERTYNAME - name of property
+        #  VALUE - value to set for property
+        # Synopsis: PROPERTYNAME
+        # Synopsis: PROPERTYNAME ?VALUE?
     }
     method overridable_method {} {
         # This method will be overridden in the derived class
