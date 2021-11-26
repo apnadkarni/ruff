@@ -2245,10 +2245,10 @@ proc ruff::document {namespaces args} {
     #  always included as it used for normalization and layout. Not all formatters
     #  may support this option.
     # -title STRING - specifies the title to use for the page
-    # -locale STRING - sets the locale of the pre-defined texts in the generated outputs
-    #  such as 'Description' or 'Return value' (Default `en`). To add
-    #  a locale for a language, create a message catalog file in the
-    #  `msgs` directory using the provided `de.msg` as a template.
+    # -locale STRING - sets the locale of the pre-defined texts in the generated
+    #  outputs such as 'Description' or 'Return value' (Default `en`). To add a
+    #  locale for a language, create a message catalog file in the `msgs`
+    #  directory using the provided `de.msg` as a template.
     #
     # The command generates documentation for one or more namespaces
     # and writes it out to file(s) as per the options shown above.
@@ -2265,16 +2265,13 @@ proc ruff::document {namespaces args} {
     #   side of the page. (Default `left`)
     # `narrow`,`normal`,`wide` - Controls the width of the navigation box.
     #   (Default `normal`)
-    # `scrolled`,`sticky`,`fixed` - Controls navigation box behaviour when
+    # `scrolled`,`sticky` - Controls navigation box behaviour when
     #   scrolling. If `scrolled`, the navigation box will scroll vertically
     #   along with the page. Thus it may not visible at all times. If
-    #   `sticky` or `fixed`, the navigation box remains visible at all times.
+    #   `sticky`, the navigation box remains visible at all times.
     #   However, this requires the number of links in the box to fit on
-    #   the page as they are never scrolled. There is a slight difference
-    #   between the two behaviours. If `fixed`, the navigation box stays
-    #   at its original position. If `sticky`, it will scroll till the top
-    #   of the viewing area and then remain fixed. Note that older browsers
-    #   do not support `sticky` and will resort to scrolling behaviour.
+    #   the page as they are never scrolled. Note that older browsers
+    #   do not support stickiness and will resort to scrolling behaviour.
     #   (Default `scrolled`)
 
     array set opts {
@@ -2526,6 +2523,10 @@ proc ruff::private::document_self {args} {
                 lappend common_args -stylesheets $opts(-stylesheets)
             }
             if {[info exists opts(-navigation)]} {
+                if {"fixed" in $opts(-navigation)} {
+                    app::log_error "Warning: \"fixed\" navigation pane option no longer supported. Falling back to \"sticky\"."
+                    set opts(-navigation) sticky
+                }
                 lappend common_args -navigation $opts(-navigation)
             }
             document $namespaces {*}$common_args \

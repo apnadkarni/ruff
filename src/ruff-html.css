@@ -1,146 +1,232 @@
-/* Ruff default CSS */
+:root {
+  /*
+  --ruff-color: black;
+  --ruff-color-unimportant: #888888;
+  --ruff-background: white;
+  --ruff-brand-color: #006666;
+  --ruff-brand-background: white;
+*/
+  --ruff-banner-width: 64px;
+  /* --ruff-grid-template-rows: minmax(var(--ruff-banner-width), min-content); */
+  --ruff-grid-template-rows: minmax(var(--ruff-banner-width), min-content) auto;
+  --ruff-grid-template-columns: minmax(200px, min-content) 1fr;
+  --ruff-grid-template-areas: "toparea toparea" "navarea mainarea" "botarea botarea";
+}
+/* Color theming support from https://dev.to/ananyaneogi/create-a-dark-light-mode-switch-with-css-variables-34l8 */
+
+.ruff-theme-light {
+  --ruff-brand-color: #006666;
+  --ruff-brand-background: white;
+  --ruff-color: #121212;
+  --ruff-color-unimportant: #888888;
+  --ruff-background: white;
+
+  --ruff-bd-synopsis-border: thin solid #cccccc;
+  --ruff-bd-synopsis-border: thin solid var(--ruff-bd-table-border);
+}
+
+.ruff-theme-dark {
+  --ruff-brand-color: #848484;
+  --ruff-brand-background: orange;
+  --ruff-color: #eeffff;
+  --ruff-color-unimportant: #888888;
+  --ruff-background: #212121;
+}
+
+.ruff-theme-dark {
+  --ruff-background-color: #829ab1;
+
+  --ruff-layout-background-color: #1a202c;
+
+
+  --ruff-nav-background-color: rgb(45,55,72);
+  --ruff-nav-color: #ccc;
+
+  --ruff-bd-background-color: var(--ruff-layout-background-color);
+  --ruff-bd-color: #ccc;
+  --ruff-bd-table-border: #808080;
+  --ruff-bd-code-color: #ecdbba;
+  --ruff-bd-code-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-h-background-color: inherit;
+  --ruff-bd-h-color: lightsteelblue;
+  --ruff-bd-h-color: rgb(160,174,192);
+  /* H1 - special treatment to match navigation pane */
+  --ruff-bd-h1-color: var(--ruff-nav-color);
+  --ruff-bd-h1-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-synopsis-border: none;
+}
+
+.ruff-theme-toggle {
+  background-image: linear-gradient(to right, #066 0%, white 50%, #848484 100%);
+  border: none;
+  border-radius: 3px;
+  width: 30px;
+  height: 20px;
+  cursor: pointer;
+  vertical-align: text-top;
+}
+
+*, *::before, *::after {
+  box-sizing:border-box;
+}
 
 body {
-  max-width: 70em;
+  color: var(--ruff-color);
   margin: 0;
+  background-color: var(--ruff-background-color);
 }
 
-h1,h2 {
-  color: #888888;
+.ruff-layout {
+  display: grid;
+  grid-template-rows: var(--ruff-grid-template-rows);
+  grid-template-columns: var(--ruff-grid-template-columns);
+  grid-template-areas: var(--ruff-grid-template-areas);
+  column-gap: 1rem;
+  min-height: 100vh;
+  max-width: 60rem;
+  margin: 0 auto;
+  background-color: var(--ruff-layout-background-color);
+  padding: 0 10px;
+}
+
+.ruff-layout-header { grid-area: toparea; }
+.ruff-layout-main {grid-area: mainarea; }
+.ruff-layout-nav {grid-area: navarea; }
+.ruff-layout-footer {grid-area: botarea; }
+
+/*** Context free styles ***/
+
+h1,h2,h3,h4,h5,h6 {
   margin-bottom: 0.5em;
-  margin-top: 0em;
+  margin-top: 0;
 }
 
-#ft {
-  text-align: left;
-  border-top: 1px solid #006666;
-  color: #888888;
-  margin-top: 10px;
-}
-
-.banner h2 {
-  color: #006666;
-}
-
-#hd.banner {
- font-family: "Times New Roman", serif;
- font-size: 200%;
- line-height: 64px;
- border-bottom: thin solid #006666;
- color: #006666;
-}
-
-p.linkline {
-    text-align: right;
-    font-size: smaller;
-    /*    margin-top: -1em; */
-    margin-bottom: 0;
-}
-
-.tinylink {
-    font-size: x-small;
-    font-variant: normal;
-    font-family: Arial, sans-serif;
-    float: right;
-    padding:2px;
-}
-
-h1 .tinylink a {
-    color: white;
-}
-
-a {
-    text-decoration: none;
-}
-a:hover {
-    text-decoration: underline;
-}
-.tinylink a {
-    text-decoration: underline;
-}
-
-#bd {
-font-family: Arial, sans-serif;
-font-size: 108%;
-}
-
-div.navbox {
-  /* margin-top: 1em; */
-    background-color: #006666;
-    color: white;
-    padding: 3px 4px 2px 4px;
-    font-family: Arial, sans-serif;
-    overflow: hidden;
-}
-
-div.navbox:hover {
-    overflow: visible;
-}
-
-/* Note .navbox header css should be based on $header_levels */
-.navbox h1, .navbox h2, .navbox h3, .navbox h4, .navbox h5 {
-  font-size: 85%;
-  margin: 0px;
-  font-weight: normal;
-}
-.navbox h1 {
-    font-weight: bold; /* Override */
-}
-.navbox h2 {
-  padding-left: 1em;
-}
-.navbox h3 {
-  padding-left: 2em;
-}
-.navbox h4 {
-  padding-left: 2.5em;
-  font-weight: normal;
-}
-.navbox h5 {
-  padding-left: 3em;
-  font-weight: normal;
-}
-.navbox hr {
-  color: white;
-  margin-top:0.1em;
-  margin-bottom:0.1em;
-}
-
-.navbox a:link, .navbox a:visited, .navbox a:hover {
+a, a:visited {
   text-decoration: none;
-  color: white;
-  background-color: #006666;
+  color: inherit;
 }
 
-.navbox a:hover {
-   font-weight: bold;
+.ruff-bd a:hover {
+  text-decoration: underline;
+}
+
+
+
+.ruff-uplink {
+  font-size: x-small;
+  font-variant: normal;
+  font-family: Arial, sans-serif;
+  float: right;
+  padding:2px;
+}
+
+.ruff-uplink a {
+  text-decoration: underline;
 }
 
 /* Tooltip text - see https://www.w3schools.com/css/css_tooltip.asp */
-.tooltip {
-    position: relative;
-    /* display: inline-block; */
+.ruff-tip {
+  position: relative;
+  /* display: inline-block; */
 }
 
-.tooltip .tooltiptext {
-    width: 100%;
-    font-weight: bold;
-    background-color: white;
-    color: #006666;
-    text-align: left;
-    border: 1px solid #006666;
-    /* border-radius: 4px; */
-    position: absolute;
-    z-index: 1;
-    margin-left: 4px;
-    padding: 2px 3px;
-    visibility: hidden;
+.ruff-tip .ruff-tiptext {
+  width: 100%;
+  font-weight: bold;
+  background-color: white;
+  color: var(--ruff-brand-color);
+  text-align: left;
+  border: 1px solid var(--ruff-brand-color);
+  /* border-radius: 4px; */
+  position: absolute;
+  z-index: 10;
+  margin-left: 4px;
+  padding: 2px 3px;
+  visibility: hidden;
 }
 
 /* Show the tooltip text when you mouse over the tooltip container */
-.tooltip:hover .tooltiptext {
-    visibility: visible;
+.ruff-tip:hover .ruff-tiptext {
+  visibility: visible;
 }
+
+
+/*** Header styles ***/
+
+.ruff-hd.banner {
+  font-family: "Times New Roman", serif;
+  font-size: 200%;
+  line-height: var(--ruff-banner-width);
+  color: var(--ruff-brand-color);
+}
+
+/*** Footer styles ***/
+
+.ruff-ft {
+  text-align: left;
+  border-top: 1px solid var(--ruff-brand-color);
+  color: var(--ruff-color-unimportant);
+  margin-top: 10px;
+}
+
+/*** Nav pane styles ***/
+
+.ruff-nav {
+  background-color: var(--ruff-nav-background-color);
+  color: var(--ruff-nav-color);
+  padding: 3px 4px 2px 4px;
+  font-family: Arial, sans-serif;
+  /* NOTE: without overflow: visible, tooltips will be clipped */
+  overflow: visible;
+  font-size: 85%;
+  margin: 0;
+}
+
+.ruff-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ruff-nav li {
+  margin: 0;
+}
+
+.ruff-nav .ruff-toc1 {
+    font-weight: bold; /* Override */
+}
+.ruff-nav .ruff-toc2 {
+  padding-left: 1em;
+}
+.ruff-nav .ruff-toc3 {
+  padding-left: 2em;
+}
+.ruff-nav .ruff-toc4 {
+  padding-left: 2.5em;
+}
+.ruff-nav .ruff-toc5 {
+  padding-left: 3em;
+}
+.ruff-nav hr {
+  color: inherit;
+  margin-top:0.2em;
+  margin-bottom:0.2em;
+}
+
+.ruff-nav a:link, .ruff-nav a:visited, .ruff-nav a:hover {
+  text-decoration: none;
+  color: inherit;
+  background-color: inherit;
+}
+
+.ruff-nav a:hover {
+  /* Disabled because it causes navigation pane width changes. */
+  /* Instead reverse foreground/background */
+  /* font-weight: bold; */
+  color: var(--ruff-nav-background-color);
+  background-color: var(--ruff-nav-color);
+}
+
 
 span.ns_scope {
     color: #aaaaaa;
@@ -161,16 +247,30 @@ span.ns_scope a:hover {
   color: #666666;
 }
 
-table {
+/*** Main content styles ***/
+
+.ruff-bd {
+  font-family: Arial, sans-serif;
+  font-size: 108%;
+  color: var(--ruff-bd-color);
+  background-color: var(--ruff-bd-background-color);
+}
+
+.ruff-bd h1 .ruff-uplink a {
+  color: inherit;
+}
+
+
+.ruff-bd table.ruff_deflist {
   margin: 1em;
   margin-top: 0.5em;
   border: thin solid;
   border-collapse: collapse;
-  border-color: #808080;
+  border-color: var(--ruff-bd-table-border);
   padding: 4px;
 }
 
-td {
+.ruff-bd .ruff_deflist td {
   border: thin solid;
   border-color: #808080;
   vertical-align: top;
@@ -178,7 +278,8 @@ td {
   padding: 0.3em;
   padding-top: 0.1em;
 }
-th {
+
+.ruff-bd .ruff_deflist th {
   border: thin solid;
   border-color: #808080;
   padding: 0.3em;
@@ -186,91 +287,89 @@ th {
   background-color: #CCCCCC;
 }
 
-dt, dd {
-   font-size: 93%;
+.ruff-bd h1 {
+  background-color: var(--ruff-bd-h1-background-color);
+  color: var(--ruff-bd-h1-color);
+  padding-left: 0.2em;
+  font-family: "Times New Roman", serif;
+}
+.ruff-bd h2 {
+  font-variant: small-caps;
+  color: var(--ruff-bd-h-color);
+  background-color: var(--ruff-bd-h-background-color);
+  font-family: "Times New Roman", serif;
 }
 
-h1.ruff {
-    background-color: #006666;
-    color: #ffffff;
-    padding-left: 0.2em;
-    font-family: "Times New Roman", serif;
-}
-h2.ruff {
-    font-variant: small-caps;
-    color: #006666;
-    font-family: "Times New Roman", serif;
+.ruff-bd h3, .ruff-bd h4, .ruff-bd h5, .ruff-bd h6 {
+  color: var(--ruff-bd-h-color);
+  background-color: var(--ruff-bd-h-background-color);
+  margin-bottom: 0.2em;
 }
 
-h3.ruff, h4.ruff, h5.ruff, h6.ruff {
-    color: #006666;
-    margin-bottom: 0.2em;
-}
-
-
-h5.ruff {
+.ruff-bd h5 {
     font-style: italic;
     font-weight: normal;
 }
-h6.ruff {
+.ruff-bd h6 {
     font-weight: normal;
 }
-h3.ruffclass, h3.ruffproc, h3.ruffmethod,
-h4.ruffclass, h4.ruffproc, h4.ruffmethod,
-h5.ruffclass, h5.ruffproc, h5.ruffmethod {
-    border-bottom: thin solid #006666;
-    color: #006666;
+
+.ruff-bd h3.ruffclass, .ruff-bd h3.ruffproc, .ruff-bd h3.ruffmethod,
+.ruff-bd h4.ruffclass, .ruff-bd h4.ruffproc, .ruff-bd h4.ruffmethod,
+.ruff-bd h5.ruffclass, .ruff-bd h5.ruffproc, .ruff-bd h5.ruffmethod {
+    border-bottom: thin solid var(--ruff-brand-color);
     margin-bottom: 0.2em;
 }
 
-pre {
-    background-color: #eeeeee;
-    margin-top: 1em;
-    margin-left: 1em;
-    padding: 5px;
-    font-family: Consolas, "Courier New", monospace;
-    //width: max-content;
-    font-size: smaller;
-    line-height: 1.2em;
+.ruff-bd pre {
+  color: var(--ruff-bd-code-color);
+  background-color: var(--ruff-bd-code-background-color);
+  margin-top: 1em;
+  margin-left: 1em;
+  padding: 5px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: smaller;
+  line-height: 1.2em;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 
 .ruff_dyn_src {
     display: none; /* Displayed via JS */
 }
 
-.ruff_synopsis {
-    border: thin solid #cccccc;
-    background: #eeeeee;
-    //font-size: smaller;
-    font-family: Consolas, "Courier New", monospace;
-    padding: 3px;
-    margin: 0em 2em 1em;
+.ruff-bd .ruff_synopsis {
+  border: var(--ruff-bd-synopsis-border);
+  color: var(--ruff-bd-code-color);
+  background-color: var(--ruff-bd-code-background-color);
+  font-family: Consolas, "Courier New", monospace;
+  margin: 0em 2em 1em;
+  padding: 0.5em;
+  /* Cannot arrange for wrapped line indent since synopsis may have multiple lines
+  padding-left: 1em;
+  text-indent: 0.5em;
+  */
 }
 
-.ruff_const, .ruff_cmd, code {
-    font-family: Consolas, "Courier New", monospace;
-    font-weight: bold;
-    font-size: smaller;
-    //background-color: #eeeeee;
-    //padding: 0px 2px;
-    //border-radius: 3px;
+.ruff-bd .ruff_const, .ruff-bd .ruff_cmd, .ruff-bd code {
+  font-family: Consolas, "Courier New", monospace;
+  font-weight: bold;
+  font-size: smaller;
 }
 
-ruff_defitem {
-    font-weight: bold;
-    font-family: Consolas, "Courier New", monospace;
-}
-.ruff_arg {
+.ruff-bd .ruff_arg {
     font-style: italic;
     font-family: Consolas, "Courier New", monospace;
     font-size: smaller;
 }
 
-.ruff_source_link {
+.ruff-bd .ruff_source_link {
     font-size: smaller;
 }
 
-.ruff_index {
+/* Specialization for index page body */
+
+.ruff-bd .ruff_index {
     font-size: small;
     color: grey;
     line-height: 1;
