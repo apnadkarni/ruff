@@ -132,6 +132,12 @@ oo::class create ruff::formatter::Formatter {
         # Construct a definition block for the parameters
         set definitions [lmap param $parameters {
             set definition [dict get $param definition]
+            set term [dict get $param term]
+            if {$definition eq "" && $term eq "args"} {
+                # Do not document "args" unless specific description given
+                # This also makes custom synopsis output a little cleaner
+                continue
+            }
             set term [my FormatInline [markup_code [dict get $param term]]]
             dict create term $term definition $definition
         }]

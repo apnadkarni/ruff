@@ -1741,7 +1741,7 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names
             unset params($name)
         } else {
             if {$name eq "args"} {
-                set definition "Optional arguments."
+                set definition ""
             } else {
                 set definition "Not documented."
             }
