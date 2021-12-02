@@ -121,7 +121,7 @@ oo::class create ruff::formatter::Html {
         append Header {
             <div style='float:right;'>
             <button id="toggleTheme" class="ruff-theme-toggle" onclick="ruffToggleTheme()"></button>
-            </div> 
+            </div>
         }
         append Header </header>
 
@@ -415,14 +415,14 @@ oo::class create ruff::formatter::Html {
             # Split pages. Add navigation to each page.
             # If highlight_ns is empty, assume main page. Hack hack hack
             if {$highlight_ns eq ""} {
-                append Document "<li class='ruff-toc1'><a style='padding-top:2px;$highlight_style' href='$main_ref'>$main_title</a></li>\n"
+                append Document "<li class='ruff-toc1'><a class='ruff-highlight' style='padding-top:2px;' href='$main_ref'>$main_title</a></li>\n"
             } else {
                 append Document "<li class='ruff-toc1'><a style='padding-top:2px;' href='$main_ref'>$main_title</a></li>\n"
             }
             if {[my Option -makeindex 1]} {
                 # Another hack hack - Index page namespaced as Index
                 if {$highlight_ns eq "Index"} {
-                    append Document "<li class='ruff-toc1'><a style='$highlight_style' href='$index_ref'>Index</a></li>\n"
+                    append Document "<li class='ruff-toc1'><a class='ruff-highlight' href='$index_ref'>Index</a></li>\n"
                 } else {
                     append Document "<li class='ruff-toc1'><a href='$index_ref' accesskey='i'>Index</a></li>\n"
                 }
@@ -437,7 +437,7 @@ oo::class create ruff::formatter::Html {
                 set ref  [ns_file_base $ns]
                 set text [string trimleft $ns :]
                 if {$ns eq $highlight_ns} {
-                    append Document "<li class='ruff-toc1'><a style='$highlight_style' href='$ref'>$text</a></li>\n"
+                    append Document "<li class='ruff-toc1'><a class='ruff-highlight' href='$ref'>$text</a></li>\n"
                 } else {
                     append Document "<li class='ruff-toc1'><a href='$ref'>$text</a></li>\n"
                 }

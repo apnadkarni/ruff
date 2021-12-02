@@ -1,17 +1,20 @@
 :root {
   /*
-  --ruff-color: black;
-  --ruff-color-unimportant: #888888;
-  --ruff-background: white;
-  --ruff-brand-color: #006666;
-  --ruff-brand-background: white;
-*/
   --ruff-banner-width: 64px;
-  /* --ruff-grid-template-rows: minmax(var(--ruff-banner-width), min-content); */
-  --ruff-grid-template-rows: minmax(var(--ruff-banner-width), min-content) auto;
+  --ruff-grid-template-rows: minmax(var(--ruff-banner-width), min-content);
+ */
+  --ruff-grid-template-rows: min-content 1fr;
   --ruff-grid-template-columns: minmax(200px, min-content) 1fr;
   --ruff-grid-template-areas: "toparea toparea" "navarea mainarea" "botarea botarea";
+  --ruff-tip-z-index: 10;
+  /*
+   * This padding is to ensure auto scrollbar does not change centering pages
+   * between pages that need a scrollbar and those that do not.
+   * See https://stackoverflow.com/questions/1417934/how-to-prevent-scrollbar-from-repositioning-web-page.
+   */
+  padding-left: calc(100vw - 100%);
 }
+
 /* Color theming support from https://dev.to/ananyaneogi/create-a-dark-light-mode-switch-with-css-variables-34l8 */
 
 .ruff-theme-light {
@@ -26,21 +29,21 @@
 }
 
 .ruff-theme-dark {
-  --ruff-brand-color: #848484;
-  --ruff-brand-background: orange;
-  --ruff-color: #eeffff;
-  --ruff-color-unimportant: #888888;
-  --ruff-background: #212121;
-}
-
-.ruff-theme-dark {
+  --ruff-color: white;
   --ruff-background-color: #829ab1;
 
   --ruff-layout-background-color: #1a202c;
 
+  --ruff-hd-color: inherit;
+  --ruff-hd-background-color: inherit;
+  --ruff-hd-font: large bold;
 
   --ruff-nav-background-color: rgb(45,55,72);
   --ruff-nav-color: #ccc;
+  --ruff-nav-tip-color: var(--ruff-nav-background-color);
+  --ruff-nav-tip-background-color: var(--ruff-nav-color);
+  --ruff-nav-highlight-color: var(--ruff-nav-background-color);
+  --ruff-nav-highlight-background-color: var(--ruff-nav-color);
 
   --ruff-bd-background-color: var(--ruff-layout-background-color);
   --ruff-bd-color: #ccc;
@@ -49,11 +52,16 @@
   --ruff-bd-code-background-color: var(--ruff-nav-background-color);
   --ruff-bd-h-background-color: inherit;
   --ruff-bd-h-color: lightsteelblue;
-  --ruff-bd-h-color: rgb(160,174,192);
   /* H1 - special treatment to match navigation pane */
   --ruff-bd-h1-color: var(--ruff-nav-color);
   --ruff-bd-h1-background-color: var(--ruff-nav-background-color);
+
+  --ruff-bd-a-color: lightskyblue;
+
   --ruff-bd-synopsis-border: none;
+
+  --ruff-ft-color: var(--ruff-bd-color);
+  --ruff-ft-background-color: var(--ruff-bd-background-color);
 }
 
 .ruff-theme-toggle {
@@ -74,6 +82,11 @@ body {
   color: var(--ruff-color);
   margin: 0;
   background-color: var(--ruff-background-color);
+}
+
+a, a:visited {
+  color: inherit;
+  background-color: inherit;
 }
 
 .ruff-layout {
@@ -101,50 +114,11 @@ h1,h2,h3,h4,h5,h6 {
   margin-top: 0;
 }
 
-a, a:visited {
-  text-decoration: none;
-  color: inherit;
-}
-
-.ruff-bd a:hover {
-  text-decoration: underline;
-}
-
-
-
-.ruff-uplink {
-  font-size: x-small;
-  font-variant: normal;
-  font-family: Arial, sans-serif;
-  float: right;
-  padding:2px;
-}
-
-.ruff-uplink a {
-  text-decoration: underline;
-}
-
 /* Tooltip text - see https://www.w3schools.com/css/css_tooltip.asp */
 .ruff-tip {
   position: relative;
   /* display: inline-block; */
 }
-
-.ruff-tip .ruff-tiptext {
-  width: 100%;
-  font-weight: bold;
-  background-color: white;
-  color: var(--ruff-brand-color);
-  text-align: left;
-  border: 1px solid var(--ruff-brand-color);
-  /* border-radius: 4px; */
-  position: absolute;
-  z-index: 10;
-  margin-left: 4px;
-  padding: 2px 3px;
-  visibility: hidden;
-}
-
 /* Show the tooltip text when you mouse over the tooltip container */
 .ruff-tip:hover .ruff-tiptext {
   visibility: visible;
@@ -153,20 +127,26 @@ a, a:visited {
 
 /*** Header styles ***/
 
-.ruff-hd.banner {
+.ruff-hd {
   font-family: "Times New Roman", serif;
   font-size: 200%;
-  line-height: var(--ruff-banner-width);
-  color: var(--ruff-brand-color);
+  padding: 5px 0px 10px;
+  color: var(--ruff-hd-color);
+  background-color: var(--ruff-hd-background-color);
 }
 
 /*** Footer styles ***/
 
 .ruff-ft {
   text-align: left;
-  border-top: 1px solid var(--ruff-brand-color);
-  color: var(--ruff-color-unimportant);
-  margin-top: 10px;
+  border-top: 1px solid var(--ruff-ft-color);
+  color: var(--ruff-ft-color);
+  background-color: var(--ruff-ft-background-color);
+  margin: 10px 0px;
+}
+
+.ruff-ft div {
+  padding: 5px 0px;
 }
 
 /*** Nav pane styles ***/
@@ -174,7 +154,8 @@ a, a:visited {
 .ruff-nav {
   background-color: var(--ruff-nav-background-color);
   color: var(--ruff-nav-color);
-  padding: 3px 4px 2px 4px;
+  --ruff-nav-padding-x: 4px;
+  padding: 3px var(--ruff-nav-padding-x) 2px var(--ruff-nav-padding-x);
   font-family: Arial, sans-serif;
   /* NOTE: without overflow: visible, tooltips will be clipped */
   overflow: visible;
@@ -193,7 +174,7 @@ a, a:visited {
 }
 
 .ruff-nav .ruff-toc1 {
-    font-weight: bold; /* Override */
+  font-weight: bold; /* Override */
 }
 .ruff-nav .ruff-toc2 {
   padding-left: 1em;
@@ -227,6 +208,29 @@ a, a:visited {
   background-color: var(--ruff-nav-color);
 }
 
+.ruff-nav a.ruff-highlight {
+  color: var(--ruff-nav-highlight-color);
+  background-color: var(--ruff-nav-highlight-background-color);
+  margin-left: calc(-1 * var(--ruff-nav-padding-x));
+  padding-left: var(--ruff-nav-padding-x);
+  padding-right: var(--ruff-nav-padding-x);
+}
+
+.ruff-nav .ruff-tiptext {
+  width: 100%;
+  font-weight: bold;
+  background-color: var(--ruff-nav-tip-background-color);
+  color: var(--ruff-nav-tip-color);
+  text-align: left;
+  border:none;
+  position: absolute;
+  z-index: var(--ruff-tip-z-index);
+  margin-left: 4px;
+  padding: 2px 3px;
+  visibility: hidden;
+}
+
+
 
 span.ns_scope {
     color: #aaaaaa;
@@ -256,10 +260,19 @@ span.ns_scope a:hover {
   background-color: var(--ruff-bd-background-color);
 }
 
-.ruff-bd h1 .ruff-uplink a {
-  color: inherit;
+.ruff-bd .ruff-uplink {
+  font-size: x-small;
+  font-variant: normal;
+  font-family: Arial, sans-serif;
+  float: right;
+  padding:2px;
 }
 
+.ruff-bd .ruff-uplink a[href], .ruff-bd .ruff-uplink a[href]:visited {
+  text-decoration: underline;
+  /* Override bd link color */
+  color: inherit;
+}
 
 .ruff-bd table.ruff_deflist {
   margin: 1em;
@@ -333,6 +346,16 @@ span.ns_scope a:hover {
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
+
+.ruff-bd a[href], .ruff-bd a[href]:visited {
+  text-decoration: none;
+  color: var(--ruff-bd-a-color);
+}
+
+.ruff-bd a:hover {
+  text-decoration: underline;
+}
+
 
 .ruff_dyn_src {
     display: none; /* Displayed via JS */
