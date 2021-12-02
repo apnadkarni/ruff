@@ -100,9 +100,11 @@ namespace eval ruff::sample {
         proc cmdA {} {
             # Implements cmdA for an ensemble procedure
         }
-    
+
         proc cmdB {args} {
             # Implements cmdB for an ensemble procedure
+            #  paramA - the first param
+            #  paramB - the optional second param
             # Synopsis: paramA paramB
             # Synopsis: paramX
 

@@ -29,8 +29,9 @@
 }
 
 .ruff-theme-dark {
-  --ruff-color: white;
+  --ruff-color: #ccc;
   --ruff-background-color: #829ab1;
+  --ruff-minor-color: #aaa;
 
   --ruff-layout-background-color: #1a202c;
 
@@ -39,14 +40,15 @@
   --ruff-hd-font: large bold;
 
   --ruff-nav-background-color: rgb(45,55,72);
-  --ruff-nav-color: #ccc;
+  --ruff-nav-color: var(--ruff-color);
   --ruff-nav-tip-color: var(--ruff-nav-background-color);
   --ruff-nav-tip-background-color: var(--ruff-nav-color);
   --ruff-nav-highlight-color: var(--ruff-nav-background-color);
   --ruff-nav-highlight-background-color: var(--ruff-nav-color);
 
   --ruff-bd-background-color: var(--ruff-layout-background-color);
-  --ruff-bd-color: #ccc;
+  --ruff-bd-color: var(--ruff-color);
+  --ruff-bd-minor-color: var(--ruff-minor-color);
   --ruff-bd-table-border: #808080;
   --ruff-bd-code-color: #ecdbba;
   --ruff-bd-code-background-color: var(--ruff-nav-background-color);
@@ -55,12 +57,13 @@
   /* H1 - special treatment to match navigation pane */
   --ruff-bd-h1-color: var(--ruff-nav-color);
   --ruff-bd-h1-background-color: var(--ruff-nav-background-color);
-
   --ruff-bd-a-color: lightskyblue;
-
   --ruff-bd-synopsis-border: none;
+  --ruff-bd-tip-color: var(--ruff-bd-color);
+  --ruff-bd-tip-background-color: var(--ruff-nav-background-color);
 
-  --ruff-ft-color: var(--ruff-bd-color);
+  --ruff-ft-color: var(--ruff-bd-minor-color);
+  --ruff-ft-minor-color: var(--ruff-ft-color);
   --ruff-ft-background-color: var(--ruff-bd-background-color);
 }
 
@@ -114,6 +117,20 @@ h1,h2,h3,h4,h5,h6 {
   margin-top: 0;
 }
 
+span.ns_scope {
+  color: var(--ruff-minor-color);
+}
+
+span.ns_scope a[href]:link, span.ns_scope a[href]:visited {
+  text-decoration: none;
+  color: var(--ruff-minor-color);
+
+}
+
+span.ns_scope a[href]:hover {
+  text-decoration: underline;
+}
+
 /* Tooltip text - see https://www.w3schools.com/css/css_tooltip.asp */
 .ruff-tip {
   position: relative;
@@ -122,6 +139,16 @@ h1,h2,h3,h4,h5,h6 {
 /* Show the tooltip text when you mouse over the tooltip container */
 .ruff-tip:hover .ruff-tiptext {
   visibility: visible;
+}
+.ruff-tiptext {
+  width: 20em;
+  text-align: left;
+  border:none;
+  position: absolute;
+  z-index: var(--ruff-tip-z-index);
+  margin-left: 4px;
+  padding: 2px 3px;
+  visibility: hidden;
 }
 
 
@@ -217,45 +244,18 @@ h1,h2,h3,h4,h5,h6 {
 }
 
 .ruff-nav .ruff-tiptext {
-  width: 100%;
-  font-weight: bold;
   background-color: var(--ruff-nav-tip-background-color);
   color: var(--ruff-nav-tip-color);
-  text-align: left;
-  border:none;
-  position: absolute;
-  z-index: var(--ruff-tip-z-index);
-  margin-left: 4px;
-  padding: 2px 3px;
-  visibility: hidden;
-}
-
-
-
-span.ns_scope {
-    color: #aaaaaa;
-}
-
-span.ns_scope a:link, span.ns_scope a:visited {
-  text-decoration: none;
-  color: #aaaaaa;
-
 }
 
 li {
   margin-top: 0.5em;
 }
 
-span.ns_scope a:hover {
-  text-decoration: none;
-  color: #666666;
-}
-
 /*** Main content styles ***/
 
 .ruff-bd {
   font-family: Arial, sans-serif;
-  font-size: 108%;
   color: var(--ruff-bd-color);
   background-color: var(--ruff-bd-background-color);
 }
@@ -352,7 +352,7 @@ span.ns_scope a:hover {
   color: var(--ruff-bd-a-color);
 }
 
-.ruff-bd a:hover {
+.ruff-bd a[href]:hover {
   text-decoration: underline;
 }
 
@@ -387,21 +387,43 @@ span.ns_scope a:hover {
 }
 
 .ruff-bd .ruff_source_link {
-    font-size: smaller;
+    font-size: small;
+}
+
+.ruff-bd .ruff_source_link a[href] {
+  color: var(--ruff-bd-minor-color);
+  text-decoration: underline;
 }
 
 /* Specialization for index page body */
 
-.ruff-bd .ruff_index {
-    font-size: small;
-    color: grey;
-    line-height: 1;
+.ruff_index {
+  font-size: small;
 }
 
 .ruff_index ul li {
-    list-style-type: none;
+  list-style-type: none;
 }
 
 .ruff_index ul li a {
-    text-decoration: none;
+  text-decoration: none;
 }
+
+#indexUL {
+  line-height: 1;
+}
+
+#indexUL a:hover {
+  /* Disabled because it causes navigation pane width changes. */
+  /* Instead reverse foreground/background */
+  /* font-weight: bold; */
+  color: var(--ruff-nav-background-color);
+  background-color: var(--ruff-nav-color);
+}
+
+
+#indexUL .ruff-tiptext {
+  background-color: var(--ruff-bd-tip-background-color);
+  color: var(--ruff-bd-tip-color);
+}
+
