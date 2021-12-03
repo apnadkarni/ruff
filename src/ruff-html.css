@@ -13,19 +13,54 @@
    * See https://stackoverflow.com/questions/1417934/how-to-prevent-scrollbar-from-repositioning-web-page.
    */
   padding-left: calc(100vw - 100%);
+
+  /* Default theme button gradient */
+  --ruff-theme-gradient: linear-gradient(to right, #fbc2eb 0%, lightgreen 51%, #a6c1ee  100%);
+  --ruff-theme-gradient: linear-gradient(90deg, orange, #fbc2eb, #a6c1ee, yellow);
 }
 
 /* Color theming support from https://dev.to/ananyaneogi/create-a-dark-light-mode-switch-with-css-variables-34l8 */
 
 .ruff-theme-light {
-  --ruff-brand-color: #006666;
-  --ruff-brand-background: white;
-  --ruff-color: #121212;
-  --ruff-color-unimportant: #888888;
-  --ruff-background: white;
+  --ruff-color: #444;
+  --ruff-background-color: #fefefe;
+  --ruff-minor-color: #888;
 
-  --ruff-bd-synopsis-border: thin solid #cccccc;
-  --ruff-bd-synopsis-border: thin solid var(--ruff-bd-table-border);
+  --ruff-layout-background-color: var(--ruff-background-color);
+
+  --ruff-hd-color: #666;
+  --ruff-hd-background-color: inherit;
+  --ruff-hd-font: large bold;
+
+  --ruff-nav-background-color: #FFF5EA;
+  --ruff-nav-color: #666;
+  --ruff-nav-tip-color: var(--ruff-nav-background-color);
+  --ruff-nav-tip-background-color: whitesmoke;
+  --ruff-nav-highlight-color: var(--ruff-nav-background-color);
+  --ruff-nav-highlight-color: var(--ruff-background-color);
+  --ruff-nav-highlight-background-color: coral;
+
+  --ruff-bd-background-color: var(--ruff-layout-background-color);
+  --ruff-bd-color: var(--ruff-color);
+  --ruff-bd-minor-color: var(--ruff-minor-color);
+  --ruff-bd-table-border: #808080;
+  --ruff-bd-code-color: var(--ruff-bd-color);
+  --ruff-bd-code-background-color: whitesmoke;
+  --ruff-bd-h-background-color: inherit;
+  --ruff-bd-h-color: #968C83;
+  /* H1 - special treatment to match navigation pane */
+  --ruff-bd-h1-color: #666;
+  --ruff-bd-h1-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-a-color: blue;
+  --ruff-bd-sourcelink-color: var(--ruff-bd-a-color);
+  --ruff-bd-sourcelink-background-color: var(--ruff-bd-background-color);
+  --ruff-bd-synopsis-border: none;
+  --ruff-bd-tip-color: inherit;
+  --ruff-bd-tip-background-color: var(--ruff-nav-background-color);
+
+  --ruff-ft-color: var(--ruff-bd-minor-color);
+  --ruff-ft-minor-color: var(--ruff-ft-color);
+  --ruff-ft-background-color: var(--ruff-bd-background-color);
 }
 
 .ruff-theme-dark {
@@ -58,6 +93,8 @@
   --ruff-bd-h1-color: var(--ruff-nav-color);
   --ruff-bd-h1-background-color: var(--ruff-nav-background-color);
   --ruff-bd-a-color: lightskyblue;
+  --ruff-bd-sourcelink-color: var(--ruff-bd-a-color);
+  --ruff-bd-sourcelink-background-color: var(--ruff-bd-background-color);
   --ruff-bd-synopsis-border: none;
   --ruff-bd-tip-color: var(--ruff-bd-color);
   --ruff-bd-tip-background-color: var(--ruff-nav-background-color);
@@ -67,14 +104,63 @@
   --ruff-ft-background-color: var(--ruff-bd-background-color);
 }
 
+/* The original ruff theme */
+.ruff-theme-v1 {
+  --ruff-color: #121212;
+  --ruff-background-color: white;
+  --ruff-minor-color: #888;
+
+  --ruff-layout-background-color: white;
+
+  --ruff-hd-color: inherit;
+  --ruff-hd-background-color: inherit;
+  --ruff-hd-font: large bold;
+
+  --ruff-nav-background-color: #006666;
+  --ruff-nav-color: white;
+  --ruff-nav-tip-color: var(--ruff-nav-background-color);
+  --ruff-nav-tip-background-color: whitesmoke;
+  --ruff-nav-highlight-color: var(--ruff-nav-background-color);
+  --ruff-nav-highlight-background-color: var(--ruff-nav-color);
+
+  --ruff-bd-background-color: var(--ruff-layout-background-color);
+  --ruff-bd-color: var(--ruff-color);
+  --ruff-bd-minor-color: var(--ruff-minor-color);
+  --ruff-bd-table-border: #808080;
+  --ruff-bd-code-color: var(--ruff-bd-color);
+  --ruff-bd-code-background-color: whitesmoke;
+  --ruff-bd-h-background-color: inherit;
+  --ruff-bd-h-color: var(--ruff-nav-background-color);
+  /* H1 - special treatment to match navigation pane */
+  --ruff-bd-h1-color: var(--ruff-nav-color);
+  --ruff-bd-h1-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-a-color: blue;
+  --ruff-bd-sourcelink-color: var(--ruff-bd-a-color);
+  --ruff-bd-sourcelink-background-color: var(--ruff-bd-background-color);
+  --ruff-bd-synopsis-border: none;
+  --ruff-bd-tip-color: inherit;
+  --ruff-bd-tip-background-color: whitesmoke;
+
+  --ruff-ft-color: var(--ruff-bd-minor-color);
+  --ruff-ft-minor-color: var(--ruff-ft-color);
+  --ruff-ft-background-color: var(--ruff-bd-background-color);
+}
+
+
 .ruff-theme-toggle {
-  background-image: linear-gradient(to right, #066 0%, white 50%, #848484 100%);
+  background-image: var(--ruff-theme-gradient);
+  transition: 0.25s;
+  background-size: 200% auto;
   border: none;
   border-radius: 3px;
-  width: 30px;
+  width: 40px;
   height: 20px;
   cursor: pointer;
   vertical-align: text-top;
+}
+
+.ruff-theme-toggle:hover {
+  background-position: right center; /* change the direction of the change here */
 }
 
 *, *::before, *::after {
@@ -322,9 +408,11 @@ li {
 .ruff-bd h5 {
     font-style: italic;
     font-weight: normal;
+    font-size: inherit;
 }
 .ruff-bd h6 {
     font-weight: normal;
+    font-size: inherit;
 }
 
 .ruff-bd h3.ruffclass, .ruff-bd h3.ruffproc, .ruff-bd h3.ruffmethod,
@@ -376,8 +464,6 @@ li {
 
 .ruff-bd .ruff_const, .ruff-bd .ruff_cmd, .ruff-bd code {
   font-family: Consolas, "Courier New", monospace;
-  font-weight: bold;
-  font-size: smaller;
 }
 
 .ruff-bd .ruff_arg {
@@ -391,7 +477,8 @@ li {
 }
 
 .ruff-bd .ruff_source_link a[href] {
-  color: var(--ruff-bd-minor-color);
+  color: var(--ruff-bd-sourcelink-color);
+  background-color: var(--ruff-bd-sourcelink-background-color);
   text-decoration: underline;
 }
 
@@ -412,15 +499,6 @@ li {
 #indexUL {
   line-height: 1;
 }
-
-#indexUL a:hover {
-  /* Disabled because it causes navigation pane width changes. */
-  /* Instead reverse foreground/background */
-  /* font-weight: bold; */
-  color: var(--ruff-nav-background-color);
-  background-color: var(--ruff-nav-color);
-}
-
 
 #indexUL .ruff-tiptext {
   background-color: var(--ruff-bd-tip-background-color);

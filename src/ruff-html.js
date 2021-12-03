@@ -31,33 +31,41 @@ function toggleSource( id )
 
 
 /***
- * Color theming support from https://dev.to/ananyaneogi/create-a-dark-light-mode-switch-with-css-variables-34l8
- *
  * NOTE: for file URL's local storage is per-file so is not maintained between files.
  * It will still persist for http urls.
+ * Someone who actually knows Javascript please rewrite this!
 */
 
-
-
 function ruffSetTheme(themeName) {
-    localStorage.setItem('ruff_theme', themeName);
-    document.documentElement.className = themeName;
+    console.log(themeName);
+    localStorage.ruff_theme = themeName;
+    document.documentElement.className = "ruff-theme-".concat(themeName);
 }
 
-// function to toggle between light and dark theme
-function ruffToggleTheme() {
-    if (localStorage.getItem('ruff_theme') === 'ruff-theme-dark') {
-        ruffSetTheme('ruff-theme-light');
+function ruffNextTheme() {
+    themeNames = JSON.parse(localStorage.ruff_themes);
+    currentTheme = localStorage.ruff_theme;
+    if (currentTheme === undefined) {
+        themeIndex = 0;
     } else {
-        ruffSetTheme('ruff-theme-dark');
+        themeIndex = themeNames.indexOf(currentTheme);
+        ++themeIndex;
+        if (themeIndex >= themeNames.length) {
+            themeIndex = 0;
+        }
     }
+    ruffSetTheme(themeNames[themeIndex]);
 }
 
 // Immediately invoked function to set the theme on initial load
 (function () {
-    if (localStorage.getItem('ruff_theme') === 'ruff-theme-dark') {
-        ruffSetTheme('ruff-theme-dark');
-    } else {
-        ruffSetTheme('ruff-theme-light');
+    // Store list of ruff themes since they may change between releases
+    themeNames = ["v1", "dark", "light"];
+    // localStorage can only contain strings
+    localStorage.ruff_themes = JSON.stringify(themeNames);
+    currentTheme = localStorage.ruff_theme;
+    if (currentTheme === undefined || themeNames.indexOf(currentTheme) < 0) {
+        currentTheme = "v1";
     }
+    ruffSetTheme(currentTheme);
 })();

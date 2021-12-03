@@ -120,7 +120,7 @@ oo::class create ruff::formatter::Html {
         }
         append Header {
             <div style='float:right;'>
-            <button id="toggleTheme" class="ruff-theme-toggle" onclick="ruffToggleTheme()"></button>
+            <button id="toggleTheme" class="ruff-theme-toggle" onclick="ruffNextTheme()"></button>
             </div>
         }
         append Header </header>
