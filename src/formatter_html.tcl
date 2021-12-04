@@ -100,27 +100,23 @@ oo::class create ruff::formatter::Html {
         append Header "</head>\n<body>\n"
         append Header "<div class='ruff-layout'>\n"
 
-        # YUI stylesheet templates
         set navpos left
-        set navwidth normal
         foreach navopt [my Option -navigation] {
             if {$navopt in {left right}} {
                 set navpos $navopt
-            } elseif {$navopt in {narrow normal wide}} {
-                set navwidth $navopt
+            } elseif {$navopt ni {scrolled sticky fixed}} {
+                app::log_error "Ignoring unknown navigation option \"$navopt\"."
             }
         }
-        set layout_class [dict get {
-            left {narrow yui-t1 normal yui-t2 wide yui-t3}
-            right {narrow yui-t3 normal yui-t4 wide yui-t6}
-        } $navpos $navwidth]
-        append Header "<header class='ruff-layout-header ruff-hd banner'>\n"
+        append Header "<header class='ruff-layout-header ruff-hd'>\n"
         if {$titledesc ne ""} {
             append Header "<a style='text-decoration:none;' href='[my SymbolReference :: {}]'>$titledesc</a>\n\n"
         }
+        # Theme control button
         append Header {
-            <div style='float:right;'>
-            <button id="toggleTheme" class="ruff-theme-toggle" onclick="ruffNextTheme()"></button>
+            <div id="ruffButtonBar">
+            <button id="ruffNavMove" onclick="ruffMoveNavPane()"></button>
+            <button id="ruffToggleTheme" onclick="ruffNextTheme()"></button>
             </div>
         }
         append Header </header>
@@ -409,7 +405,6 @@ oo::class create ruff::formatter::Html {
         }
 
         append Document "<nav class='ruff-nav'><ul $scrolling>"
-
         if {[my Option -pagesplit none] ne "none"} {
             # Split pages. Add navigation to each page.
             # If highlight_ns is empty, assume main page. Hack hack hack

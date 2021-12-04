@@ -56,15 +56,60 @@ function ruffNextTheme() {
     ruffSetTheme(themeNames[themeIndex]);
 }
 
+function ruffSetNavSide(navSide) {
+    localStorage.ruff_nav_side = navSide;
+    but = document.getElementById("ruffNavMove");
+    if (navSide === "right") {
+        gridAreas = '"toparea toparea" "mainarea navarea" "botarea botarea"';
+        gridCols = "1fr minmax(200px, min-content)";
+        arrowChar = "\u25c0";
+        borderLeft = "none";
+        borderRight = "solid thick";
+    } else {
+        gridAreas = '"toparea toparea" "navarea mainarea" "botarea botarea"';
+        gridCols = "minmax(200px, min-content) 1fr";
+        arrowChar = "\u25b6";
+        borderLeft = "solid thick";
+        borderRight = "none";
+    }
+    but.textContent = arrowChar;
+    but.style.setProperty("border-left", borderLeft);
+    but.style.setProperty("border-right",borderRight);
+    document.documentElement.style.setProperty("--ruff-grid-template-areas", gridAreas);
+    document.documentElement.style.setProperty("--ruff-grid-template-columns", gridCols);
+}
+
+function ruffMoveNavPane() {
+    if (localStorage.ruff_nav_side === "left")
+        ruffSetNavSide("right");
+    else
+        ruffSetNavSide("left");
+}
+
 // Immediately invoked function to set the theme on initial load
 (function () {
+    // Set up the themes
     themeNames = ["v1", "light", "dark", "slate", "solar", "clouds"];
     // Store list of ruff themes since they may change between releases
     // localStorage can only contain strings
     localStorage.ruff_themes = JSON.stringify(themeNames);
-    currentTheme = localStorage.ruff_theme;
-    if (currentTheme === undefined || themeNames.indexOf(currentTheme) < 0) {
-        currentTheme = "v1";
+    navSide = localStorage.ruff_nav_side;
+    if (navSide !== "left" && navSide !== "right")
+        navSide = "left";
+
+    // Actual updating of DOM only to be done AFTEr load is done
+    window.onload = init;
+    function init () {
+        currentTheme = localStorage.ruff_theme;
+        if (currentTheme === undefined || themeNames.indexOf(currentTheme) < 0) {
+            currentTheme = "v1";
+        }
+        ruffSetTheme(currentTheme);
+
+        // Set up the navigation layout
+        navSide = localStorage.ruff_nav_side;
+        if (navSide !== "right")
+            navSide = "left";
+        ruffSetNavSide(navSide);
     }
-    ruffSetTheme(currentTheme);
 })();

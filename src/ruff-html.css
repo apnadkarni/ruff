@@ -1,8 +1,4 @@
 :root {
-  /*
-  --ruff-banner-width: 64px;
-  --ruff-grid-template-rows: minmax(var(--ruff-banner-width), min-content);
- */
   --ruff-grid-template-rows: min-content 1fr;
   --ruff-grid-template-columns: minmax(200px, min-content) 1fr;
   --ruff-grid-template-areas: "toparea toparea" "navarea mainarea" "botarea botarea";
@@ -15,9 +11,6 @@
   padding-left: calc(100vw - 100%);
 
   /* Default theme button gradient */
-  --ruff-theme-gradient: linear-gradient(to right, #fbc2eb 0%, lightgreen 51%, #a6c1ee  100%);
-  --ruff-theme-gradient: linear-gradient(90deg, orange, #fbc2eb, #a6c1ee, yellow);
-  --ruff-theme-gradient: linear-gradient(90deg, orange, #fbc2eb, #a6c1ee, yellow);
   --ruff-theme-gradient: linear-gradient(90deg, #0000ff, #00ff00, #ff0000);
 }
 
@@ -70,13 +63,13 @@
   --ruff-background-color: whitesmoke;
   --ruff-minor-color: #888;
 
-  --ruff-layout-background-color: #fff5eb;
+  --ruff-layout-background-color: azure;
 
   --ruff-hd-color: #666;
   --ruff-hd-background-color: inherit;
   --ruff-hd-font: large bold;
 
-  --ruff-nav-background-color: #cfebf7;
+  --ruff-nav-background-color: lightblue;
   --ruff-nav-color: #212121;
   --ruff-nav-tip-color: var(--ruff-nav-background-color);
   --ruff-nav-tip-background-color: var(--ruff-nav-color);
@@ -89,7 +82,8 @@
   --ruff-bd-minor-color: var(--ruff-minor-color);
   --ruff-bd-table-border: #808080;
   --ruff-bd-code-color: var(--ruff-bd-color);
-  --ruff-bd-code-background-color: floralwhite;
+  --ruff-bd-code-background-color: #cfebf7;
+  --ruff-bd-code-background-color: #cffcff;
   --ruff-bd-h-background-color: inherit;
   --ruff-bd-h-color: #968C83;
   /* H1 - special treatment to match navigation pane */
@@ -273,22 +267,42 @@
   --ruff-ft-background-color: var(--ruff-bd-background-color);
 }
 
+#ruffButtonBar {
+  float: right;
+}
 
-.ruff-theme-toggle {
+#ruffToggleTheme {
   background-image: var(--ruff-theme-gradient);
   transition: 0.25s;
   background-size: 200% auto;
   border: none;
-  border-radius: 3px;
-  width: 40px;
+  border-radius: 4px;
+  width: 20px;
   height: 20px;
   cursor: pointer;
   vertical-align: text-top;
 }
 
-.ruff-theme-toggle:hover {
+#ruffToggleTheme:hover {
   background-position: right center; /* change the direction of the change here */
+  vertical-align: text-top;
 }
+
+#ruffNavMove {
+  color: #006666;
+  background-color: lightgrey;
+  border-color: #006666;
+  height: 20px;
+  border-radius: 4px;
+  text-align: center;
+  border: none;
+  cursor: pointer;
+  vertical-align: text-top;
+  /* Following is to get the text arrow to align to the vertical center */
+  display: inline-flex;
+  align-items: baseline;
+}
+
 
 *, *::before, *::after {
   box-sizing:border-box;
@@ -328,6 +342,10 @@ a, a:visited {
 h1,h2,h3,h4,h5,h6 {
   margin-bottom: 0.5em;
   margin-top: 0;
+}
+
+li {
+  margin-top: 0.5em;
 }
 
 span.ns_scope {
@@ -461,10 +479,6 @@ span.ns_scope a[href]:hover {
 .ruff-nav .ruff-tiptext {
   background-color: var(--ruff-nav-tip-background-color);
   color: var(--ruff-nav-tip-color);
-}
-
-li {
-  margin-top: 0.5em;
 }
 
 /*** Main content styles ***/

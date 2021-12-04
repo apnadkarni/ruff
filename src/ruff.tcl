@@ -76,11 +76,15 @@ namespace eval ruff {
         and the full API for a class, with inherited and mixed-in methods, is
         flattened and summarized.
 
-        The Ruff! documentation itself is produced with Ruff!. For a larger
-        example, see the
-        [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html)
-        reference manual or
-        the reference pages for [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html) (though the latter is with an older version of Ruff!).
+        * The HTML formatter includes built-in themes with user-end selection.
+
+        The Ruff! documentation itself is produced with Ruff!. Examples of other
+        packages documented with Ruff! include
+        [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html),
+        [cffi](https://cffi.magicsplat.com),
+        [iocp](https://iocp.magicsplat.com),
+        [obex](https://obex.magicsplat.com),
+        [promise](https://promise.magicsplat.com).
 
         ## Documentation
 
@@ -90,7 +94,6 @@ namespace eval ruff {
         it was generated.
 
         ## Downloads and Install
-
 
         Download the Ruff! distribution from
         <https://sourceforge.net/projects/magicsplat/files/ruff/>. The
