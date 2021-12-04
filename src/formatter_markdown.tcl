@@ -4,7 +4,11 @@
 
 # Ruff! formatter for markdown
 # For compiling generated markdown to html using pandoc:
-# pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle="My package" ruff.md
+#   pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle="My package" ruff.md
+# For compiling generated markdown to manpages using pandoc
+#   pandoc ruff_ruff.md -s -t man -o ruff.man
+#   dos2unix ruff.man
+#   tbl ruff.man | man -l -
 
 namespace eval ruff::formatter {}
 

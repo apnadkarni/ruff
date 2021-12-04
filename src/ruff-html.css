@@ -109,7 +109,7 @@
 
 .ruff-theme-dark {
   --ruff-color: #ddd;
-  --ruff-background-color: #121212;
+  --ruff-background-color: #27242c;
   --ruff-minor-color: #aaa;
 
   --ruff-layout-background-color: #212121;
@@ -122,8 +122,8 @@
   --ruff-nav-color: var(--ruff-color);
   --ruff-nav-tip-color: var(--ruff-nav-background-color);
   --ruff-nav-tip-background-color: var(--ruff-nav-color);
-  --ruff-nav-highlight-color: var(--ruff-nav-background-color);
-  --ruff-nav-highlight-background-color: var(--ruff-nav-color);
+  --ruff-nav-highlight-color: #e6eff5;
+  --ruff-nav-highlight-background-color: #1164a3;
 
   --ruff-bd-background-color: var(--ruff-layout-background-color);
   --ruff-bd-color: var(--ruff-color);
@@ -132,7 +132,7 @@
   --ruff-bd-code-color: inherit;
   --ruff-bd-code-background-color: var(--ruff-nav-background-color);
   --ruff-bd-h-background-color: inherit;
-  --ruff-bd-h-color: #bbb;
+  --ruff-bd-h-color: lightblue;
   /* H1 - special treatment to match navigation pane */
   --ruff-bd-h1-color: var(--ruff-nav-color);
   --ruff-bd-h1-background-color: var(--ruff-nav-background-color);
