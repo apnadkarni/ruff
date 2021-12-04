@@ -17,16 +17,18 @@
   /* Default theme button gradient */
   --ruff-theme-gradient: linear-gradient(to right, #fbc2eb 0%, lightgreen 51%, #a6c1ee  100%);
   --ruff-theme-gradient: linear-gradient(90deg, orange, #fbc2eb, #a6c1ee, yellow);
+  --ruff-theme-gradient: linear-gradient(90deg, orange, #fbc2eb, #a6c1ee, yellow);
+  --ruff-theme-gradient: linear-gradient(90deg, #0000ff, #00ff00, #ff0000);
 }
 
 /* Color theming support from https://dev.to/ananyaneogi/create-a-dark-light-mode-switch-with-css-variables-34l8 */
 
 .ruff-theme-light {
   --ruff-color: #444;
-  --ruff-background-color: #fefefe;
+  --ruff-background-color: whitesmoke;
   --ruff-minor-color: #888;
 
-  --ruff-layout-background-color: var(--ruff-background-color);
+  --ruff-layout-background-color: #fefefe;
 
   --ruff-hd-color: #666;
   --ruff-hd-background-color: inherit;
@@ -35,7 +37,7 @@
   --ruff-nav-background-color: #FFF5EA;
   --ruff-nav-color: #666;
   --ruff-nav-tip-color: var(--ruff-nav-background-color);
-  --ruff-nav-tip-background-color: whitesmoke;
+  --ruff-nav-tip-background-color: var(--ruff-nav-color);
   --ruff-nav-highlight-color: var(--ruff-nav-background-color);
   --ruff-nav-highlight-color: var(--ruff-background-color);
   --ruff-nav-highlight-background-color: coral;
@@ -63,11 +65,136 @@
   --ruff-ft-background-color: var(--ruff-bd-background-color);
 }
 
+.ruff-theme-clouds {
+  --ruff-color: #111;
+  --ruff-background-color: whitesmoke;
+  --ruff-minor-color: #888;
+
+  --ruff-layout-background-color: #fff5eb;
+
+  --ruff-hd-color: #666;
+  --ruff-hd-background-color: inherit;
+  --ruff-hd-font: large bold;
+
+  --ruff-nav-background-color: #cfebf7;
+  --ruff-nav-color: #212121;
+  --ruff-nav-tip-color: var(--ruff-nav-background-color);
+  --ruff-nav-tip-background-color: var(--ruff-nav-color);
+  --ruff-nav-highlight-color: var(--ruff-nav-background-color);
+  --ruff-nav-highlight-color: var(--ruff-background-color);
+  --ruff-nav-highlight-background-color: midnightblue;
+
+  --ruff-bd-background-color: var(--ruff-layout-background-color);
+  --ruff-bd-color: var(--ruff-color);
+  --ruff-bd-minor-color: var(--ruff-minor-color);
+  --ruff-bd-table-border: #808080;
+  --ruff-bd-code-color: var(--ruff-bd-color);
+  --ruff-bd-code-background-color: floralwhite;
+  --ruff-bd-h-background-color: inherit;
+  --ruff-bd-h-color: #968C83;
+  /* H1 - special treatment to match navigation pane */
+  --ruff-bd-h1-color: #666;
+  --ruff-bd-h1-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-a-color: blue;
+  --ruff-bd-sourcelink-color: var(--ruff-bd-a-color);
+  --ruff-bd-sourcelink-background-color: var(--ruff-bd-background-color);
+  --ruff-bd-synopsis-border: none;
+  --ruff-bd-tip-color: inherit;
+  --ruff-bd-tip-background-color: var(--ruff-nav-background-color);
+
+  --ruff-ft-color: var(--ruff-bd-minor-color);
+  --ruff-ft-minor-color: var(--ruff-ft-color);
+  --ruff-ft-background-color: var(--ruff-bd-background-color);
+}
+
 .ruff-theme-dark {
+  --ruff-color: #ddd;
+  --ruff-background-color: #121212;
+  --ruff-minor-color: #aaa;
+
+  --ruff-layout-background-color: #212121;
+
+  --ruff-hd-color: inherit;
+  --ruff-hd-background-color: inherit;
+  --ruff-hd-font: large bold;
+
+  --ruff-nav-background-color: #22272e;
+  --ruff-nav-color: var(--ruff-color);
+  --ruff-nav-tip-color: var(--ruff-nav-background-color);
+  --ruff-nav-tip-background-color: var(--ruff-nav-color);
+  --ruff-nav-highlight-color: var(--ruff-nav-background-color);
+  --ruff-nav-highlight-background-color: var(--ruff-nav-color);
+
+  --ruff-bd-background-color: var(--ruff-layout-background-color);
+  --ruff-bd-color: var(--ruff-color);
+  --ruff-bd-minor-color: var(--ruff-minor-color);
+  --ruff-bd-table-border: #808080;
+  --ruff-bd-code-color: inherit;
+  --ruff-bd-code-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-h-background-color: inherit;
+  --ruff-bd-h-color: #bbb;
+  /* H1 - special treatment to match navigation pane */
+  --ruff-bd-h1-color: var(--ruff-nav-color);
+  --ruff-bd-h1-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-a-color: #489bf5;
+  --ruff-bd-sourcelink-color: var(--ruff-bd-a-color);
+  --ruff-bd-sourcelink-background-color: var(--ruff-bd-background-color);
+  --ruff-bd-synopsis-border: none;
+  --ruff-bd-tip-color: var(--ruff-bd-background-color);
+  --ruff-bd-tip-background-color: var(--ruff-bd-color);
+
+  --ruff-ft-color: var(--ruff-bd-minor-color);
+  --ruff-ft-minor-color: var(--ruff-ft-color);
+  --ruff-ft-background-color: var(--ruff-bd-background-color);
+}
+
+.ruff-theme-solar {
+  --ruff-color: whitesmoke;
+  --ruff-background-color: #011;
+  --ruff-minor-color: #aaa;
+
+  --ruff-layout-background-color: #002b35;
+
+  --ruff-hd-color: inherit;
+  --ruff-hd-background-color: inherit;
+  --ruff-hd-font: large bold;
+
+  --ruff-nav-background-color: #003641;
+  --ruff-nav-color: var(--ruff-color);
+  --ruff-nav-tip-color: var(--ruff-nav-background-color);
+  --ruff-nav-tip-background-color: var(--ruff-nav-color);
+  --ruff-nav-highlight-color: var(--ruff-nav-background-color);
+  --ruff-nav-highlight-background-color: var(--ruff-nav-color);
+
+  --ruff-bd-background-color: var(--ruff-layout-background-color);
+  --ruff-bd-color: var(--ruff-color);
+  --ruff-bd-minor-color: var(--ruff-minor-color);
+  --ruff-bd-table-border: #808080;
+  --ruff-bd-code-color: inherit;
+  --ruff-bd-code-background-color: #003641;
+  --ruff-bd-h-background-color: inherit;
+  --ruff-bd-h-color: cornsilk;
+  /* H1 - special treatment to match navigation pane */
+  --ruff-bd-h1-color: var(--ruff-nav-color);
+  --ruff-bd-h1-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-a-color: palegreen;
+  --ruff-bd-sourcelink-color: var(--ruff-bd-a-color);
+  --ruff-bd-sourcelink-background-color: var(--ruff-bd-background-color);
+  --ruff-bd-synopsis-border: none;
+  --ruff-bd-tip-color: var(--ruff-bd-color);
+  --ruff-bd-tip-background-color: var(--ruff-nav-background-color);
+
+  --ruff-ft-color: var(--ruff-bd-minor-color);
+  --ruff-ft-minor-color: var(--ruff-ft-color);
+  --ruff-ft-background-color: var(--ruff-bd-background-color);
+}
+
+.ruff-theme-slate {
   --ruff-color: #ccc;
   --ruff-background-color: #829ab1;
   --ruff-minor-color: #aaa;
 
+  --ruff-layout-background-color: #181a26;
   --ruff-layout-background-color: #1a202c;
 
   --ruff-hd-color: inherit;
@@ -205,6 +332,8 @@ h1,h2,h3,h4,h5,h6 {
 
 span.ns_scope {
   color: var(--ruff-minor-color);
+  font-size: 85%;
+  font-weight: bold;
 }
 
 span.ns_scope a[href]:link, span.ns_scope a[href]:visited {
@@ -344,6 +473,8 @@ li {
   font-family: Arial, sans-serif;
   color: var(--ruff-bd-color);
   background-color: var(--ruff-bd-background-color);
+  font-size: 93%;
+  line-height: 1.3;
 }
 
 .ruff-bd .ruff-uplink {
@@ -392,6 +523,7 @@ li {
   padding-left: 0.2em;
   font-family: "Times New Roman", serif;
 }
+
 .ruff-bd h2 {
   font-variant: small-caps;
   color: var(--ruff-bd-h-color);
@@ -485,7 +617,7 @@ li {
 /* Specialization for index page body */
 
 .ruff_index {
-  font-size: small;
+  #font-size: small;
 }
 
 .ruff_index ul li {

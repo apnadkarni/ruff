@@ -37,7 +37,6 @@ function toggleSource( id )
 */
 
 function ruffSetTheme(themeName) {
-    console.log(themeName);
     localStorage.ruff_theme = themeName;
     document.documentElement.className = "ruff-theme-".concat(themeName);
 }
@@ -59,8 +58,8 @@ function ruffNextTheme() {
 
 // Immediately invoked function to set the theme on initial load
 (function () {
+    themeNames = ["v1", "light", "dark", "slate", "solar", "clouds"];
     // Store list of ruff themes since they may change between releases
-    themeNames = ["v1", "dark", "light"];
     // localStorage can only contain strings
     localStorage.ruff_themes = JSON.stringify(themeNames);
     currentTheme = localStorage.ruff_theme;
