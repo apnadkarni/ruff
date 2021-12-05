@@ -59,22 +59,22 @@ function ruffNextTheme() {
 function ruffSetNavSide(navSide) {
     localStorage.ruff_nav_side = navSide;
     but = document.getElementById("ruffNavMove");
+    // Note we set individual border properties as we do not want color to change */
     if (navSide === "right") {
         gridAreas = '"toparea toparea" "mainarea navarea" "botarea botarea"';
         gridCols = "1fr minmax(200px, min-content)";
-        arrowChar = "\u25c0";
-        borderLeft = "none";
-        borderRight = "solid thick";
+        but.textContent = "\u25c0";
+        but.style.setProperty("border-left", "none");
+        but.style.setProperty("border-right-style", "solid");
+        but.style.setProperty("border-right-width", "thick");
     } else {
         gridAreas = '"toparea toparea" "navarea mainarea" "botarea botarea"';
         gridCols = "minmax(200px, min-content) 1fr";
-        arrowChar = "\u25b6";
-        borderLeft = "solid thick";
-        borderRight = "none";
+        but.textContent = "\u25b6";
+        but.style.setProperty("border-right", "none");
+        but.style.setProperty("border-left-style", "solid");
+        but.style.setProperty("border-left-width", "thick");
     }
-    but.textContent = arrowChar;
-    but.style.setProperty("border-left", borderLeft);
-    but.style.setProperty("border-right",borderRight);
     document.documentElement.style.setProperty("--ruff-grid-template-areas", gridAreas);
     document.documentElement.style.setProperty("--ruff-grid-template-columns", gridCols);
 }

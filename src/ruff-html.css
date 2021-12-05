@@ -11,7 +11,7 @@
   padding-left: calc(100vw - 100%);
 
   /* Default theme button gradient */
-  --ruff-theme-gradient: linear-gradient(90deg, #0000ff, #00ff00, #ff0000);
+  --ruff-theme-gradient: linear-gradient(90deg, lightblue, coral, lightgreen);
 }
 
 /* Color theming support from https://dev.to/ananyaneogi/create-a-dark-light-mode-switch-with-css-variables-34l8 */
@@ -276,7 +276,6 @@
   transition: 0.25s;
   background-size: 200% auto;
   border: none;
-  border-radius: 4px;
   width: 20px;
   height: 20px;
   cursor: pointer;
@@ -289,18 +288,15 @@
 }
 
 #ruffNavMove {
-  color: #006666;
-  background-color: lightgrey;
-  border-color: #006666;
+  color: lightblue;
+  border-color: lightblue;
+  background-color: var(--ruff-bd-background-color);
   height: 20px;
-  border-radius: 4px;
   text-align: center;
   border: none;
   cursor: pointer;
-  vertical-align: text-top;
-  /* Following is to get the text arrow to align to the vertical center */
-  display: inline-flex;
-  align-items: baseline;
+  vertical-align: text-top; /* Move button up */
+  line-height: 1; /* To vertically center text within button */
 }
 
 
