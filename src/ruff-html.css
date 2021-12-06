@@ -1,5 +1,6 @@
 :root {
   --ruff-grid-template-rows: min-content 1fr;
+  /* TBD - maybe use fit-content(200px) instead of minmax(...) */
   --ruff-grid-template-columns: minmax(200px, min-content) 1fr;
   --ruff-grid-template-areas: "toparea toparea" "navarea mainarea" "botarea botarea";
   --ruff-tip-z-index: 10;
@@ -75,7 +76,7 @@
   --ruff-nav-tip-background-color: var(--ruff-nav-color);
   --ruff-nav-highlight-color: var(--ruff-nav-background-color);
   --ruff-nav-highlight-color: var(--ruff-background-color);
-  --ruff-nav-highlight-background-color: midnightblue;
+  --ruff-nav-highlight-background-color: #14a7ff;
 
   --ruff-bd-background-color: var(--ruff-layout-background-color);
   --ruff-bd-color: var(--ruff-color);

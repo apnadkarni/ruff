@@ -88,7 +88,7 @@ oo::class create ruff::formatter::Html {
             }
         } else {
             # Use built-in styles
-            if {1} {
+            if {0} {
                 append Header "<link rel='stylesheet' type='text/css' href='../src/ruff-html.css' />"
             } else {
                 append Header "<style>\n" \
