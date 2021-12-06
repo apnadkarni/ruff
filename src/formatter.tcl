@@ -13,7 +13,7 @@ oo::class create ruff::formatter::Formatter {
 
     constructor {} {
         # Base class for output formatters.
-        namespace path [list ::ruff ::ruff::private]
+        namespace path [linsert [namespace path] 0 ::ruff ::ruff::private]
     }
 
     method Option {opt {default {}}} {
@@ -1152,16 +1152,19 @@ oo::class create ruff::formatter::Formatter {
                 }
                 {`} {
                     # CODE
-                    regexp -start $index $re_backticks $text m
-                    set start [expr $index + [string length $m]]
+                    regexp -start $index $re_backticks $text backticks
+                    set start [expr $index + [string length $backticks]]
 
-                    if {[regexp -start $start -indices $m $text m]} {
-                        set stop [expr [lindex $m 0] - 1]
+                    # Look for the matching backticks. If not found,
+                    # we will not treat this as code. Otherwise pass through
+                    # the entire match unchanged.
+                    if {[regexp -start $start -indices $backticks $text terminating_indices]} {
+                        set stop [expr {[lindex $terminating_indices 0] - 1}]
 
                         set sub [string trim [string range $text $start $stop]]
 
                         append result "<code>[my Escape $sub]</code>"
-                        set index [expr [lindex $m 1] + 1]
+                        set index [expr [lindex $terminating_indices 1] + 1]
                         continue
                     }
                 }

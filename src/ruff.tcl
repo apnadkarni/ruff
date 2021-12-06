@@ -2390,7 +2390,7 @@ proc ruff::formatters {} {
     # documentation in that format.
     #
     # Returns a list of available formatters.
-    return {html markdown}
+    return {html markdown nroff}
 }
 
 # TBD - where is this used
@@ -2534,6 +2534,13 @@ proc ruff::private::document_self {args} {
             }
             document $namespaces {*}$common_args \
                 -output [file join $opts(-outdir) ruff.html] \
+                -title $title \
+                -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
+                -includesource $opts(-includesource)
+        }
+        nroff {
+            document $namespaces {*}$common_args \
+                -output [file join $opts(-outdir) ruff.3tcl] \
                 -title $title \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
                 -includesource $opts(-includesource)
