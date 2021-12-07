@@ -11,16 +11,15 @@ oo::class create ruff::formatter::Nroff {
 
     # Data members
     variable DocumentNamespace; # Namespace being documented
+    variable Header;          # Common header for all pages
+    variable PageTitle;       # Page title - first line of man page
+    variable Synopsis;        # Holds the synopsis
     variable Body;            # Main content
-    variable Header;          # Common header
     variable Footer;          # Common footer
     variable HeaderLevels;    # Header levels for various headers
-    variable Synopsis;        # Holds the synopsis
     variable SeeAlso;         # The See also section
 
-    # NOTE: NavigationLinks are currently recorded but not used since
-    # there is no standard way to have a navigation pane or ToC in nroff.
-    variable NavigationLinks; # Navigation links forming ToC
+    variable Indentation; # How much to indent in nroff units
 
     constructor args {
         namespace path [linsert [namespace path] 0 ::ruff::formatter::nroff]
@@ -31,6 +30,7 @@ oo::class create ruff::formatter::Nroff {
             nonav 5
             parameters 5
         }
+        set Indentation 4n
         next {*}$args
     }
 
@@ -45,9 +45,9 @@ oo::class create ruff::formatter::Nroff {
         # support for specific dialects which implement metainformation.
         set Header ""
 
-        append Header "'\\\"\n"
+        append Header [nr_comment "\n"]
         if {[my Option? -copyright copyright]} {
-            append Header "'\\\" Copyright (c) [my Escape $copyright]\n"
+            append Header [nr_comment "Copyright (c) [my Escape $copyright]\n"]
         }
 
         # Generate the Footer used by all files
@@ -58,13 +58,10 @@ oo::class create ruff::formatter::Nroff {
     method DocumentBegin {ns} {
         # See [Formatter.DocumentBegin].
         # ns - Namespace for this document.
-        set title [my Option -title]
-        set section [my Option -section 3tcl]
-        set version [my Option -version 0.0]
-        set module [my Option -module TBD]
+        set ns [string trimleft $ns :]
 
         set DocumentNamespace $ns
-        set Body [nr_title "\"[string trimleft $ns :]\" $section $version $module \"$title\""]
+        set Body ""
         set Synopsis ""
         set SeeAlso ""
 
@@ -74,10 +71,27 @@ oo::class create ruff::formatter::Nroff {
     method DocumentEnd {} {
         # See [Formatter.DocumentEnd].
 
+        set title [my Option -title]
+        set section [my Option -section 3tcl]
+        set version [my Option -version 0.0]
+        set product [my Option -product $DocumentNamespace]
+        if {$DocumentNamespace eq ""} {
+            set header_left $product
+        } else {
+            set header_left $DocumentNamespace
+        }
+        set PageTitle [nr_title "\"$header_left\" $section $version \"$product\" \"$title\""]
+
         # Add the navigation bits and footer
-        set doc $Header
+        append doc $Header $PageTitle
+        append doc [nr_section NAME] \n
+        if {$DocumentNamespace eq ""} {
+            append doc "Introduction - $title"
+        } else {
+            append doc "$DocumentNamespace - Commands in namespace $DocumentNamespace"
+        }
         if {$Synopsis ne ""} {
-            append doc [nr_section SYNOPSIS] $Synopsis
+            append doc [nr_section SYNOPSIS] \n $Synopsis
         }
         append doc $Body
         if {$SeeAlso ne ""} {
@@ -96,12 +110,12 @@ oo::class create ruff::formatter::Nroff {
         set level [dict get $HeaderLevels $type]
         set ns    [namespace qualifiers $fqn]
         set name  [namespace tail $fqn]
-        append Body [nr_vspace]
         if {[string length $ns]} {
-            append Body [nr_bldr [namespace tail $name]] " ($ns)"
+            append Body [nr_p] [nr_inn -$Indentation] \n [nr_bldr [namespace tail $name]] " ($ns)"
         } else {
-            append Body [nr_bldr $name]
+            append Body [nr_p] [nr_inn -$Indentation] \n [nr_bldr $name]
         }
+        append Body [nr_out]
         return
     }
 
@@ -119,12 +133,12 @@ oo::class create ruff::formatter::Nroff {
         # TBD - should $text really be passed through ToNroff? In particular do
         # commands like .SH accept embedded escapes ?
         set text [my ToNroff $text $scope]
-        if {$level == 1} {
+        if {$level < 3} {
             append Body [nr_section $text]
-        } elseif {$level == 2} {
+        } elseif {$level == 3} {
             append Body [nr_subsection $text]
         } else {
-            append Body [nr_bldr $text]
+            append Body [nr_p] [nr_bldr $text]
         }
         return
     }
@@ -133,7 +147,7 @@ oo::class create ruff::formatter::Nroff {
         # See [Formatter.AddParagraph].
         #  lines  - The paragraph lines.
         #  scope - The documentation scope of the content.
-        append Body [nr_p] [my ToNroff [join $lines \n]]
+        append Body [nr_p] [my ToNroff [join $lines \n] $scope]
         return
     }
 
@@ -148,6 +162,7 @@ oo::class create ruff::formatter::Nroff {
         # Note: CommonMark does not recognize tables without a heading line
         # TBD - how do empty headers look in generated HTML?
         set autopunctuate [my Option -autopunctuate 0]
+        append Body [nr_inn $Indentation]
         foreach item $definitions {
             set def [join [dict get $item definition] " "]
             if {$autopunctuate} {
@@ -165,6 +180,7 @@ oo::class create ruff::formatter::Nroff {
             }
             append Body [nr_blt $term] "\n" $def
         }
+        append Body [nr_out]
 
         return
     }
@@ -173,7 +189,6 @@ oo::class create ruff::formatter::Nroff {
         # See [Formatter.AddBullets].
         #  bullets  - The list of bullets.
         #  scope    - The documentation scope of the content.
-        puts BULLET:[nroff_postprocess [nr_blt "\\(bu"]]
         foreach lines $bullets {
             append Body [nr_blt "\n\1\\(bu"] "\n" [my ToNroff [join $lines { }] $scope]
         }
@@ -185,7 +200,7 @@ oo::class create ruff::formatter::Nroff {
         #  text  - Preformatted text.
         #  scope - The documentation scope of the content.
 
-        append Body [nr_in] [nr_nofill] [nr_ta ".25i .5i .75i 1i"]
+        append Body [nr_p] [nr_inn $Indentation] [nr_nofill]  \n
         append Body $text
         append Body [nr_fill] [nr_out]
         return
@@ -197,14 +212,16 @@ oo::class create ruff::formatter::Nroff {
         #             and the parameter list for it.
         #  scope  - The documentation scope of the content.
 
+        append Body [nr_inn $Indentation]; # Indent the synopsis
         foreach {cmds params} $synopsis {
-            set line "[nr_bldr [join $cmds { }]]"
+            set line "[nr_bldp [join $cmds { }]]"
             if {[llength $params]} {
-                append line " " [nr_ulr [join $params { }]] 
+                append line " " [nr_ulp [join $params { }]] 
             }
             append Synopsis $line [nr_br]
             append Body $line [nr_br]
         }
+        append Body [nr_out] \n
         return
     }
 
@@ -294,10 +311,10 @@ oo::class create ruff::formatter::Nroff {
                                     # *** - Strong+emphasis - no way I think. Make bold
                                     append result "[nr_bld][my ToNroff $sub $scope][nr_fpop]"
                                 }
+                            }
 
                             incr index [string length $m]
                             continue
-                        }
                     }
                 }
                 {`} {
@@ -370,7 +387,8 @@ oo::class create ruff::formatter::Nroff {
                     # PRINT IMG, A TAG
                     if {$match_found} {
                         if {$ref_type eq {link}} {
-                            append result $txt
+                            # TBD - some nroff version support urls using .UR
+                            append result [nr_ulr $txt]
                             if {$url ne ""} {
                                 append result " \[URL: $url\]"
                             }
@@ -458,7 +476,7 @@ oo::class create ruff::formatter::Nroff {
     forward FormatInline my ToNroff
 }
 
-# From tcllib - BSD license.]
+# MODFIED/ADAPTED From tcllib - BSD license.]
 namespace eval ruff::formatter::nroff {
     # -*- tcl -*-
     #
@@ -476,12 +494,14 @@ namespace eval ruff::formatter::nroff {
 
 
     proc nr_lp      {}          {return \n\1.LP}
-    proc nr_ta      {{text {}}} {return "\1.ta$text"}
+    proc nr_ta      {{text {}}} {return "\n\1.ta$text"}
     proc nr_bld     {}          {return \1\\fB}
     proc nr_bldt    {t}         {return "\n\1.B $t\n"}
     proc nr_bldr    {t}         {return \1\\fB$t[nr_rst]}
+    proc nr_bldp    {t}         {return \1\\fB$t[nr_fpop]}
     proc nr_ul      {}          {return \1\\fI}
-    proc nr_ulr     {t}         {return \1\\fI$t[nr_rst]}
+    proc nr_ulr     {t}         {return \1\\fI$t[nr_fpop]}
+    proc nr_ulp     {t}         {return \1\\fI$t[nr_fpop]}
     proc nr_rst     {}          {return \1\\fR}
     proc nr_fpop    {}          {return \1\\fP}
     proc nr_p       {}          {return \n\1.PP\n}
@@ -493,6 +513,7 @@ namespace eval ruff::formatter::nroff {
     proc nr_blt     {text}      {return "\n\1.TP\n$text"}
     proc nr_bltn    {n text}    {return "\n\1.TP $n\n$text"}
     proc nr_in      {}          {return \n\1.RS}
+    proc nr_inn     {n}         {return "\n\1.RS $n"}
     proc nr_out     {}          {return \n\1.RE}
     proc nr_nofill  {}          {return \n\1.nf}
     proc nr_fill    {}          {return \n\1.fi}

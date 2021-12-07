@@ -61,22 +61,21 @@ namespace eval ruff {
 
         On the output side,
 
-        * Ruff! supports multiple formats (currently HTML and Markdown).
-        Additional formats can be added through subclassing.
+        * Ruff! supports multiple formats (currently HTML, Markdown and nroff).
 
         * Generated documentation can optionally be split across multiple pages.
 
         * Hyperlinks between program elements, and optionally source code,
         make navigation easy and efficient.
 
-        * A searchable index permits quick location of command and class
-        documentation.
+        * A table of contents and optional searchable index permits quick
+        location of command and class documentation.
 
-        * In object oriented code, class relationships are extracted
+        * Class relationships are extracted
         and the full API for a class, with inherited and mixed-in methods, is
         flattened and summarized.
 
-        * The HTML formatter includes built-in themes with user-end selection.
+        * The HTML formatter includes multiple themes switchable by the end-user.
 
         The Ruff! documentation itself is produced with Ruff!. Examples of other
         packages documented with Ruff! include
@@ -2224,10 +2223,22 @@ proc ruff::document {namespaces args} {
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
     #  procedure is also included. Default value is false.
+    # -locale STRING - sets the locale of the pre-defined texts in the generated
+    #  outputs such as **Description** or **Return value** (Default `en`). To add a
+    #  locale for a language, create a message catalog file in the `msgs`
+    #  directory using the provided `de.msg` as a template. Currently only the
+    #  HTML formatter makes use of this option.
     # -makeindex BOOLEAN - if true, an index page is generated for classes
     #  and methods. Default value is true. Not supported by all formatters.
-    # -navigation OPTS - Options controlling appearance and position of navigation
-    #  box (see below). Not supported by all formatters.
+    # -navigation OPT - Controls navigation box behaviour when
+    #  scrolling. If `scrolled`, the navigation box will scroll vertically
+    #  along with the page. Thus it may not visible at all times. If
+    #  `sticky`, the navigation box remains visible at all times.
+    #  However, this requires the number of links in the box to fit on
+    #  the page as they are never scrolled. Note that older browsers
+    #  do not support stickiness and will resort to scrolling behaviour.
+    #  box (see below). Only supported by the `html` formatter.
+    #  (Default `scrolled`)
     # -output PATH - Specifies the path of the output file.
     #  If the output is to multiple files, this is the path of the
     #  documentation top. Other files will named accordingly by
@@ -2239,19 +2250,23 @@ proc ruff::document {namespaces args} {
     # -preamble TEXT - Any text that should be appear at the beginning
     #  outside of any namespace documentation, for example an introduction
     #  or overview of a package. `TEXT` is assumed to be in Ruff! syntax.
+    # -product PRODUCTNAME - the short name of the product. If unspecified, this
+    #  defaults to the first element in $namespaces. This should be a short name
+    #  and is used by formatters to identify the documentation set as a whole
+    #  when documenting multiple namespaces.
     # -recurse BOOLEAN - if true, child namespaces are recursively
     #  documented.
-    # -sortnamespaces BOOLEAN - if `true` (default) the namespaces are
+    # -section SECTION - the section of the documentation where the pages should
+    #  be located. Currently only used by the `nroff` formatter and defaults to
+    #  `3tcl`.
+    # -sortnamespaces BOOLEAN - If `true` (default) the namespaces are
     #  sorted in the navigation otherwise they are in the order passed in.
-    # -stylesheets URLLIST - if specified, the stylesheets passed in URLLIST
-    #  are used instead of the built-in styles. Note the built-in YUI is
-    #  always included as it used for normalization and layout. Not all formatters
-    #  may support this option.
-    # -title STRING - specifies the title to use for the page
-    # -locale STRING - sets the locale of the pre-defined texts in the generated
-    #  outputs such as 'Description' or 'Return value' (Default `en`). To add a
-    #  locale for a language, create a message catalog file in the `msgs`
-    #  directory using the provided `de.msg` as a template.
+    # -title TITLE - This text is shown in a formatter-specific area on every
+    #  generated page. The `nroff` formatter for manpages has only a limited
+    #  space to display this so `TITLE` should be limited to roughly 50 characters
+    #  if that formatter is to be used. If unspecified, it is constructed from
+    #  the `-product`.
+    # -version VERSION - The version of product being documented.
     #
     # The command generates documentation for one or more namespaces
     # and writes it out to file(s) as per the options shown above.
@@ -2259,23 +2274,6 @@ proc ruff::document {namespaces args} {
     # [Documenting namespaces] for details of the expected source
     # formats and the generation process.
     #
-    # The `-navigation` option takes as an argument a list of values from the
-    # table below. These control the positioning and appearance of the
-    # navigation box. The list should contain at most one value from each
-    # row.
-    #
-    # `left`,`right` - Controls whether navigation box is on the left or right
-    #   side of the page. (Default `left`)
-    # `narrow`,`normal`,`wide` - Controls the width of the navigation box.
-    #   (Default `normal`)
-    # `scrolled`,`sticky` - Controls navigation box behaviour when
-    #   scrolling. If `scrolled`, the navigation box will scroll vertically
-    #   along with the page. Thus it may not visible at all times. If
-    #   `sticky`, the navigation box remains visible at all times.
-    #   However, this requires the number of links in the box to fit on
-    #   the page as they are never scrolled. Note that older browsers
-    #   do not support stickiness and will resort to scrolling behaviour.
-    #   (Default `scrolled`)
 
     array set opts {
         -compact 0
@@ -2291,8 +2289,8 @@ proc ruff::document {namespaces args} {
         -recurse false
         -pagesplit none
         -sortnamespaces true
-        -title ""
         -locale en
+        -section 3tcl
     }
 
     array set opts $args
@@ -2302,6 +2300,14 @@ proc ruff::document {namespaces args} {
     if {$opts(-pagesplit) eq "none" && $opts(-makeindex)} {
         app::log_error "Option -makeindex ignored if -pagesplit is specified as none."
         set opts(-makeindex) false
+    }
+    if {![info exists opts(-product)]} {
+        set opts(-product) [string trim [lindex $namespaces 0] :]
+        lappend args -product $opts(-product)
+    }
+    if {![info exists opts(-title)]} {
+        set opts(-title) [string totitle $opts(-product)]
+        lappend args -title $opts(-title)
     }
 
     ::msgcat::mclocale $opts(-locale)
@@ -2343,9 +2349,6 @@ proc ruff::document {namespaces args} {
     if {$opts(-recurse)} {
         set namespaces [namespace_tree $namespaces]
     }
-
-    # TBD - make sane the use of -modulename
-    lappend args -modulename $opts(-title)
 
     if {$opts(-preamble) ne ""} {
         # TBD - format of -preamble argument passed to formatters
@@ -2487,17 +2490,16 @@ proc ruff::private::document_self {args} {
 
     file mkdir $opts(-outdir)
     set namespaces [list ::ruff ::ruff::app ::ruff::sample]
-    set title "Ruff! - Runtime Formatting Function Reference (V$::ruff::version)"
     set common_args [list \
                          -compact $opts(-compact) \
                          -format $opts(-format) \
                          -recurse $opts(-includeprivate) \
-                         -title $title \
                          -makeindex $opts(-makeindex) \
                          -pagesplit $opts(-pagesplit) \
                          -preamble $::ruff::_ruff_intro \
                          -autopunctuate $opts(-autopunctuate) \
                          -locale $opts(-locale) \
+                         -product "Ruff!" \
                          -version $::ruff::version]
     if {$opts(-includeprivate)} {
         lappend common_args -recurse 1 -includeprivate 1
@@ -2505,26 +2507,13 @@ proc ruff::private::document_self {args} {
         lappend common_args -excludeprocs {^[_A-Z]}
     }
     switch -exact -- $opts(-format) {
-        doctools {
-            error "Formatter '$opts(-format)' not implemented for generating Ruff! documentation."
-            # Not implemented yet
-            document $namespaces {*}$common_args \
-                -output [file join $opts(-outdir) ruff.man] \
-                -hidenamespace ::ruff \
-                -keywords [list "documentation generation"] \
-                -modulename ::ruff
-        }
         markdown {
             document $namespaces {*}$common_args \
                 -output [file join $opts(-outdir) ruff.md] \
-                -title $title \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
                 -includesource $opts(-includesource)
         }
         html {
-            if {[info exists opts(-stylesheets)]} {
-                lappend common_args -stylesheets $opts(-stylesheets)
-            }
             if {[info exists opts(-navigation)]} {
                 if {"fixed" in $opts(-navigation)} {
                     app::log_error "Warning: \"fixed\" navigation pane option no longer supported. Falling back to \"sticky\"."
@@ -2534,14 +2523,12 @@ proc ruff::private::document_self {args} {
             }
             document $namespaces {*}$common_args \
                 -output [file join $opts(-outdir) ruff.html] \
-                -title $title \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
                 -includesource $opts(-includesource)
         }
         nroff {
             document $namespaces {*}$common_args \
                 -output [file join $opts(-outdir) ruff.3tcl] \
-                -title $title \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
                 -includesource $opts(-includesource)
         }
@@ -2568,11 +2555,11 @@ proc ruff::private::distribute {{dir {}}} {
         formatter.tcl
         formatter_html.tcl
         formatter_markdown.tcl
+        formatter_nroff.tcl
         ruff-html.js
         ruff-index.js
         ruff-html.css
         ruff-md.css
-        ruff-yui.css
         ../doc/sample.tcl
         ../doc/ruff.html
         ../doc/ruff_ruff.html

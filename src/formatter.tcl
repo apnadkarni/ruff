@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Ashok P. Nadkarni
+# Copyright (c) 2019-2021, Ashok P. Nadkarni
 # All rights reserved.
 # See the file LICENSE in the source root directory for license.
 
@@ -950,9 +950,6 @@ oo::class create ruff::formatter::Formatter {
         #   -title STRING - the title for the documentation.
         #    Used as the title for the document.
         #    If undefined, the string "Reference" is used.
-        #   -stylesheets URLLIST - if specified, the stylesheets passed in URLLIST
-        #    are used instead of the built-in styles. Note the built-in YUI is
-        #    always included.
 
         set Namespaces [dict keys $ns_info]
         set References [dict create]
@@ -965,7 +962,6 @@ oo::class create ruff::formatter::Formatter {
                  -navigation {left normal} \
                  -pagesplit none \
                  -title "" \
-                 -modulename "Reference" \
                  -sortnamespaces 1 \
                  -autopunctuate 0 \
                 ]

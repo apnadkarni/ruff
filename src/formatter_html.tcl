@@ -81,36 +81,27 @@ oo::class create ruff::formatter::Html {
         # append Header "<link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans|Noto+Serif|Droid+Sans+Mono'>"
         set titledesc [my Option -title]
         append Header "<title>$titledesc</title>\n"
-        if {[my Option? -stylesheets stylesheets]} {
-            # APN - append Header "<style>\n[read_ruff_file ruff-yui.css]\n</style>\n"
-            foreach url $stylesheets {
-                append Header "<link rel='stylesheet' type='text/css' href='$url' />"
-            }
+
+        # TBD - -embedcss option
+        if {0} {
+            append Header "<link rel='stylesheet' type='text/css' href='../src/ruff-html.css' />"
         } else {
-            # Use built-in styles
-            if {0} {
-                append Header "<link rel='stylesheet' type='text/css' href='../src/ruff-html.css' />"
-            } else {
-                append Header "<style>\n" \
-                    [read_ruff_file ruff-html.css] \
-                    "</style>\n"
-            }
+            append Header "<style>\n" \
+                [read_ruff_file ruff-html.css] \
+                "</style>\n"
         }
+
         append Header "<script>[read_ruff_file ruff-html.js]</script>"
         append Header "</head>\n<body>\n"
         append Header "<div class='ruff-layout'>\n"
 
-        set navpos left
-        foreach navopt [my Option -navigation] {
-            if {$navopt in {left right}} {
-                set navpos $navopt
-            } elseif {$navopt ni {scrolled sticky fixed}} {
-                app::log_error "Ignoring unknown navigation option \"$navopt\"."
-            }
-        }
         append Header "<header class='ruff-layout-header ruff-hd'>\n"
         if {$titledesc ne ""} {
-            append Header "<a style='text-decoration:none;' href='[my SymbolReference :: {}]'>$titledesc</a>\n\n"
+            if {[my Option? -version version]} {
+                append Header "<a style='text-decoration:none;' href='[my SymbolReference :: {}]'>$titledesc (v$version)</a>\n\n"
+            } else {
+                append Header "<a style='text-decoration:none;' href='[my SymbolReference :: {}]'>$titledesc</a>\n\n"
+            }
         }
         # Theme control button
         append Header {
@@ -120,11 +111,6 @@ oo::class create ruff::formatter::Html {
             </div>
         }
         append Header </header>
-
-        if {[my Option? -modulename modulename] && $modulename ne ""} {
-            # TBD - do we need a modulename option?
-          #  append Header [AddHeading 1 $modulename]
-        }
 
         # Generate the Footer used by all files
         append Footer "<footer class='ruff-layout-footer ruff-ft'>"
@@ -147,7 +133,6 @@ oo::class create ruff::formatter::Html {
         set    Document $Header
         append Document "<main class='ruff-layout-main ruff-bd'>"
         set    DocumentNamespace $ns
-        # append Document "<div id='yui-main'><div class='yui-b'>"
 
         return
     }
