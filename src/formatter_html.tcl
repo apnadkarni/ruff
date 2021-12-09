@@ -373,7 +373,7 @@ oo::class create ruff::formatter::Html {
 
         set main_title "Start page"
         set main_ref [ns_file_base {}]
-        set index_ref [ns_file_base _docindex]
+        set index_ref [ns_file_base -docindex]
 
         set scrolling ""
         foreach opt [my Option -navigation {}] {

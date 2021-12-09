@@ -106,22 +106,21 @@ namespace eval ruff {
         Ruff! is authored by [Ashok P. Nadkarni](https://www.magicsplat.com).
 
         It uses the `textutil` package from
-        [tcllib](https://core.tcl-lang.org/tcllib) and a modified version of the
+        [tcllib](https://core.tcl-lang.org/tcllib), a modified version of the
         Markdown inline parser from the
-        [Caius](http://caiusproject.com/) project.
+        [Caius](http://caiusproject.com/) project, and portions of the
+        `nroff` generator from Tcllib's `doctools` package.
     }
 
     variable _ruff_preamble {
 
         ## Usage
 
-        Ruff! is not intended to be a standalone script. Rather the package
-        provides commands that should be driven from a script that controls
-        which particular namespaces, classes etc. are to be included.
+        ### Usage from a script
 
-        To document a package, first load it into a Tcl interpreter.
-        Then load `ruff` and invoke the [document] command to document
-        classes and commands within one or more namespaces.
+        To document a package or packages, first load them into a Tcl
+        interpreter. Then load `ruff` and invoke the [document] command to
+        document classes and commands within one or more namespaces.
 
         For example, the following command will document the `NS` namespace using
         the built-in HTML formatter.
@@ -129,14 +128,32 @@ namespace eval ruff {
         package require ruff
         ::ruff::document ::NS
         ````
-        The output will be written to `NS.html`.
+        The output will be written to `NS.html`. The [document] command takes
+        a number of options which control what is documented, output formats,
+        layouts etc.
 
-        The following will document the namespace `NS`, `NS2` and their children,
-        splitting the output across multiple pages.
+        For example, the following will document the namespace `NS`, `NS2` and
+        their children, splitting the output across multiple pages.
+
         ````
         ::ruff::document {::NS ::NS2} -output docs.html -recurse true -pagesplit namespace
         ````
-        Refer to [document] for various other options.
+
+        ### Usage from the command line
+
+        For simpler cases, documentation can also be generated from the command
+        line by invoking the `ruff.tcl` script. Assuming the `NS` and `NS2`
+        namespaces were implemented by the `mypac` package,
+
+        ````
+        tclsh /path/to/ruff.tcl "::NS ::NS2" -preeval "package require mypac" \
+            -output docs.html -recurse true -pagesplit namespace
+        ````
+
+        All arguments passed to the script are passed to the [document]
+        command. The `-preeval` option is required to load the packages being
+        documented, generally using the `package require` or `source`
+        commands.
 
         ## Documenting procedures
 
@@ -430,8 +447,15 @@ namespace eval ruff {
         ```
 
         When generating HTML from Markdown, it is generally desirable to specify
-        a CSS style file. The `ruff-md.css` file provides some *minimal* CSS that
-        resembles the output of the internal HTML formatter.
+        a CSS style file. The `ruff-md.css` file provides some *minimal* CSS
+        for this purpose.
+
+        ### Nroff formatter
+
+        The Nroff formatter generates documentation in the format required
+        for Unix manpages. It generates documentation as a single manpage
+        or as a page per namespace with the `-pagesplit namespace` option.
+        It does not support navigation links or table of contents.
     }
 
     namespace eval private {
@@ -539,7 +563,7 @@ proc ruff::private::ns_file_base {ns_or_class {ext {}}} {
         if {$ProgramOptions(-pagesplit) eq "none" || $ns eq "::"} {
             set fn "$output_file_base$output_file_ext"
         } else {
-            set fn "${output_file_base}[regsub -all {:+|[^-\w_.]} $ns _]$output_file_ext"
+            set fn "${output_file_base}[regsub -all {:+|[^-\w_.]} $ns -]$output_file_ext"
         }
         set ns_file_base_cache($ns) $fn
     }
@@ -2257,6 +2281,9 @@ proc ruff::document {namespaces args} {
     # -preamble TEXT - Any text that should be appear at the beginning
     #  outside of any namespace documentation, for example an introduction
     #  or overview of a package. `TEXT` is assumed to be in Ruff! syntax.
+    # -preeval SCRIPT - a script to run before generating documentation. This
+    #  is generally used from the command line to load the packages being
+    #  documented.
     # -product PRODUCTNAME - the short name of the product. If unspecified, this
     #  defaults to the first element in $namespaces. This should be a short name
     #  and is used by formatters to identify the documentation set as a whole
@@ -2298,9 +2325,14 @@ proc ruff::document {namespaces args} {
         -sortnamespaces true
         -locale en
         -section 3tcl
+        -preeval ""
     }
 
     array set opts $args
+
+    # Load any dependencies
+    uplevel #0 $opts(-preeval)
+
     if {![info exists opts(-makeindex)]} {
         set opts(-makeindex) [expr {$opts(-pagesplit) ne "none"}]
     }
@@ -2371,7 +2403,10 @@ proc ruff::document {namespaces args} {
 
     set docs [$formatter generate_document $classprocinfodict {*}$args]
     if {$opts(-makeindex)} {
-        lappend docs _docindex [$formatter generate_document_index]
+        set docindex [$formatter generate_document_index]
+        if {$docindex ne ""} {
+            lappend docs -docindex $docindex
+        }
     }
 
     $formatter destroy

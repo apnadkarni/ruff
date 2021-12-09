@@ -18,13 +18,15 @@ proc ruff::private::document_self {args} {
                         -pagesplit namespace \
                         -makeindex true \
                         -includeprivate false \
-                        -outdir [file join $ruff_dir .. doc] \
                         -compact 0 \
                         -locale en \
                         -autopunctuate true \
                         -navigation {left sticky}
                        ]
     array set opts $args
+    if {![info exists opts(-outdir)]} {
+        set opts(-outdir) [file join [file dirname [ruff_dir]] doc $opts(-format)]
+    }
 
     if {![namespace exists ::ruff::sample]} {
         if {[file exists [file join $ruff_dir sample.tcl]]} {
@@ -91,7 +93,8 @@ proc ruff::private::document_self {args} {
 
 
 if {[catch {
-    ruff::private::document_self {*}$argv
+    ruff::private::document_self -format html {*}$argv
+    ruff::private::document_self -format nroff {*}$argv
 } result]} {
     puts stderr $result
 } else {
