@@ -501,9 +501,9 @@ oo::class create ruff::formatter::Html {
         #append Header "<link rel='stylesheet' type='text/css' href='$cssfile' />"
 
         if {[file extension $asset] eq ".css"} {
-            return "<style>[read_asset_file $path utf-8]</style>"
+            return "<style>[read_asset_file $asset utf-8]</style>"
         } else {
-            return "<script>[read_asset_file $path utf-8]</script>"
+            return "<script>[read_asset_file $asset utf-8]</script>"
         }
     }
 

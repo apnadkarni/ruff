@@ -2459,153 +2459,6 @@ proc ruff::private::wrap_text {text args} {
     return [string replace $text 0 [expr {[string length $prefix]-1}] $prefix1]
 }
 
-proc ruff::private::document_self {args} {
-    # Generates documentation for Ruff!
-    # -formatter FORMATTER - the formatter to use (default html)
-    # -outdir DIRPATH - the output directory where files will be stored. Note
-    #  files in this directory with the same name as the output files
-    #  will be overwritten! (default sibling `doc` directory)
-    # -includesource BOOLEAN - if `true`, include source code in documentation.
-    #  Default is `false`.
-
-    variable ruff_dir
-    variable names
-
-    array set opts [list \
-                        -format html \
-                        -includesource true \
-                        -pagesplit namespace \
-                        -makeindex true \
-                        -includeprivate false \
-                        -outdir [file join $ruff_dir .. doc] \
-                        -compact 0 \
-                        -locale en \
-                        -autopunctuate true \
-                        -navigation {left sticky}
-                       ]
-    array set opts $args
-
-    if {![namespace exists ::ruff::sample]} {
-        if {[file exists [file join $ruff_dir sample.tcl]]} {
-            uplevel #0 [list source [file join $ruff_dir sample.tcl]]
-        } else {
-            uplevel #0 [list source [file join $ruff_dir .. doc sample.tcl]]
-        }
-    }
-
-    load_formatters
-
-    file mkdir $opts(-outdir)
-    set namespaces [list ::ruff ::ruff::app ::ruff::sample]
-    set common_args [list \
-                         -compact $opts(-compact) \
-                         -format $opts(-format) \
-                         -recurse $opts(-includeprivate) \
-                         -makeindex $opts(-makeindex) \
-                         -pagesplit $opts(-pagesplit) \
-                         -preamble $::ruff::_ruff_intro \
-                         -autopunctuate $opts(-autopunctuate) \
-                         -locale $opts(-locale) \
-                         -product "Ruff!" \
-                         -version $::ruff::version]
-    if {$opts(-includeprivate)} {
-        lappend common_args -recurse 1 -includeprivate 1
-    } else {
-        lappend common_args -excludeprocs {^[_A-Z]}
-    }
-    switch -exact -- $opts(-format) {
-        markdown {
-            document $namespaces {*}$common_args \
-                -output [file join $opts(-outdir) ruff.md] \
-                -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
-                -includesource $opts(-includesource)
-        }
-        html {
-            if {[info exists opts(-navigation)]} {
-                if {"fixed" in $opts(-navigation)} {
-                    app::log_error "Warning: \"fixed\" navigation pane option no longer supported. Falling back to \"sticky\"."
-                    set opts(-navigation) sticky
-                }
-                lappend common_args -navigation $opts(-navigation)
-            }
-            document $namespaces {*}$common_args \
-                -output [file join $opts(-outdir) ruff.html] \
-                -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
-                -includesource $opts(-includesource)
-        }
-        nroff {
-            document $namespaces {*}$common_args \
-                -output [file join $opts(-outdir) ruff.3tcl] \
-                -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
-                -includesource $opts(-includesource)
-        }
-        default {
-            # The formatter may exist but we do not support it for
-            # out documentation.
-            error "Format '$opts(-format)' not implemented for generating Ruff! documentation."
-        }
-    }
-    return
-}
-
-proc ruff::private::distribute {{dir {}}} {
-
-    if {$dir eq ""} {
-        set dir [file join [ruff_dir] .. dist]
-    }
-    set outname ruff-[version]
-    set dir [file join $dir $outname]
-    file delete -force $dir;    # Empty it out
-    file mkdir $dir
-    set files {
-        pkgIndex.tcl
-        ruff.tcl
-        formatter.tcl
-        formatter_html.tcl
-        formatter_markdown.tcl
-        formatter_nroff.tcl
-        ../doc/sample.tcl
-        ../doc/ruff.html
-        ../doc/ruff_ruff.html
-        ../doc/ruff_ruff_sample.html
-        ../LICENSE
-        ../README.md
-        ../ruff_logo.png
-    }
-    file copy -force -- {*}[lmap file $files {file join [ruff_dir] $file}] $dir
-    file copy -force -- [file join [ruff_dir] msgs] $dir
-
-    # Copy assets
-    # Ensure minimized versions are up to date
-    set assets_dir [file join $dir assets]
-    foreach {max min} {
-        ruff.css ruff-min.css
-        ruff.js ruff-min.js
-        ruff-index.js ruff-index-min.js
-    } {
-        # Minimization: csso -i ruff-html.css -o ruff-html-min.css
-        # Minimization: uglifyjs ruff.js -b beautify=false -b ascii_only=true -o ruff-min.js
-        set max [file join [ruff_dir] assets $max]
-        set min [file join [ruff_dir] assets $min]
-        if {[file mtime $max] > [file mtime $min]} {
-            app::log_error "File $max is newer than $min. Please regenerate $min."
-            exit 1
-        }
-        file copy -force -- $min $assets_dir
-    }
-    file copy -force [file join [ruff_dir] assets ruff-md.css] $assets_dir
-
-    # Zip it all
-    set zipfile [file join $dir ${outname}.zip]
-    file delete -force -- $zipfile
-    set curdir [pwd]
-    try {
-        cd [file join $dir ..]
-        exec {*}[auto_execok zip.exe] -r ${outname}.zip $outname
-    } finally {
-        cd $curdir
-    }
-}
 
 source [file join $::ruff::private::ruff_dir formatter.tcl]
 
@@ -2634,15 +2487,14 @@ package provide ruff $::ruff::version
 # If we are the main script, accept commands.
 if {[info exists argv0] &&
     [file dirname [file normalize [info script]/...]] eq [file dirname [file normalize $argv0/...]]} {
-    switch -exact -- [lindex $argv 0] {
-        document {
-            ruff::private::document_self {*}[lrange $argv 1 end]
-        }
-        distribute {
-            ruff::private::distribute {*}[lrange $argv 1 end]
-        }
-        default {
-            puts "Unknown command \"[lindex $argv 0]\"."
+    if {[catch {
+        ruff::document {*}$::argv
+    } result]} {
+        puts stderr $result
+        puts stderr $::errorInfo
+    } else {
+        if {$result ne ""} {
+            puts stdout $result
         }
     }
 }
