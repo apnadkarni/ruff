@@ -294,3 +294,14 @@ oo::class create ruff::sample::FunnyMethods {
     export + * > < & _
 
 }
+
+
+oo::class create ruff::sample::MetaClass {
+    superclass ::oo::class
+}
+
+ruff::sample::MetaClass create ruff::sample::MetaClassInstance {
+    method amethod {} {
+        # A method of a class created from a metaclass
+    }
+}

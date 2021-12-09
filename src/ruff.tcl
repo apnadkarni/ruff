@@ -312,6 +312,9 @@ namespace eval ruff {
         reasonable place for such information, or include it in the general
         information section as described in the next section.
 
+        Classes created from user-defined metaclasses are also included
+        in the generated documentation.
+
         ## Documenting namespaces
 
         In addition to procedures and classes within a namespace, there may be a
@@ -1942,6 +1945,17 @@ proc ruff::private::extract_ooclass {classname args} {
     return $result
 }
 
+proc ruff::private::get_metaclasses {} {
+    set metaclasses [list ]
+    set pending [list ::oo::class]
+    while {[llength $pending]} {
+        set pending [lassign $pending metaclass]
+        lappend metaclasses $metaclass
+        # Add subclasses of the metaclass as metaclasses
+        lappend pending {*}[info class subclasses $metaclass]
+    }
+    return $metaclasses
+}
 
 proc ruff::private::extract_procs_and_classes {pattern args} {
     # Extracts metainformation for procs and classes 
@@ -1981,7 +1995,10 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
 
     set classes [dict create]
     if {"classes" in $opts(-include)} {
-        set class_names [info class instances ::oo::class $pattern]
+        set class_names [list ]
+        foreach metaclass [get_metaclasses] {
+            lappend class_names {*}[info class instances $metaclass $pattern]
+        }
         foreach class_name $class_names {
             # This covers child namespaces as well which we do not want
             # so filter those out. The differing pattern interpretations in
