@@ -83,15 +83,9 @@ oo::class create ruff::formatter::Html {
         append Header "<title>$titledesc</title>\n"
 
         # TBD - -embedcss option
-        if {0} {
-            append Header "<link rel='stylesheet' type='text/css' href='../src/ruff-html.css' />"
-        } else {
-            append Header "<style>\n" \
-                [read_ruff_file ruff-html.css] \
-                "</style>\n"
-        }
+        append Header [my GetAsset ruff-min.css ruff.css]
+        append Header [my GetAsset ruff-min.js ruff.js]
 
-        append Header "<script>[read_ruff_file ruff-html.js]</script>"
         append Header "</head>\n<body>\n"
         append Header "<div class='ruff-layout'>\n"
 
@@ -208,7 +202,8 @@ oo::class create ruff::formatter::Html {
         }
         append Document "\n</ul>\n"
         append Document "</div>"
-        append Document "<script>\n[read_ruff_file ruff-index.js]\nmyIndexInit();</script>\n"
+        append Document [my GetAsset ruff-index-min.js ruff-index.js]
+        append Document "<script>\nmyIndexInit();</script>\n"
 
         return [my DocumentEnd]
     }
@@ -488,6 +483,28 @@ oo::class create ruff::formatter::Html {
             <    &lt;
             >    &gt;
         } $s]
+    }
+
+    method GetAsset {asset args} {
+        # Returns HTML to be included for an asset
+        #   asset - the name of asset to be included
+        #   args - files to check for ensuring $asset is up to date
+        #
+        set path [file join [ruff_dir] assets $asset]
+        foreach arg $args {
+            set arg [file join [ruff_dir] assets $arg]
+            if {[file exists $arg] && [file mtime $arg] > [file mtime $path]} {
+                error "Asset $arg is newer than $path. Regenerate $path."
+            }
+        }
+        # For development - this link will not work for deployment
+        #append Header "<link rel='stylesheet' type='text/css' href='$cssfile' />"
+
+        if {[file extension $asset] eq ".css"} {
+            return "<style>[read_asset_file $path utf-8]</style>"
+        } else {
+            return "<script>[read_asset_file $path utf-8]</script>"
+        }
     }
 
     method extension {} {
