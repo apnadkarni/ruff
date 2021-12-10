@@ -83,11 +83,11 @@ oo::class create ruff::formatter::Html {
         append Header "<title>$titledesc</title>\n"
 
         if {[my Option -linkassets 1]} {
-            append Header [my GetAsset ruff-min.css ruff.css]
-            append Header [my GetAsset ruff-min.js ruff.js]
-        } else {
             append Header [my LinkAsset ruff-min.css ruff.css]
             append Header [my LinkAsset ruff-min.js ruff.js]
+        } else {
+            append Header [my GetAsset ruff-min.css ruff.css]
+            append Header [my GetAsset ruff-min.js ruff.js]
         }
 
         append Header "</head>\n<body>\n"

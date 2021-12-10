@@ -19,7 +19,7 @@ msgcat::mcload [file join [file dirname [info script]] msgs]
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 1.3.0
+    variable version 2.0
     proc version {} {
         # Returns the Ruff! version.
         variable version
@@ -92,29 +92,32 @@ namespace eval ruff {
         Ruff! features along with the associated source code from which
         it was generated.
 
-        ## Downloads and Install
+        ## Downloads
 
         Download the Ruff! distribution from
         <https://sourceforge.net/projects/magicsplat/files/ruff/>. The
         source code repository is at <https://github.com/apnadkarni/ruff>.
 
+        ## Installation
+
         To install, extract the distribution to a directory listed in your
         Tcl `auto_path` variable.
 
-        ## Version History
+        ## History
 
         Changes in v2.0:
 
-        * Added Nroff formatter for Unix manpages
-        * Added themes with end-user control
-        * Added end-user control for positioning navigation pane
-        * Classes defined with metaclasses are included
-        * Generated proc and method synopsis can be overridden, for example
+        * Added Nroff formatter for Unix manpages.
+        * Added themes with end-user selection.
+        * Added end-user control for positioning navigation pane.
+        * Classes defined with metaclasses are included.
+        * Proc and method synopsis overrides, for example
           to distinguish invocation options.
-        * **Incompatibility** Generated HTML and CSS templates have changed
-          and require modern browsers (no IE support)
-        * **Incompatibility** The `-stylesheets` option is not supported.
-        * **Incompatibility** The `-navigation` option only takes `scrolled`
+        * Web assets are linked by default (option `-linkassets`).
+        * **Incompatibility:** Generated HTML and CSS templates have changed
+          and require modern browsers (no Internet Explorer support).
+        * **Incompatibility:** The `-stylesheets` option is not supported.
+        * **Incompatibility:** The `-navigation` option only takes `scrolled`
           `sticky` as valid values.
         * [Bug fixes](https://github.com/apnadkarni/ruff/issues?q=is%3Aissue+is%3Aclosed+milestone%3Av2.0+label%3Abug)
 
