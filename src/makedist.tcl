@@ -17,12 +17,11 @@ proc ruff::private::distribute {{dir {}}} {
         formatter_markdown.tcl
         formatter_nroff.tcl
         ../doc/sample.tcl
-        ../doc/ruff.html
-        ../doc/ruff_ruff.html
-        ../doc/ruff_ruff_sample.html
+        ../doc/html/ruff.html
+        ../doc/html/ruff-ruff.html
+        ../doc/html/ruff-ruff-sample.html
         ../LICENSE
         ../README.md
-        ../ruff_logo.png
     }
     file copy -force -- {*}[lmap file $files {file join [ruff_dir] $file}] $dir
     file copy -force -- [file join [ruff_dir] msgs] $dir
@@ -47,6 +46,7 @@ proc ruff::private::distribute {{dir {}}} {
         file copy -force -- $min $assets_dir
     }
     file copy -force [file join [ruff_dir] assets ruff-md.css] $assets_dir
+    file copy -force [file join [ruff_dir] assets ruff-logo.png] $assets_dir
 
     # Zip it all
     set zipfile [file join $dir ${outname}.zip]

@@ -34,8 +34,8 @@ proc ruff::private::document_self {args} {
 
     load_formatters
 
-    file mkdir $opts(-outdir)
-    file copy -force [file join [ruff_dir] assets ruff_logo.png] $opts(-outdir)
+    file mkdir [file join $opts(-outdir) assets]
+    file copy -force [file join [ruff_dir] assets ruff-logo.png] [file join $opts(-outdir) assets ruff-logo.png]
 
     set namespaces [list ::ruff ::ruff::app ::ruff::sample]
     set common_args [list \

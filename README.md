@@ -10,7 +10,8 @@ See https://ruff.magicsplat.com for features and reference documentation.
 For additional examples of Ruff! generated documentation, see
 [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html),
 [iocp](https://iocp.magicsplat.com),
-[tcl-promise](https://tcl-promise.magicsplat.com/#::promise::ptask),
+[cffi](https://cffi.magicsplat.com),
+[tcl-promise](https://tcl-promise.magicsplat.com),
 [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).

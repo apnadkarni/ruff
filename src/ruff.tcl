@@ -82,8 +82,8 @@ namespace eval ruff {
         [cffi](https://cffi.magicsplat.com),
         [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html),
         [iocp](https://iocp.magicsplat.com),
-        [obex](https://obex.magicsplat.com),
-        [promise](https://promise.magicsplat.com).
+        [obex](https://tcl-obex.magicsplat.com),
+        [promise](https://tcl-promise.magicsplat.com).
 
         ## Documentation
 
@@ -2390,6 +2390,8 @@ proc ruff::document {namespaces args} {
     if {![info exists opts(-linkassets)]} {
         set opts(-linkassets) [expr {$opts(-pagesplit) ne "none"}]
     }
+    lappend args -linkassets $opts(-linkassets)
+
     if {![info exists opts(-product)]} {
         set opts(-product) [string trim [lindex $namespaces 0] :]
         lappend args -product $opts(-product)

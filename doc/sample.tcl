@@ -93,9 +93,9 @@ namespace eval ruff::sample {
 
         Images can be specified using either Markdown or HTML:
 
-        * ![alt img](ruff_logo.png) `![alt img](ruff_logo.png)`
-        * <img src='ruff_logo.png' alt='logo'/> `<img src='ruff_logo.png' alt='logo'/>`
-        * <img src="ruff_logo.png" alt=""/> `<img src="ruff_logo.png" alt=""/>`
+        * ![alt img](assets/ruff-logo.png) `![alt img](assets/ruff-logo.png)`
+        * <img src='assets/ruff-logo.png' alt='logo'/> `<img src='assets/ruff-logo.png' alt='logo'/>`
+        * <img src="assets/ruff-logo.png" alt=""/> `<img src="assets/ruff-logo.png" alt=""/>`
 
         <!-- The empty alt above is for testing bugfix #49 -->
     }
