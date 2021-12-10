@@ -1,3 +1,10 @@
+/* Ruff! JS helpers
+   To minimize:
+
+   uglifyjs ruff.js -o ruff-min.js
+
+ */
+
 function toggleSource( id )
 {
     /* Copied from Rails */
@@ -89,7 +96,7 @@ function ruffMoveNavPane() {
 // Immediately invoked function to set the theme on initial load
 (function () {
     // Set up the themes
-    themeNames = ["v1", "light", "dark", "slate", "solar", "clouds"];
+    themeNames = ["v1", "light", "dark", "slate", "solar", "clouds", "maroon"];
     // Store list of ruff themes since they may change between releases
     // localStorage can only contain strings
     localStorage.ruff_themes = JSON.stringify(themeNames);

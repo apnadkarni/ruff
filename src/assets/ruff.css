@@ -1,3 +1,6 @@
+/* To minimize:
+csso -i ruff.css -o ruff-min.cscsso -i ruff.css -o ruff-min.csss
+*/
 :root {
   --ruff-grid-template-rows: min-content 1fr;
   /* TBD - maybe use fit-content(200px) instead of minmax(...) */
@@ -267,6 +270,48 @@
   --ruff-ft-minor-color: var(--ruff-ft-color);
   --ruff-ft-background-color: var(--ruff-bd-background-color);
 }
+
+.ruff-theme-maroon {
+  --ruff-color: #844;
+  --ruff-background-color: whitesmoke;
+  --ruff-minor-color: #888;
+
+  --ruff-layout-background-color: white;
+
+  --ruff-hd-color: inherit;
+  --ruff-hd-background-color: inherit;
+  --ruff-hd-font: large bold;
+
+  --ruff-nav-background-color: maroon;
+  --ruff-nav-color: white;
+  --ruff-nav-tip-color: var(--ruff-nav-background-color);
+  --ruff-nav-tip-background-color: whitesmoke;
+  --ruff-nav-highlight-color: var(--ruff-nav-background-color);
+  --ruff-nav-highlight-background-color: var(--ruff-nav-color);
+
+  --ruff-bd-background-color: var(--ruff-layout-background-color);
+  --ruff-bd-color: #212121;
+  --ruff-bd-minor-color: var(--ruff-minor-color);
+  --ruff-bd-table-border: #808080;
+  --ruff-bd-code-color: var(--ruff-bd-color);
+  --ruff-bd-code-background-color: #fff0f0;
+  --ruff-bd-h-background-color: inherit;
+  --ruff-bd-h-color: var(--ruff-nav-background-color);
+  /* H1 - special treatment to match navigation pane */
+  --ruff-bd-h1-color: var(--ruff-nav-color);
+  --ruff-bd-h1-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-a-color: #44f;
+  --ruff-bd-sourcelink-color: var(--ruff-bd-a-color);
+  --ruff-bd-sourcelink-background-color: var(--ruff-bd-background-color);
+  --ruff-bd-synopsis-border: none;
+  --ruff-bd-tip-color: inherit;
+  --ruff-bd-tip-background-color: whitesmoke;
+
+  --ruff-ft-color: var(--ruff-bd-minor-color);
+  --ruff-ft-minor-color: var(--ruff-ft-color);
+  --ruff-ft-background-color: var(--ruff-bd-background-color);
+}
+
 
 #ruffButtonBar {
   float: right;
