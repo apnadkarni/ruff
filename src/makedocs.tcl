@@ -29,16 +29,14 @@ proc ruff::private::document_self {args} {
     }
 
     if {![namespace exists ::ruff::sample]} {
-        if {[file exists [file join $ruff_dir sample.tcl]]} {
-            uplevel #0 [list source [file join $ruff_dir sample.tcl]]
-        } else {
-            uplevel #0 [list source [file join $ruff_dir .. doc sample.tcl]]
-        }
+        uplevel #0 [list source [file join [file dirname [ruff_dir]] doc sample.tcl]]
     }
 
     load_formatters
 
     file mkdir $opts(-outdir)
+    file copy -force [file join [ruff_dir] assets ruff_logo.png] $opts(-outdir)
+
     set namespaces [list ::ruff ::ruff::app ::ruff::sample]
     set common_args [list \
                          -compact $opts(-compact) \
