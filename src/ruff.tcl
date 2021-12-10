@@ -101,6 +101,23 @@ namespace eval ruff {
         To install, extract the distribution to a directory listed in your
         Tcl `auto_path` variable.
 
+        ## Version History
+
+        Changes in v2.0:
+
+        * Added Nroff formatter for Unix manpages
+        * Added themes with end-user control
+        * Added end-user control for positioning navigation pane
+        * Classes defined with metaclasses are included
+        * Generated proc and method synopsis can be overridden, for example
+          to distinguish invocation options.
+        * **Incompatibility** Generated HTML and CSS templates have changed
+          and require modern browsers (no IE support)
+        * **Incompatibility** The `-stylesheets` option is not supported.
+        * **Incompatibility** The `-navigation` option only takes `scrolled`
+          `sticky` as valid values.
+        * [Bug fixes](https://github.com/apnadkarni/ruff/issues?q=is%3Aissue+is%3Aclosed+milestone%3Av2.0+label%3Abug)
+
         ## Credits
 
         Ruff! is authored by [Ashok P. Nadkarni](https://www.magicsplat.com).
