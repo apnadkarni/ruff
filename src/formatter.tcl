@@ -1197,7 +1197,12 @@ oo::class create ruff::formatter::Formatter {
 
                         if {[my ResolvableReference? $lbl $scope code_link]} {
                             # RUFF CODE REFERENCE
-                            set url [my Escape [dict get $code_link ref]]
+                            # Bug #42 - do not escape else links for names like '<' do not work
+                            if {0} {
+                                set url [my Escape [dict get $code_link ref]]
+                            } else {
+                                set url [dict get $code_link ref]
+                            }
                             if {! $display_text_specified} {
                                 set txt [my Escape [dict get $code_link label]]
                             }
