@@ -2293,8 +2293,10 @@ proc ruff::document {namespaces args} {
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
     #  procedure is also included. Default value is false.
-    # -linkassets - if true (default), CSS and Javascript assets are linked.
-    #  Otherwise, they are embedded inline. Only supported by the HTML formatter.
+    # -linkassets - if true, CSS and Javascript assets are linked. If false,
+    #  they are embedded inline. If unspecified, defaults to `false` if the
+    #  `-pagesplit` option is `none` and `true` otherwise. Only supported by the
+    #  HTML formatter.
     # -locale STRING - sets the locale of the pre-defined texts in the generated
     #  outputs such as **Description** or **Return value** (Default `en`). To add a
     #  locale for a language, create a message catalog file in the `msgs`
@@ -2353,7 +2355,6 @@ proc ruff::document {namespaces args} {
 
     array set opts {
         -compact 0
-        -linkassets true
         -excludeprocs {}
         -excludeclasses {}
         -format html
@@ -2385,6 +2386,9 @@ proc ruff::document {namespaces args} {
     if {$opts(-pagesplit) eq "none" && $opts(-makeindex)} {
         app::log_error "Option -makeindex ignored if -pagesplit is specified as none."
         set opts(-makeindex) false
+    }
+    if {![info exists opts(-linkassets)]} {
+        set opts(-linkassets) [expr {$opts(-pagesplit) ne "none"}]
     }
     if {![info exists opts(-product)]} {
         set opts(-product) [string trim [lindex $namespaces 0] :]
