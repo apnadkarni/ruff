@@ -73,6 +73,7 @@ namespace eval ruff::sample {
         external resources, e.g. [example](https://www.example.com) or
         explicit, e.g. <https://ruff.magicsplat.com>.
 
+
         ### Preformatted blocks
 
         ````
@@ -93,7 +94,10 @@ namespace eval ruff::sample {
         Images can be specified using either Markdown or HTML:
 
         * ![alt img](ruff_logo.png) `![alt img](ruff_logo.png)`
-        * <img src='ruff_logo.png'/> `<img src='ruff_logo.png'/>`
+        * <img src='ruff_logo.png' alt='logo'/> `<img src='ruff_logo.png' alt='logo'/>`
+        * <img src="ruff_logo.png" alt=""/> `<img src="ruff_logo.png" alt=""/>`
+
+        <!-- The empty alt above is for testing bugfix #49 -->
     }
 
     namespace eval ensemble_proc {
