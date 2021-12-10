@@ -39,6 +39,7 @@ proc ruff::private::document_self {args} {
 
     set namespaces [list ::ruff ::ruff::app ::ruff::sample]
     set common_args [list \
+                         -outdir $opts(-outdir) \
                          -compact $opts(-compact) \
                          -format $opts(-format) \
                          -recurse $opts(-includeprivate) \
@@ -57,7 +58,7 @@ proc ruff::private::document_self {args} {
     switch -exact -- $opts(-format) {
         markdown {
             document $namespaces {*}$common_args \
-                -output [file join $opts(-outdir) ruff.md] \
+                -outdir $opts(-outdir) \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
                 -includesource $opts(-includesource)
         }
@@ -70,13 +71,13 @@ proc ruff::private::document_self {args} {
                 lappend common_args -navigation $opts(-navigation)
             }
             document $namespaces {*}$common_args \
-                -output [file join $opts(-outdir) ruff.html] \
+                -outdir $opts(-outdir) \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
                 -includesource $opts(-includesource)
         }
         nroff {
             document $namespaces {*}$common_args \
-                -output [file join $opts(-outdir) ruff.3tcl] \
+                -outdir $opts(-outdir) \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
                 -includesource $opts(-includesource)
         }
@@ -94,7 +95,7 @@ if {[catch {
     ruff::private::document_self -format html {*}$argv
     ruff::private::document_self -format nroff {*}$argv
 } result]} {
-    puts stderr $result
+    puts stderr "Error: $result"
 } else {
     if {$result ne ""} {
         puts stdout $result

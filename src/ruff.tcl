@@ -79,8 +79,8 @@ namespace eval ruff {
 
         The Ruff! documentation itself is produced with Ruff!. Examples of other
         packages documented with Ruff! include
-        [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html),
         [cffi](https://cffi.magicsplat.com),
+        [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html),
         [iocp](https://iocp.magicsplat.com),
         [obex](https://obex.magicsplat.com),
         [promise](https://promise.magicsplat.com).
@@ -119,6 +119,8 @@ namespace eval ruff {
         * **Incompatibility:** The `-stylesheets` option is not supported.
         * **Incompatibility:** The `-navigation` option only takes `scrolled`
           `sticky` as valid values.
+        * **Incompatibility:** The `-output` option is not supported. Use
+          `-outfile` and `-outdir` instead.
         * [Bug fixes](https://github.com/apnadkarni/ruff/issues?q=is%3Aissue+is%3Aclosed+milestone%3Av2.0+label%3Abug)
 
         ## Credits
@@ -156,7 +158,7 @@ namespace eval ruff {
         their children, splitting the output across multiple pages.
 
         ````
-        ::ruff::document {::NS ::NS2} -output docs.html -recurse true -pagesplit namespace
+        ::ruff::document {::NS ::NS2} -outdir /path/to/docdir -recurse true -pagesplit namespace
         ````
 
         ### Usage from the command line
@@ -167,7 +169,7 @@ namespace eval ruff {
 
         ````
         tclsh /path/to/ruff.tcl "::NS ::NS2" -preeval "package require mypac" \
-            -output docs.html -recurse true -pagesplit namespace
+            -outfile docs.html -recurse true -pagesplit none
         ````
 
         All arguments passed to the script are passed to the [document]
@@ -449,7 +451,7 @@ namespace eval ruff {
         To generate documentation, including private namespaces, in multipage
         format:
         ````
-        ruff::document ::ruff -recurse true -pagesplit namespace -output full/ruff.html -title "Ruff! internal reference"
+        ruff::document ::ruff -recurse true -pagesplit namespace -outdir ./docs -title "Ruff! internal reference"
         ````
 
         ### Markdown formatter
@@ -462,7 +464,7 @@ namespace eval ruff {
         The following generates Ruff! documentation in Markdown format and
         then uses `pandoc` to convert it to HTML.
         ```
-        ruff::document ::ruff -format markdown -output ruff.md -title "Ruff! reference"
+        ruff::document ::ruff -format markdown -outfile ruff.md -title "Ruff! reference"
         ```
         Then from the shell or Windows command line,
         ```
@@ -2309,12 +2311,13 @@ proc ruff::document {namespaces args} {
     #  do not support stickiness and will resort to scrolling behaviour.
     #  box (see below). Only supported by the `html` formatter.
     #  (Default `scrolled`)
-    # -output PATH - Specifies the path of the output file.
-    #  If the output is to multiple files, this is the path of the
-    #  documentation top. Other files will named accordingly by
-    #  appending the namespace. **Existing files are overwritten.**
-    #  By default, the output file is written to the current directory
-    #  with a name constructed from the first namespace specified.
+    # -outdir DIRPATH - Specifies the output directory path. Defaults to the
+    #  current directory.
+    # -outfile FILENAME - Specifies the name of the output file.
+    #  If the output is to multiple files, this is the name of the
+    #  documentation main page. Other files will named accordingly by
+    #  appending the namespace. Defaults to a name constructed from the first
+    #  namespace specified.
     # -pagesplit SPLIT - if `none`, a single documentation file is produced.
     #  If `namespace`, a separate file is output for every namespace.
     # -preamble TEXT - Any text that should be appear at the beginning
@@ -2358,7 +2361,6 @@ proc ruff::document {namespaces args} {
         -include {procs classes}
         -includeprivate false
         -includesource false
-        -output ""
         -preamble ""
         -recurse false
         -pagesplit none
@@ -2369,6 +2371,10 @@ proc ruff::document {namespaces args} {
     }
 
     array set opts $args
+
+    if {[info exists opts(-output)]} {
+        error "Option -output is obsolete. Use -outdir and/or -outfile instead."
+    }
 
     # Load any dependencies
     uplevel #0 $opts(-preeval)
@@ -2415,16 +2421,29 @@ proc ruff::document {namespaces args} {
 
     set formatter [[load_formatter $opts(-format)] new]
 
+    # Determine output file paths
     array unset private::ns_file_base_cache
-    if {$opts(-output) eq ""} {
-        set opts(-output) [namespace tail [lindex $namespaces 0]]
+    if {![info exists opts(-outdir)]} {
+        set opts(-outdir) [pwd]
+    } else {
+        set opts(-outdir) [file normalize $opts(-outdir)]
     }
-    set private::output_file_base [file root [file tail $opts(-output)]]
-    set private::output_file_ext [file extension $opts(-output)]
+    if {![info exists opts(-outfile)]} {
+        # Special cases  - :: -> "", ::foo::bar:: -> ::foo::bar
+        set ns [string trimright [lindex $namespaces 0] :]
+        if {$ns eq ""} {
+            error "Option -outfile must be specified for namespace ::."
+        }
+        set opts(-outfile) [namespace tail $ns]
+    }
+    if {[file tail $opts(-outfile)] ne $opts(-outfile)} {
+        error "Option -outfile must not include a path."
+    }
+    set private::output_file_base [file root $opts(-outfile)]
+    set private::output_file_ext [file extension $opts(-outfile)]
     if {$private::output_file_ext in {{} .}} {
         set private::output_file_ext .[$formatter extension]
     }
-    set outdir [file dirname $opts(-output)]
 
     if {$opts(-recurse)} {
         set namespaces [namespace_tree $namespaces]
@@ -2450,14 +2469,14 @@ proc ruff::document {namespaces args} {
         }
     }
 
-    $formatter copy_assets $outdir
+    $formatter copy_assets $opts(-outdir)
 
     $formatter destroy
 
-    file mkdir $outdir
+    file mkdir $opts(-outdir)
     foreach {ns doc} $docs {
         set fn [private::ns_file_base $ns]
-        set fd [open [file join $outdir $fn] w]
+        set fd [open [file join $opts(-outdir) $fn] w]
         fconfigure $fd -encoding utf-8
         if {[catch {
             puts $fd $doc

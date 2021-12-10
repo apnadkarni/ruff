@@ -1,3 +1,4 @@
+error "This file is obsolete!"
 # Copyright (c) 2009-2019, Ashok P. Nadkarni
 # All rights reserved.
 # See the file WOOF_LICENSE in the Woof! root directory for license
