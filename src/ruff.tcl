@@ -2288,11 +2288,13 @@ proc ruff::document {namespaces args} {
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
     #  procedure is also included. Default value is false.
+    # -linkassets - if true (default), CSS and Javascript assets are linked.
+    #  Otherwise, they are embedded inline. Only supported by the HTML formatter.
     # -locale STRING - sets the locale of the pre-defined texts in the generated
     #  outputs such as **Description** or **Return value** (Default `en`). To add a
     #  locale for a language, create a message catalog file in the `msgs`
-    #  directory using the provided `de.msg` as a template. Currently only the
-    #  HTML formatter makes use of this option.
+    #  directory using the provided `de.msg` as a template. Only supported by the
+    #  HTML formatter.
     # -makeindex BOOLEAN - if true, an index page is generated for classes
     #  and methods. Default value is true. Not supported by all formatters.
     # -navigation OPT - Controls navigation box behaviour when
@@ -2345,6 +2347,7 @@ proc ruff::document {namespaces args} {
 
     array set opts {
         -compact 0
+        -linkassets true
         -excludeprocs {}
         -excludeclasses {}
         -format html
@@ -2418,6 +2421,7 @@ proc ruff::document {namespaces args} {
     if {$private::output_file_ext in {{} .}} {
         set private::output_file_ext .[$formatter extension]
     }
+    set outdir [file dirname $opts(-output)]
 
     if {$opts(-recurse)} {
         set namespaces [namespace_tree $namespaces]
@@ -2443,13 +2447,14 @@ proc ruff::document {namespaces args} {
         }
     }
 
+    $formatter copy_assets $outdir
+
     $formatter destroy
 
-    set dir [file dirname $opts(-output)]
-    file mkdir $dir
+    file mkdir $outdir
     foreach {ns doc} $docs {
         set fn [private::ns_file_base $ns]
-        set fd [open [file join $dir $fn] w]
+        set fd [open [file join $outdir $fn] w]
         fconfigure $fd -encoding utf-8
         if {[catch {
             puts $fd $doc

@@ -82,9 +82,13 @@ oo::class create ruff::formatter::Html {
         set titledesc [my Option -title]
         append Header "<title>$titledesc</title>\n"
 
-        # TBD - -embedcss option
-        append Header [my GetAsset ruff-min.css ruff.css]
-        append Header [my GetAsset ruff-min.js ruff.js]
+        if {[my Option -linkassets 1]} {
+            append Header [my GetAsset ruff-min.css ruff.css]
+            append Header [my GetAsset ruff-min.js ruff.js]
+        } else {
+            append Header [my LinkAsset ruff-min.css ruff.css]
+            append Header [my LinkAsset ruff-min.js ruff.js]
+        }
 
         append Header "</head>\n<body>\n"
         append Header "<div class='ruff-layout'>\n"
@@ -485,6 +489,25 @@ oo::class create ruff::formatter::Html {
         } $s]
     }
 
+    method LinkAsset {asset args} {
+        # Returns HTML to be included to link to an asset
+        #   asset - the name of asset to be included
+        #   args - files to check for ensuring $asset is up to date
+        #
+        set path [file join [ruff_dir] assets $asset]
+        foreach arg $args {
+            set arg [file join [ruff_dir] assets $arg]
+            if {[file exists $arg] && [file mtime $arg] > [file mtime $path]} {
+                error "Asset $arg is newer than $path. Regenerate $path."
+            }
+        }
+        if {[file extension $asset] eq ".css"} {
+            return "<link rel='stylesheet' type='text/css' href='assets/$asset' />\n"
+        } else {
+            return "<script type='text/javascript' src='assets/$asset'></script>\n"
+        }
+    }
+
     method GetAsset {asset args} {
         # Returns HTML to be included for an asset
         #   asset - the name of asset to be included
@@ -497,13 +520,22 @@ oo::class create ruff::formatter::Html {
                 error "Asset $arg is newer than $path. Regenerate $path."
             }
         }
-        # For development - this link will not work for deployment
-        #append Header "<link rel='stylesheet' type='text/css' href='$cssfile' />"
 
         if {[file extension $asset] eq ".css"} {
-            return "<style>[read_asset_file $asset utf-8]</style>"
+            return "<style>[read_asset_file $asset utf-8]</style>\n"
         } else {
-            return "<script>[read_asset_file $asset utf-8]</script>"
+            return "<script>[read_asset_file $asset utf-8]</script>\n"
+        }
+    }
+
+    method copy_assets {outdir} {
+        # Copies any CSS and Javascript assets to the output directory.
+        #   outdir - root directory where output files will be stored
+        #
+
+        file mkdir [file join $outdir assets]
+        foreach fn {ruff-min.css ruff-min.js ruff-index-min.js} {
+            file copy -force [file join [ruff_dir] assets $fn] [file join $outdir assets $fn]
         }
     }
 

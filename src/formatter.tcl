@@ -914,6 +914,14 @@ oo::class create ruff::formatter::Formatter {
         return
     }
 
+    method copy_assets {outdir} {
+        # Copies any assets to the output directory.
+        #   outdir - directory where output files will be stored
+        #
+        # A derived class may override this if it makes uses of any
+        # static assets.
+    }
+
     method extension {} {
         # Returns the default file extension to be used for output files.
         error "Method extension not overridden by derived class."
