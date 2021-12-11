@@ -110,10 +110,11 @@ namespace eval ruff {
         * Added Nroff formatter for Unix manpages.
         * Added themes with end-user selection.
         * Added end-user control for positioning navigation pane.
-        * Classes defined with metaclasses are included.
+        * Classes defined with metaclasses are recognized.
         * Proc and method synopsis overrides, for example
           to distinguish invocation options.
-        * Web assets are linked by default (option `-linkassets`).
+        * Web assets are linked by default (option `-linkassets`) instead
+          of being embedded.
         * **Incompatibility:** Generated HTML and CSS templates have changed
           and require modern browsers (no Internet Explorer support).
         * **Incompatibility:** The `-stylesheets` option is not supported.
@@ -121,6 +122,8 @@ namespace eval ruff {
           `sticky` as valid values.
         * **Incompatibility:** The `-output` option is not supported. Use
           `-outfile` and `-outdir` instead.
+        * **Incompatibility:** Output file names use hyphen as a separator
+          instead of underscore.
         * [Bug fixes](https://github.com/apnadkarni/ruff/issues?q=is%3Aissue+is%3Aclosed+milestone%3Av2.0+label%3Abug)
 
         ## Credits

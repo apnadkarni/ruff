@@ -18,4 +18,7 @@ and
 
 ## Release notes for 2.0
 
-See https://ruff.magicsplat.com/ruff.html#History for features and reference documentation.
+See https://ruff.magicsplat.com/ruff.html#History.
+
+NOTE 2.0 HAS SEVERAL INCOMPATIBILITIES VIS-A-VIS 1.x IN OPTIONS AND GENERATED
+OUTPUT FORMAT. See above link for details.
