@@ -79,11 +79,17 @@ namespace eval ruff {
 
         The Ruff! documentation itself is produced with Ruff!. Examples of other
         packages documented with Ruff! include
+        [iocp](https://iocp.magicsplat.com),
         [cffi](https://cffi.magicsplat.com),
         [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html),
-        [iocp](https://iocp.magicsplat.com),
+        [apave](https://aplsimple.github.io/en/tcl/pave/apave.html),
+        [baltip](https://aplsimple.github.io/en/tcl/baltip/baltip.html),
+        [hl-tcl](https://aplsimple.github.io/en/tcl/hl_tcl/hl_tcl.html),
+        [promise](https://tcl-promise.magicsplat.com),
         [obex](https://tcl-obex.magicsplat.com),
-        [promise](https://tcl-promise.magicsplat.com).
+        [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
+        and
+        [tcl-vix](https://tcl-vix.magicsplat.com/).
 
         ## Documentation
 
