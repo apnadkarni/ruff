@@ -27,7 +27,7 @@ namespace eval ruff {
     }
 
     variable _ruff_intro {
-        ## Introduction
+        # Introduction to Ruff!
 
         Ruff! (Runtime function formatter) is a documentation generation system
         for programs written in the Tcl programming language. Ruff! uses runtime
@@ -1680,8 +1680,7 @@ proc ruff::private::extract_ensemble {ens} {
             }
         }
     }
-
-    return [lmap cmd $cmds {
+    set ens_cmds [lmap cmd $cmds {
         if {[dict exists $ens_config(-map) $cmd]} {
             set real_cmd [dict get $ens_config(-map) $cmd]
         } else {
@@ -1704,6 +1703,20 @@ proc ruff::private::extract_ensemble {ens} {
         dict set result ensemble $ens
         set result
     }]
+
+    dict set ens_info name $ens
+    dict set ens_info body [list paragraph "$ens ensemble command"]
+    dict set ens_info summary "$ens ensemble command"
+    dict set ens_info parameters {
+        {term subcmd definition "Subcommand" type parameter}
+        {term args definition "Arguments for subcommand" type parameter}
+    }
+    dict set ens_info class {}
+    dict set ens_info proctype proc
+    dict set ens_info source "# $ens ensemble command"
+
+    return [linsert $ens_cmds[set ens_cmds {}] 0 $ens_info]
+
 }
 
 proc ruff::private::extract_ooclass_method {class method} {
@@ -1886,7 +1899,7 @@ proc ruff::private::extract_ooclass {classname args} {
     # destructor - method definition for the destructor
     #   returned by extract_ooclass_method
     #
-    # Each method definition is in the format returned by the 
+    # Each method definition is in the format returned by the
     # extract_ooclass_method command with an additional keys:
     # visibility - indicates whether the method is 'public' or 'private'
 

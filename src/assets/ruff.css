@@ -576,8 +576,10 @@ span.ns_scope a[href]:hover {
 .ruff-bd h1 {
   background-color: var(--ruff-bd-h1-background-color);
   color: var(--ruff-bd-h1-color);
-  padding-left: 0.2em;
   font-family: "Times New Roman", serif;
+  /* Get H1 text to align with other text while having padding from border */
+  padding-left: 2px;
+  margin-left: -2px;
 }
 
 .ruff-bd h2 {

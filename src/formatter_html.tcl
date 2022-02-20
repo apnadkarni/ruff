@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Ashok P. Nadkarni
+# Copyright (c) 2019-2022, Ashok P. Nadkarni
 # All rights reserved.
 # See the file LICENSE in the source root directory for license.
 
@@ -231,7 +231,7 @@ oo::class create ruff::formatter::Html {
         }
         set name [namespace tail $fqn]
         dict set linkinfo label $name
-        dict set NavigationLinks $anchor $linkinfo
+        dict set NavigationLinks $anchor [dict create LinkInfo $linkinfo Type $type]
         dict set GlobalIndex $anchor $linkinfo
         if {[string length $ns]} {
             set ns_link [my ToHtml [markup_reference $ns]]
@@ -263,7 +263,7 @@ oo::class create ruff::formatter::Html {
                 dict set linkinfo tip $tip
             }
             dict set linkinfo label $text
-            dict set NavigationLinks $anchor $linkinfo
+            dict set NavigationLinks $anchor [dict create LinkInfo $linkinfo Type heading]
             # NOTE: <a></a> empty because the text itself may contain anchors.
             set heading "<a name='$anchor'></a>[my ToHtml $text $scope]"
         } else {
@@ -425,10 +425,23 @@ oo::class create ruff::formatter::Html {
 
         # Add on the per-namespace navigation links
         if {[dict size $NavigationLinks]} {
-            dict for {text link} $NavigationLinks {
+            set last_lead_word ""
+            dict for {text navinfo} $NavigationLinks {
+                set link [dict get $navinfo LinkInfo]
                 set label [my Escape [string trimleft [dict get $link label] :]]
                 set level  [dict get $link level]
                 set href [dict get $link href]
+                if {[dict get $navinfo Type] eq "proc"} {
+                    catch {
+                        set remain [lassign $label lead_word]
+                        if {[llength $remain] > 0} {
+                            if {$lead_word eq $last_lead_word} {
+                                set label "<span style='visibility:hidden'>&nbsp;&nbsp;&nbsp;</span> [join $remain { }]"
+                            }
+                        }
+                        set last_lead_word $lead_word
+                    }
+                }
                 if {[dict exists $link tip]} {
                     append Document "<li class='ruff-toc$level ruff-tip'><a href='$href'>$label</a><span class='ruff-tiptext'>[dict get $link tip]</span></li>"
                 } else {
