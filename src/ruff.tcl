@@ -1680,6 +1680,7 @@ proc ruff::private::extract_ensemble {ens} {
             }
         }
     }
+    set ens_subcmds {}
     set ens_cmds [lmap cmd $cmds {
         if {[dict exists $ens_config(-map) $cmd]} {
             set real_cmd [dict get $ens_config(-map) $cmd]
@@ -1699,21 +1700,37 @@ proc ruff::private::extract_ensemble {ens} {
                             implementing ensemble command \"$ens $cmd\": $result"
             continue
         }
+        dict set ens_subcmds $cmd real_cmd "$ens $cmd"
+        dict set ens_subcmds $cmd summary [dict get $result summary]
         dict set result name "$ens $cmd"
         dict set result ensemble $ens
         set result
     }]
 
+    set subcmds [lsort -dictionary [dict keys $ens_subcmds]]
+    set subcmd_list [join [lmap subcmd $subcmds {
+        return -level 0 "\[$subcmd\]\[[dict get $ens_subcmds $subcmd real_cmd]\]"
+    }] ", "]
+
+    set body [list ]
+    set definitions [lmap subcmd $subcmds {
+        list term "\[$subcmd\]\[[dict get $ens_subcmds $subcmd real_cmd]\]" definition [dict get $ens_subcmds $subcmd summary]
+    }]
+    lappend body paragraph "The ensemble supports the following subcommands:"
+    lappend body definitions $definitions
+
     dict set ens_info name $ens
-    dict set ens_info body [list paragraph "$ens ensemble command"]
-    dict set ens_info summary "$ens ensemble command"
-    dict set ens_info parameters {
-        {term subcmd definition "Subcommand" type parameter}
-        {term args definition "Arguments for subcommand" type parameter}
-    }
+    dict set ens_info body $body
+    dict set ens_info summary "A command ensemble."
+    dict set ens_info parameters \
+        [list \
+             [list term subcmd definition "One of $subcmd_list" type parameter] \
+             [list term args definition "Subcommand arguments" type parameter]]
+    dict set ens_info parameters {}
+    dict set ens_info synopsis [list "subcommand ..."]
     dict set ens_info class {}
     dict set ens_info proctype proc
-    dict set ens_info source "# $ens ensemble command"
+    #dict set ens_info source "# $ens ensemble command"
 
     return [linsert $ens_cmds[set ens_cmds {}] 0 $ens_info]
 
