@@ -7,6 +7,10 @@ csso -i ruff.css -o ruff-min.cscsso -i ruff.css -o ruff-min.csss
   --ruff-grid-template-columns: minmax(200px, min-content) 1fr;
   --ruff-grid-template-areas: "toparea toparea" "navarea mainarea" "botarea botarea";
   --ruff-tip-z-index: 10;
+
+  /* This is dynamically set in the generated body to set level of indentation for h2... */
+  --ruff-nav-toc-offset: 0em;
+
   /*
    * This padding is to ensure auto scrollbar does not change centering pages
    * between pages that need a scrollbar and those that do not.
@@ -479,16 +483,16 @@ span.ns_scope a[href]:hover {
   font-weight: bold; /* Override */
 }
 .ruff-nav .ruff-toc2 {
-  padding-left: 1em;
+  padding-left: calc(0em + var(--ruff-nav-toc-offset,0));
 }
 .ruff-nav .ruff-toc3 {
-  padding-left: 2em;
+  padding-left: calc(1em + var(--ruff-nav-toc-offset,0));
 }
 .ruff-nav .ruff-toc4 {
-  padding-left: 2.5em;
+  padding-left: calc(1.5em + var(--ruff-nav-toc-offset,0));
 }
 .ruff-nav .ruff-toc5 {
-  padding-left: 3em;
+  padding-left: calc(2em + var(--ruff-nav-toc-offset,0));
 }
 .ruff-nav hr {
   color: inherit;
@@ -683,7 +687,7 @@ span.ns_scope a[href]:hover {
 /* Specialization for index page body */
 
 .ruff_index {
-  #font-size: small;
+  font-size: smaller;
 }
 
 .ruff_index ul li {

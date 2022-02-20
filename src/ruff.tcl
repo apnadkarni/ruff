@@ -27,7 +27,7 @@ namespace eval ruff {
     }
 
     variable _ruff_intro {
-        # Introduction to Ruff!
+        # Introduction
 
         Ruff! (Runtime function formatter) is a documentation generation system
         for programs written in the Tcl programming language. Ruff! uses runtime
@@ -1707,6 +1707,8 @@ proc ruff::private::extract_ensemble {ens} {
         set result
     }]
 
+    # Construct the documentation for the main ensemble command
+
     set subcmds [lsort -dictionary [dict keys $ens_subcmds]]
     set subcmd_list [join [lmap subcmd $subcmds {
         return -level 0 "\[$subcmd\]\[[dict get $ens_subcmds $subcmd real_cmd]\]"
@@ -1718,6 +1720,7 @@ proc ruff::private::extract_ensemble {ens} {
     }]
     lappend body paragraph "The ensemble supports the following subcommands:"
     lappend body definitions $definitions
+    lappend body paragraph "Refer to the reference documentation of each subcommand for details."
 
     dict set ens_info name $ens
     dict set ens_info body $body

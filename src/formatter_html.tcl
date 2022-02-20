@@ -90,7 +90,15 @@ oo::class create ruff::formatter::Html {
             append Header [my GetAsset ruff-min.js ruff.js]
         }
 
-        append Header "</head>\n<body>\n"
+        append Header "</head>\n"
+
+        # If we are not splitting pages, h1 headings are shown in navigation alongside
+        # h2.. headers so the latter need to be offset further.
+        if {[my Option -pagesplit none] eq "none"} {
+            append Header "<body style='--ruff-nav-toc-offset: 1em;'>\n"
+        } else {
+            append Header "<body>\n"; # Take default of 0 defined in ruff css
+        }
         append Header "<div class='ruff-layout'>\n"
 
         append Header "<header class='ruff-layout-header ruff-hd'>\n"
@@ -253,6 +261,7 @@ oo::class create ruff::formatter::Html {
         if {![string is integer -strict $level]} {
             set level [dict get $HeaderLevels $level]
         }
+
         set do_link [expr {$level >= [dict get $HeaderLevels nonav] ? false : true}]
 
         if {$do_link} {
@@ -263,9 +272,19 @@ oo::class create ruff::formatter::Html {
                 dict set linkinfo tip $tip
             }
             dict set linkinfo label $text
-            dict set NavigationLinks $anchor [dict create LinkInfo $linkinfo Type heading]
+
             # NOTE: <a></a> empty because the text itself may contain anchors.
             set heading "<a name='$anchor'></a>[my ToHtml $text $scope]"
+
+            # Namespace headers do not get a navigation link if page splitting
+            # because they are already highlighted in the namespaces section in
+            # navigation. Hack - this assumes level 1 heading is not used within
+            # the content.
+            if {$level > 1 || [my Option -pagesplit none] eq "none"} {
+
+                dict set NavigationLinks $anchor [dict create LinkInfo $linkinfo Type heading]
+            }
+             
         } else {
             set heading [my ToHtml $text $scope]
         }
