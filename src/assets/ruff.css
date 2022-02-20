@@ -612,6 +612,13 @@ span.ns_scope a[href]:hover {
     margin-bottom: 0.2em;
 }
 
+.ruff-bd p code, .ruff-bd p .ruff_cmd {
+    background-color: var(--ruff-bd-code-background-color);
+    border-radius: 4px;
+    padding-left: 2px;
+    padding-right: 2px;
+}
+
 .ruff-bd pre {
   color: var(--ruff-bd-code-color);
   background-color: var(--ruff-bd-code-background-color);
