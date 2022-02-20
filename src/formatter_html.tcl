@@ -478,7 +478,7 @@ oo::class create ruff::formatter::Html {
                 "<a href='#top'>Top</a>, " \
                 "<a href='[my SymbolReference :: {}]'>Main</a>"
             if {[my Option -makeindex true]} {
-                append links ", <a href='[my SymbolReference _docindex {}]'>Index</a>"
+                append links ", <a href='[my SymbolReference -docindex {}]'>Index</a>"
             }
         }
         set links "<span class='ruff-uplink'>$links</span>"
