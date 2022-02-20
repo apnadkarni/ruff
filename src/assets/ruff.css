@@ -608,8 +608,9 @@ span.ns_scope a[href]:hover {
 .ruff-bd h3.ruffclass, .ruff-bd h3.ruffproc, .ruff-bd h3.ruffmethod,
 .ruff-bd h4.ruffclass, .ruff-bd h4.ruffproc, .ruff-bd h4.ruffmethod,
 .ruff-bd h5.ruffclass, .ruff-bd h5.ruffproc, .ruff-bd h5.ruffmethod {
-    border-bottom: thin solid var(--ruff-brand-color);
+    border-bottom: thin solid;
     margin-bottom: 0.2em;
+    margin-top: 2em;
 }
 
 .ruff-bd p code, .ruff-bd p .ruff_cmd {
