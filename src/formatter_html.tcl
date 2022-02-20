@@ -20,7 +20,7 @@ oo::class create ruff::formatter::Html {
     constructor args {
         set HeaderLevels {
             class 3
-            proc 4
+            proc 3
             method 4
             nonav 5
             parameters 5

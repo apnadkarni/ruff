@@ -489,10 +489,10 @@ span.ns_scope a[href]:hover {
   padding-left: calc(1em + var(--ruff-nav-toc-offset,0));
 }
 .ruff-nav .ruff-toc4 {
-  padding-left: calc(1.5em + var(--ruff-nav-toc-offset,0));
+  padding-left: calc(2em + var(--ruff-nav-toc-offset,0));
 }
 .ruff-nav .ruff-toc5 {
-  padding-left: calc(2em + var(--ruff-nav-toc-offset,0));
+  padding-left: calc(3em + var(--ruff-nav-toc-offset,0));
 }
 .ruff-nav hr {
   color: inherit;
