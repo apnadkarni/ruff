@@ -21,7 +21,38 @@ For additional examples of Ruff! generated documentation, see
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
+
+## Release notes for 2.1
+
+This release mainly has cosmetic changes in presentation.
+
+* Ensemble command includes table to subcommands.
+* Show command synopsis in navigation pane tooltip.
+* Tweaks to themes and navigation.
+* Bug fix: broken link to index page.
+
 ## Release notes for 2.0
+
+* Added Nroff formatter for Unix manpages.
+* Added themes with end-user selection.
+* Added end-user control for positioning navigation pane.
+* Classes defined with metaclasses are recognized.
+* Proc and method synopsis overrides, for example
+  to distinguish invocation options.
+* Web assets are linked by default (option `-linkassets`) instead
+  of being embedded.
+* **Incompatibility:** Generated HTML and CSS templates have changed
+  and require modern browsers (no Internet Explorer support).
+* **Incompatibility:** The `-stylesheets` option is not supported.
+* **Incompatibility:** The `-navigation` option only takes `scrolled`
+  `sticky` as valid values.
+* **Incompatibility:** The `-output` option is not supported. Use
+  `-outfile` and `-outdir` instead.
+* **Incompatibility:** Output file names use hyphen as a separator
+  instead of underscore.
+* [Bug fixes](https://github.com/apnadkarni/ruff/issues?q=is%3Aissue+is%3Aclosed+milestone%3Av2.0+label%3Abug)
+
+
 
 See https://ruff.magicsplat.com/ruff.html#History.
 
