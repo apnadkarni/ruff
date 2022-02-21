@@ -1,5 +1,5 @@
 /* To minimize:
-csso -i ruff.css -o ruff-min.cscsso -i ruff.css -o ruff-min.csss
+csso -i ruff.css -o ruff-min.cscsso -i ruff.css -o ruff-min.css
 */
 :root {
   --ruff-grid-template-rows: min-content 1fr;
@@ -620,7 +620,7 @@ span.ns_scope a[href]:hover {
     margin-top: 2em;
 }
 
-.ruff-bd p code, .ruff-bd p .ruff_cmd {
+.ruff-bd code, .ruff-bd .ruff_cmd {
     background-color: var(--ruff-bd-code-background-color);
     border-radius: 4px;
     padding-left: 2px;
