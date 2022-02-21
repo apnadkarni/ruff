@@ -19,7 +19,7 @@ msgcat::mcload [file join [file dirname [info script]] msgs]
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 2.0
+    variable version 2.1
     proc version {} {
         # Returns the Ruff! version.
         variable version
