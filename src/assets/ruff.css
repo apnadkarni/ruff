@@ -419,8 +419,11 @@ span.ns_scope a[href]:hover {
 .ruff-tip:hover .ruff-tiptext {
   visibility: visible;
 }
+.ruff-tiptext pre {
+  margin-top: 0;
+}
 .ruff-tiptext {
-  width: 20em;
+  min-width: 20em;
   text-align: left;
   border:none;
   position: absolute;

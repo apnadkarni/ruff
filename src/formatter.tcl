@@ -293,10 +293,18 @@ oo::class create ruff::formatter::Formatter {
 
         set scope [namespace qualifiers $fqn]
         if {[info exists summary]} {
-            my AddProgramElementHeading $proctype $fqn $summary
+            if {[info exists synopsis]} {
+                my AddProgramElementHeading $proctype $fqn $summary $synopsis
+            } else {
+                my AddProgramElementHeading $proctype $fqn $summary
+            }
             my AddParagraph $summary $scope
         } else {
-            my AddProgramElementHeading $proctype $fqn
+            if {[info exists synopsis]} {
+                my AddProgramElementHeading $proctype $fqn "" $synopsis
+            } else {
+                my AddProgramElementHeading $proctype $fqn
+            }
         }
 
         if {[info exists synopsis]} {

@@ -101,7 +101,7 @@ oo::class create ruff::formatter::Nroff {
         return [nroff_postprocess $doc]
     }
 
-    method AddProgramElementHeading {type fqn {tooltip {}}} {
+    method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
         # Adds heading for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
         #  fqn - Fully qualified name of element.

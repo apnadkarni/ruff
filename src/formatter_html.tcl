@@ -220,11 +220,13 @@ oo::class create ruff::formatter::Html {
         return [my DocumentEnd]
     }
 
-    method AddProgramElementHeading {type fqn {tooltip {}}} {
+    method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
         # Adds heading for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
         #  fqn - Fully qualified name of element.
-        #  tooltip - The tooltip lines, if any, to be displayed in the navigation pane.
+        #  tooltip - The tooltip lines, if any, to be displayed in navigation pane.
+        #  synopsis - The synopsis to be displayed along with tooltip. Alternating
+        #     list of command name and argument list.
         # In addition to adding the heading to the document, a link
         # is also added to the collection of navigation links.
 
@@ -233,10 +235,18 @@ oo::class create ruff::formatter::Html {
         set anchor   [my Anchor $fqn]
         set href     [my SymbolReference $ns $fqn]
         set linkinfo [dict create level $level href $href ns $ns]
+
+        # Cosntruct tooltip from synopsis and tooltip
+        if {[llength $synopsis]} {
+            set tip "<pre>[join [my SynopsisToHtml $synopsis] \n]</pre>"
+        }
         if {[llength $tooltip]} {
-            set tip "[my ToHtml [string trim [join $tooltip { }]] $ns]\n"
+            append tip "[my ToHtml [string trim [join $tooltip { }]] $ns]\n"
+        }
+        if {[info exists tip]} {
             dict set linkinfo tip $tip
         }
+
         set name [namespace tail $fqn]
         dict set linkinfo label $name
         dict set NavigationLinks $anchor [dict create LinkInfo $linkinfo Type $type]
@@ -284,7 +294,6 @@ oo::class create ruff::formatter::Html {
 
                 dict set NavigationLinks $anchor [dict create LinkInfo $linkinfo Type heading]
             }
-             
         } else {
             set heading [my ToHtml $text $scope]
         }
@@ -355,13 +364,11 @@ oo::class create ruff::formatter::Html {
         return
     }
 
-    method AddSynopsis {synopsis scope} {
-        # Adds a Synopsis section to the document content.
+    method SynopsisToHtml {synopsis} {
+        # Returns the a list of HTML lines for a synopsis
         #  synopsis - List of alternating elements comprising the command portion
         #             and the parameter list for it.
-        #  scope  - The documentation scope of the content.
-
-        set text ""
+        set lines [list ]
         foreach {cmds params} $synopsis {
             set cmds   "<span class='ruff_cmd'>[my Escape [join $cmds { }]]</span>"
             if {[llength $params]} {
@@ -369,9 +376,19 @@ oo::class create ruff::formatter::Html {
             } else {
                 set params ""
             }
-            append text "$cmds $params<br>"
+            lappend lines "$cmds $params"
         }
-        append Document "<div class='ruff_synopsis'>$text</div>\n"
+        return $lines
+    }
+
+    method AddSynopsis {synopsis scope} {
+        # Adds a Synopsis section to the document content.
+        #  synopsis - List of alternating elements comprising the command portion
+        #             and the parameter list for it.
+        #  scope  - The documentation scope of the content.
+
+        set lines [my SynopsisToHtml $synopsis]
+        append Document "<div class='ruff_synopsis'>[join $lines <br>]</div>\n"
         return
     }
 
