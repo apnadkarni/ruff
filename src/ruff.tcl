@@ -1678,7 +1678,13 @@ proc ruff::private::extract_ensemble {ens} {
             continue
         }
         dict set ens_subcmds $cmd real_cmd "$ens $cmd"
-        dict set ens_subcmds $cmd summary [dict get $result summary]
+        if {[dict exists $result summary]} {
+            dict set ens_subcmds $cmd summary [dict get $result summary]
+        } elseif {[dict exists $result returns]} {
+            dict set ens_subcmds $cmd summary [dict get $result returns]
+        } else {
+            dict set ens_subcmds $cmd summary "Subcommand"
+        }
         dict set result name "$ens $cmd"
         dict set result ensemble $ens
         set result
@@ -1697,7 +1703,7 @@ proc ruff::private::extract_ensemble {ens} {
     }]
     lappend body paragraph "The ensemble supports the following subcommands:"
     lappend body definitions $definitions
-    lappend body paragraph "Refer to the reference documentation of each subcommand for details."
+    lappend body paragraph "Refer to the documentation of each subcommand for details."
 
     dict set ens_info name $ens
     dict set ens_info body $body
