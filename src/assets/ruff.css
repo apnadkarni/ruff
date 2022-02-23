@@ -486,16 +486,20 @@ span.ns_scope a[href]:hover {
   font-weight: bold; /* Override */
 }
 .ruff-nav .ruff-toc2 {
-  padding-left: calc(0em + var(--ruff-nav-toc-offset,0));
+  padding-left: calc(2em + var(--ruff-nav-toc-offset,0));
+  text-indent: -2em;
 }
 .ruff-nav .ruff-toc3 {
-  padding-left: calc(1em + var(--ruff-nav-toc-offset,0));
+  padding-left: calc(3em + var(--ruff-nav-toc-offset,0));
+  text-indent: -2em;
 }
 .ruff-nav .ruff-toc4 {
-  padding-left: calc(2em + var(--ruff-nav-toc-offset,0));
+  padding-left: calc(4em + var(--ruff-nav-toc-offset,0));
+  text-indent: -2em;
 }
 .ruff-nav .ruff-toc5 {
-  padding-left: calc(3em + var(--ruff-nav-toc-offset,0));
+  padding-left: calc(5em + var(--ruff-nav-toc-offset,0));
+  text-indent: -2em;
 }
 .ruff-nav hr {
   color: inherit;
