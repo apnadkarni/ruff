@@ -509,7 +509,8 @@ span.ns_scope a[href]:hover {
 
 .ruff-nav a:link, .ruff-nav a:visited, .ruff-nav a:hover {
   text-decoration: none;
-  color: inherit;
+  /* Bug #70 Edge/Chrome - color:inherit makes visited link keep browser visited color */
+  color: var(--ruff-nav-color);
   background-color: inherit;
 }
 
@@ -556,8 +557,8 @@ span.ns_scope a[href]:hover {
 
 .ruff-bd .ruff-uplink a[href], .ruff-bd .ruff-uplink a[href]:visited {
   text-decoration: underline;
-  /* Override bd link color */
-  color: inherit;
+  /* Buf #70, On Edge/Chrome, needed else shows browser's visited color */
+  color: var(--ruff-bd-h-color);
 }
 
 .ruff-bd table.ruff_deflist {
