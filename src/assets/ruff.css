@@ -532,6 +532,8 @@ span.ns_scope a[href]:hover {
 .ruff-nav .ruff-tiptext {
   background-color: var(--ruff-nav-tip-background-color);
   color: var(--ruff-nav-tip-color);
+  /* Fix Bug #72 */
+  text-indent: 0em;
 }
 
 /*** Main content styles ***/
