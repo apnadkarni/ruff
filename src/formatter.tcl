@@ -172,6 +172,18 @@ oo::class create ruff::formatter::Formatter {
         return
     }
 
+    method AddFenced {lines modifier scope} {
+        # Adds a list of fenced lines to document content.
+        #  lines - Preformatted text as a list of lines.
+        #  modifier - string appended to the fence, e.g. 
+        #  scope - The documentation scope of the content.
+        # [Formatter] provides a base implementation that ignores the
+        # modifier and treats the lines as preformatted lines.
+        # It may be overridden by derived classes.
+        my AddPreformatted $lines $scope
+        return
+    }
+
     method AddReferences {xrefs scope {title {}}} {
         # Adds reference list to document content.
         #  xrefs - List of cross references and links.
@@ -523,6 +535,9 @@ oo::class create ruff::formatter::Formatter {
                 }
                 preformatted {
                     my AddPreformatted $content $scope
+                }
+                fenced {
+                    my AddFenced {*}$content $scope
                 }
                 seealso -
                 default {

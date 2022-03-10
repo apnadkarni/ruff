@@ -364,6 +364,24 @@ oo::class create ruff::formatter::Html {
         return
     }
 
+    method AddFenced {lines modifier scope} {
+        # Adds a list of fenced lines to document content.
+        #  lines - Preformatted text as a list of lines.
+        #  modifier - string appended to the fence, e.g.
+        #  scope - The documentation scope of the content.
+
+        # See if it is a modifier we specialize, else just pass
+        # it to default implementation.
+        if {[lindex $modifier 0] eq "diagram"} {
+            set image_url [ruff::diagram::generate [join $lines \n] {*}[lrange $modifier 1 end]]
+            append Document "\n<img src=$image_url></img>\n"
+            return
+        }
+
+        next $lines $modifier $scope
+        return
+    }
+
     method SynopsisToHtml {synopsis} {
         # Returns the a list of HTML lines for a synopsis
         #  synopsis - List of alternating elements comprising the command portion

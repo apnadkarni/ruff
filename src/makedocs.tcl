@@ -94,8 +94,9 @@ proc ruff::private::document_self {args} {
 if {[catch {
     ruff::private::document_self -format html {*}$argv
     ruff::private::document_self -format nroff {*}$argv
-} result]} {
+} result edict]} {
     puts stderr "Error: $result"
+    puts [dict get $edict -errorinfo]
 } else {
     if {$result ne ""} {
         puts stdout $result

@@ -52,6 +52,8 @@ namespace eval ruff {
 
         * Supports inline formatting using Markdown syntax.
 
+        * Embedded diagrams in multiple formats
+
         * Program elements like command arguments, defaults and
         class relationships like inheritance are automatically derived.
 
@@ -394,9 +396,93 @@ namespace eval ruff {
         two pairs of `[]` else it will be treated as two separate symbol
         references. This is intentional.*
 
-
         If the text does not match a section heading or program element name, it
         is treated as a normal Markdown reference but a warning is emitted.
+
+        ## Diagram support
+
+        Diagrams can be embedded in multiple textual description formats
+        by appropriately tagging preformatted blocks. The following marks
+        the content as a `ditaa` textual description.
+
+        ````
+        ``` diagram kroki ditaa
+        +------------+   Ruff!   +---------------+
+        | Tcl script |---------->| HTML document |
+        +------------+           +---------------+
+        ```
+        ````
+
+        The above will produce
+
+        ``` diagram kroki ditaa
+        +------------+   Ruff!   +---------------+
+        | Tcl script |---------->| HTML document |
+        +------------+           +---------------+
+        ```
+
+        The general format of the `diagram` modifier is
+
+        ```
+        diagram GENERATOR ARG ...
+        ```
+
+        where `GENERATOR` is the diagram generator to use and is followed
+        by generator-specific arguments. Currently Ruff! supports `kroki` and
+        `ditaa` generators.
+
+        ### The `kroki` diagram generator
+
+        The `kroki` generator is based on the online diagram converter
+        at https://kroki.io which can convert multiple input formats.
+        For example, the block below in `graphviz` format
+
+
+        ````
+        ``` diagram kroki graphviz
+        digraph {
+            "Tcl package" -> "HTML document" [label=" Ruff!"]
+        }
+        ```
+        ````
+
+        will produce
+
+        ``` diagram kroki graphviz
+        digraph {
+            "Tcl package" -> "HTML document" [label=" Ruff!"]
+        }
+        ```
+
+        The single argument following `diagram kroki` specifies the input
+        format for the block and may be [any format](https://kroki.io/#support)
+        supported by `kroki`.
+
+        Use of `kroki` requires a network connection and
+
+        * The `kroki` command line executable that can be downloaded
+        for several platforms from https://github.com/yuzutech/kroki-cli/releases/,
+        *or*
+
+        * The `twapi` extension (Windows only), *or
+
+        * The `tls` extension
+
+        Ruff! will try each of the above in turn and use the first that is
+        available.
+
+        ### The `ditaa` diagram generator
+
+        
+
+        ### Formatter support for diagrams
+
+        Not all output formats support embedded diagrams. In such cases the
+        fenced block is output as standard preformatted text. For this reason,
+        it is best to use an ascii diagram format like `ditaa` so flowcharts
+        etc. are still readable when displayed in their original text format.
+        You can use tools like [asciiflow](https://asciiflow.com) for
+        construction of ascii format diagrams.
 
         ## Output
 
@@ -832,9 +918,12 @@ proc ruff::private::parse_line {line mode current_indent}  {
                         Term "[lindex $matches 1][lindex $matches 2]" \
                         Text [lindex $matches 3]]
         }
-        {^(`{3,})$} {
+        {^(`{3,})(.*)$} {
             # ```` Fenced code block
-            return [list Type fence Indent $indent Text $text]
+            set modifier [string trim [lindex $matches 2]]
+            return [list Type fence Indent $indent \
+                        Text [lindex $matches 1] \
+                        Modifier $modifier]
         }
         default {
             # Normal text line
@@ -923,6 +1012,7 @@ proc ruff::private::parse_fence_state {statevar} {
     upvar 1 $statevar state
     set marker [dict get $state(parsed) Text]
     set marker_indent  [dict get $state(parsed) Indent]
+    set modifier [dict get $state(parsed) Modifier]
     set code_block {}
 
     # Gobble up any lines until the matching fence
@@ -949,7 +1039,7 @@ proc ruff::private::parse_fence_state {statevar} {
             lappend code_block $line
         }
     }
-    lappend state(body) preformatted $code_block
+    lappend state(body) fenced [list $code_block $modifier]
     set state(state) body
 }
 
@@ -2459,6 +2549,8 @@ proc ruff::document {namespaces args} {
     } else {
         set opts(-outdir) [file normalize $opts(-outdir)]
     }
+    set ProgramOptions(-outdir) $opts(-outdir)
+
     if {![info exists opts(-outfile)]} {
         # Special cases  - :: -> "", ::foo::bar:: -> ::foo::bar
         set ns [string trimright [lindex $namespaces 0] :]
@@ -2500,7 +2592,7 @@ proc ruff::document {namespaces args} {
         }
     }
 
-    $formatter copy_assets $opts(-outdir)
+    $formatter copy_assets $ProgramOptions(-outdir)
 
     $formatter destroy
 
@@ -2588,6 +2680,7 @@ proc ruff::private::wrap_text {text args} {
 
 
 source [file join $::ruff::private::ruff_dir formatter.tcl]
+source [file join $::ruff::private::ruff_dir diagram.tcl]
 
 ################################################################
 #### Application overrides
