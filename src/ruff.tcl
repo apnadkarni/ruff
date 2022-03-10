@@ -19,7 +19,7 @@ msgcat::mcload [file join [file dirname [info script]] msgs]
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 2.1.2
+    variable version 2.2.0
     proc version {} {
         # Returns the Ruff! version.
         variable version
@@ -399,7 +399,7 @@ namespace eval ruff {
         If the text does not match a section heading or program element name, it
         is treated as a normal Markdown reference but a warning is emitted.
 
-        ## Diagram support
+        ## Embedding diagrams
 
         Diagrams can be embedded in multiple textual description formats
         by appropriately tagging preformatted blocks. The following marks
@@ -431,7 +431,17 @@ namespace eval ruff {
         by generator-specific arguments. Currently Ruff! supports `kroki` and
         `ditaa` generators.
 
-        ### The `kroki` diagram generator
+        ### Formatter support
+
+        Not all output formats support embedded diagrams. In such cases the
+        fenced block is output as standard preformatted text. For this reason,
+        it is best to use an ascii diagram format like `ditaa` so flowcharts
+        etc. are still readable when displayed in their original text format.
+        You can use tools like [asciiflow](https://asciiflow.com) for
+        construction of ascii format diagrams.
+
+
+        ### Diagrams with kroki
 
         The `kroki` generator is based on the online diagram converter
         at https://kroki.io which can convert multiple input formats.
@@ -458,31 +468,75 @@ namespace eval ruff {
         format for the block and may be [any format](https://kroki.io/#support)
         supported by `kroki`.
 
-        Use of `kroki` requires a network connection and
+        Use of `kroki` requires a network connection and any **one** of the
+        following
 
         * The `kroki` command line executable that can be downloaded
         for several platforms from https://github.com/yuzutech/kroki-cli/releases/,
-        *or*
+        **or**
 
-        * The `twapi` extension (Windows only), *or
+        * The `twapi` extension (Windows only), **or**
 
         * The `tls` extension
 
         Ruff! will try each of the above in turn and use the first that is
         available.
 
-        ### The `ditaa` diagram generator
+        ### Diagrams with ditaa
 
-        
+        The [ditaa](http://ditaa.sourceforge.net/) generator produces images
+        from ASCII text diagrams. Although the `kroki` generator also supports
+        this format (using `ditaa` on the server side), the `ditaa` generator
+        has the advantage of not requiring network access and allowing for
+        more control over image generation. Conversely, it needs the `ditaa`
+        Java application to be locally installed.
 
-        ### Formatter support for diagrams
+        Ruff! expects that the generator can be invoked by exec'ing `ditaa`.
+        On most Linux programs this can be installed through the system package
+        manager. On Windows `ditaa` needs to be downloaded from
+        its [repository](https://github.com/stathissideris/ditaa/releases)
+        as a `jar` file to a directory included in the `PATH` environment variable.
+        Then create a batch file containing the following in that same directory.
 
-        Not all output formats support embedded diagrams. In such cases the
-        fenced block is output as standard preformatted text. For this reason,
-        it is best to use an ascii diagram format like `ditaa` so flowcharts
-        etc. are still readable when displayed in their original text format.
-        You can use tools like [asciiflow](https://asciiflow.com) for
-        construction of ascii format diagrams.
+        ```
+        @echo off
+        java -jar %~dp0\ditaa-0.11.0-standalone.jar %*
+        ```
+
+        You will need Java also installed and available through `PATH`.
+
+        Similarly, on Unix and MacOS, a shell script needs to be placed in
+        the path with equivalent content.
+
+        A `ditaa` block is similar to `kroki` block except it does not need
+        a generator argument as input format is always the same. Additional
+        arguments specified are passed to the `ditaa` executable.
+        For example,
+
+        ````
+        ``` diagram ditaa --round-corners --scale 0.8 --no-shadows
+        +------------+   Ruff!   +---------------+
+        | Tcl script |---------->| HTML document |
+        +------------+           +---------------+
+        ```
+        ````
+
+        The above will produce
+
+        ``` diagram ditaa --round-corners --scale 0.8 --no-shadows
+        +------------+   Ruff!   +---------------+
+        | Tcl script |---------->| HTML document |
+        +------------+           +---------------+
+        ```
+
+        Notice the options to control generated image, something Ruff! cannot
+        do with `kroki`.
+
+        Only the following options or their short form equivalent should
+        be used with `ditaa` : `--no-antialias`, `--no-separation`, `--round-corners`,
+        `--scale`, and `--fixed-slope`. The `--background` and `--transparent`
+        options may be specified but may not play well with all Ruff! themes.
+        See the `ditaa` documentation for the meaning of these options.
 
         ## Output
 

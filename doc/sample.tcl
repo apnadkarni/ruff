@@ -89,6 +89,63 @@ namespace eval ruff::sample {
         Click on the *Show source* link to see the underlying source code
         for the procedure or method from which the documentation was generated.
 
+        ### Diagrams
+
+        Diagrams can be embedded in several formats such as `ditaa`,
+
+        ````
+        ``` diagram ditaa
+        +--------+   +-------+    +-------+
+        |        | --+ ditaa +--> |       |
+        |  Text  |   +-------+    |diagram|
+        |Document|   |!magic!|    |       |
+        |     {d}|   |       |    |       |
+        +---+----+   +-------+    +-------+
+        :                         ^
+        |       Lots of work      |
+        +-------------------------+
+        ```
+        ````
+
+
+        ``` diagram ditaa
+        +--------+   +-------+    +-------+
+        |        | --+ ditaa +--> |       |
+        |  Text  |   +-------+    |diagram|
+        |Document|   |!magic!|    |       |
+        |     {d}|   |       |    |       |
+        +---+----+   +-------+    +-------+
+        :                         ^
+        |       Lots of work      |
+        +-------------------------+
+        ```
+
+        or PlantUML,
+
+        ````
+        ``` diagram kroki plantuml
+        @startuml
+        Alice -> Bob: Authentication Request
+        Bob --> Alice: Authentication Response
+
+        Alice -> Bob: Another authentication Request
+        Alice <-- Bob: Another authentication Response
+        @enduml
+        ```
+        ````
+
+        ``` diagram kroki plantuml
+        @startuml
+        Alice -> Bob: Authentication Request
+        Bob --> Alice: Authentication Response
+
+        Alice -> Bob: Another authentication Request
+        Alice <-- Bob: Another authentication Response
+        @enduml
+        ```
+
+        and several others.
+
         ### Images
 
         Images can be specified using either Markdown or HTML:

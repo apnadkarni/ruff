@@ -9,14 +9,16 @@ namespace eval ruff::diagram {
 
 }
 
-proc ruff::diagram::generate {text generator {input_format ditaa} args} {
+proc ruff::diagram::generate {text generator args} {
     set commands [info commands generators::$generator]
     if {[llength $commands] == 1} {
-        return [[lindex $commands 0] $text $input_format {*}$args]
+        return [[lindex $commands 0] $text {*}$args]
     }
     error "Unknown diagram generator \"$generator\"."
 }
 
+###
+# kroki diagrammer
 proc ruff::diagram::generators::kroki_init {} {
     # If a command line kroki exists, we will use it
     if {[llength [auto_execok kroki]]} {
@@ -75,5 +77,23 @@ proc ruff::diagram::generators::kroki {text input_format args} {
     } finally {
         close $fd
     }
+    return $url
+}
+
+###
+# ditaa diagrammer
+
+proc ruff::diagram::generators::ditaa {text args} {
+    variable ditaa_image_counter
+
+    set url "assets/ditaa[incr ditaa_image_counter].svg"
+    set fd [open [file join [program_option -outdir] $url] wb]
+
+    set image_fd [open |[list {*}[auto_execok ditaa] - - --svg {*}$args] r+]
+    puts $image_fd $text
+    close $image_fd w
+    puts $fd [read $image_fd]
+    close $image_fd
+
     return $url
 }
