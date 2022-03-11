@@ -22,6 +22,10 @@ and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
 
+## Release notes for 2.2
+
+* Support for diagrams in documentation.
+
 ## Release notes for 2.1
 
 This release mainly has cosmetic changes in presentation.

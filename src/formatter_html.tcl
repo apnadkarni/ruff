@@ -373,7 +373,14 @@ oo::class create ruff::formatter::Html {
         # See if it is a modifier we specialize, else just pass
         # it to default implementation.
         if {[lindex $modifier 0] eq "diagram"} {
-            set image_url [ruff::diagram::generate [join $lines \n] {*}[lrange $modifier 1 end]]
+            if {[llength $modifier] == 1} {
+                # No diagrammer specified in the block header. See if
+                # an option is set or use the default
+                set modifier [program_option -diagrammer]
+            } else {
+                set modifier [lrange $modifier 1 end]
+            }
+            set image_url [ruff::diagram::generate [join $lines \n] {*}$modifier]
             append Document "\n<img src=$image_url></img>\n"
             return
         }

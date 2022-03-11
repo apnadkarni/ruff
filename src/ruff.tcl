@@ -406,7 +406,7 @@ namespace eval ruff {
         the content as a `ditaa` textual description.
 
         ````
-        ``` diagram kroki ditaa
+        ``` diagram
         +------------+   Ruff!   +---------------+
         | Tcl script |---------->| HTML document |
         +------------+           +---------------+
@@ -415,7 +415,7 @@ namespace eval ruff {
 
         The above will produce
 
-        ``` diagram kroki ditaa
+        ``` diagram
         +------------+   Ruff!   +---------------+
         | Tcl script |---------->| HTML document |
         +------------+           +---------------+
@@ -424,12 +424,17 @@ namespace eval ruff {
         The general format of the `diagram` modifier is
 
         ```
-        diagram GENERATOR ARG ...
+        diagram ?GENERATOR ARG ...?
         ```
 
         where `GENERATOR` is the diagram generator to use and is followed
         by generator-specific arguments. Currently Ruff! supports `kroki` and
         `ditaa` generators.
+
+        If `GENERATOR` is not specified, as above, it defaults to
+        `kroki ditaa`. This default can be changed with the `-diagrammer`
+        option to the [::ruff::document] command.
+
 
         ### Formatter support
 
@@ -529,7 +534,7 @@ namespace eval ruff {
         +------------+           +---------------+
         ```
 
-        Notice the options to control generated image, something Ruff! cannot
+        Notice the options to control the generated image, something Ruff! cannot
         do with `kroki`.
 
         Only the following options or their short form equivalent should
@@ -2441,6 +2446,9 @@ proc ruff::document {namespaces args} {
     # -compact BOOLEAN - If `true`, documentation is generated in a more
     #  compact form, primarily by omitting headers within procedure and method
     #  definitions.
+    # -diagrammer `DIAGRAMARGS` - arguments to pass to `diagram` processor
+    #  if none are specified in the diagram block header. Defaults to
+    #  `kroci ditaa`
     # -excludeclasses REGEXP - If specified, any classes whose names
     #  match `REGEXPR` will not be included in the documentation.
     # -excludeprocs REGEXP - If specified, any procedures whose names
@@ -2538,6 +2546,7 @@ proc ruff::document {namespaces args} {
         -locale en
         -section 3tcl
         -preeval ""
+        -diagrammer "kroki ditaa"
     }
 
     array set opts $args
@@ -2579,6 +2588,7 @@ proc ruff::document {namespaces args} {
     }
     set ProgramOptions(-pagesplit) $opts(-pagesplit)
     set ProgramOptions(-makeindex) $opts(-makeindex)
+    set ProgramOptions(-diagrammer) $opts(-diagrammer)
 
     # Fully qualify namespaces
     set namespaces [lmap ns $namespaces {

@@ -67,7 +67,7 @@ proc ruff::diagram::generators::kroki_generate_http {text input_format fd} {
     return
 }
 
-proc ruff::diagram::generators::kroki {text input_format args} {
+proc ruff::diagram::generators::kroki {text {input_format ditaa} args} {
     variable kroki_image_counter
     kroki_init
     set url "assets/kroki[incr kroki_image_counter].svg"
