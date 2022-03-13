@@ -381,7 +381,7 @@ oo::class create ruff::formatter::Html {
                 set modifier [lrange $modifier 1 end]
             }
             set image_url [ruff::diagram::generate [join $lines \n] {*}$modifier]
-            append Document "\n<img src=$image_url></img>\n"
+            append Document "\n<img class='ruff-diagram' src='$image_url'></img>\n"
             return
         }
 

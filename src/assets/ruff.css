@@ -717,3 +717,10 @@ span.ns_scope a[href]:hover {
   color: var(--ruff-bd-tip-color);
 }
 
+.ruff-diagram {
+  text-align: center;
+  display: block;
+  max-width: 95%;
+  margin: auto;
+  height: auto;
+}
