@@ -36,6 +36,8 @@ oo::class create ruff::formatter::Nroff {
 
     method CollectReferences args {}
     method CollectHeadingReference args {}
+    method CollectFigureReference args {}
+    export CollectFigureReference
 
     method Begin {} {
         # Implements the [Formatter.Begin] method for nroff.

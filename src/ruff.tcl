@@ -29,6 +29,8 @@ namespace eval ruff {
     variable _ruff_intro {
         # Introduction
 
+        This produces a centered [Centered diagram with caption].
+
         Ruff! (Runtime function formatter) is a documentation generation system
         for programs written in the Tcl programming language. Ruff! uses runtime
         introspection in conjunction with comment analysis to generate reference
@@ -237,10 +239,11 @@ namespace eval ruff {
         previous block. Note in the case of lists, it ends the list element
         but not the list itself.
 
-        * A line containing 3 or more consecutive backquote (\`) characters
-        with only surrounding whitespace on the line starts a fenced
-        block. The block is terminated by the same sequence and
-        all intervening lines are passed through to the output unchanged.
+        * A line containing 3 or more consecutive backquote (\`) characters with
+        only leading whitespace starts a fenced block. The block is terminated
+        by the same sequence of backquotes. By default, all intervening lines
+        are passed through to the output unchanged. However, fenced blocks may
+        undergo specialized processing. See [Fenced blocks].
 
         * Lines starting with a `-` or a `*` character followed by at least one
         space begins a bulleted list item block. A list item may be continued
@@ -308,6 +311,7 @@ namespace eval ruff {
 
         Ruff! adds
         * definition lists
+        * specialized processing for fenced blocks
 
         ## Documenting classes
 
@@ -399,11 +403,45 @@ namespace eval ruff {
         If the text does not match a section heading or program element name, it
         is treated as a normal Markdown reference but a warning is emitted.
 
+        ## Fenced blocks
+
+        A line containing 3 or more consecutive backquote (\`) characters with
+        only leading whitespace starts a fenced block. The block is terminated
+        by the same sequence of backquotes. By default, formatters will pass
+        all intervening lines through verbatim to the output. 
+
+        However, the leading line of a fenced block can contain
+        additional options for specialized processing. The general form
+        of a fenced block is
+
+        ````
+        ``` ?option value...? ?transform arg...?
+        some text
+        lines
+        ```
+        ````
+
+        The supported options are
+
+        `-align ALIGNMENT` - Aligns the output as per `ALIGNMENT` which may
+        be specified as `left`, `right` or `center`.
+        `-caption CAPTION` - Adds a caption below the output.
+
+        In addition, a transform can be specified which transforms
+        the input lines into some other form as opposed to outputting them
+        without modification. The only transform currently implemented is
+        `diagram` and is described in [Embedding diagrams].
+
+        Formatters that do not support the options or the transforms
+        will silently ignore them and do the default processing on the
+        block.
+
+
         ## Embedding diagrams
 
         Diagrams can be embedded in multiple textual description formats
-        by appropriately tagging preformatted blocks. The following marks
-        the content as a `ditaa` textual description.
+        by specifying the `diagram` transform on [fenced blocks][Fenced blocks].
+        The following marks the content as a `ditaa` textual description.
 
         ````
         ``` diagram
@@ -421,10 +459,10 @@ namespace eval ruff {
         +------------+           +---------------+
         ```
 
-        The general format of the `diagram` modifier is
+        The general format of the `diagram` transform is
 
         ```
-        diagram ?GENERATOR ARG ...?
+        ?fence options? diagram ?GENERATOR ARG ...?
         ```
 
         where `GENERATOR` is the diagram generator to use and is followed
@@ -444,7 +482,6 @@ namespace eval ruff {
         etc. are still readable when displayed in their original text format.
         You can use tools like [asciiflow](https://asciiflow.com) for
         construction of ascii format diagrams.
-
 
         ### Diagrams with kroki
 
@@ -542,6 +579,36 @@ namespace eval ruff {
         `--scale`, and `--fixed-slope`. The `--background` and `--transparent`
         options may be specified but may not play well with all Ruff! themes.
         See the `ditaa` documentation for the meaning of these options.
+
+        ### Diagram options
+
+        The following options may be used with `diagram`. They need to be placed
+        after the `diagram` token and before the diagrammer command itself.
+
+        `-align ALIGNMENT` - Aligns the diagram as per `ALIGNMENT` which may
+        be specified as `left`, `right` or `center`.
+        `-caption CAPTION` - Adds a caption below the diagram.
+
+        Below is the centered version of the previous example.
+
+        ````
+        ``` -align center -caption "Centered diagram with caption" diagram ditaa --scale 0.8
+        +------------+   Ruff!   +---------------+
+        | Tcl script |---------->| HTML document |
+        +------------+           +---------------+
+        ```
+        ````
+
+        This produces a centered [Centered diagram with caption].
+
+        ``` -align center -caption "Centered diagram with caption" diagram ditaa --scale 0.8
+        +------------+   Ruff!   +---------------+
+        | Tcl script |---------->| HTML document |
+        +------------+           +---------------+
+        ```
+
+        Note that not all formatters support these options. Those not
+        understood by the formatter will be silently ignored.
 
         ## Output
 
@@ -897,34 +964,6 @@ proc ruff::private::sift_names {names} {
     return $namespaces
 }
 
-proc ruff::private::TBDNEEDED?sift_classprocinfo {classprocinfodict} {
-    # Sifts through class and proc meta information based
-    # on namespace
-    #
-    # Returns a dictionary with keys namespaces and values
-    # being dictionaries with keys "classes" and "procs"
-    # containing metainformation.
-
-    set result [dict create]
-    dict for {name procinfo} [dict get $classprocinfodict procs] {
-        set ns [namespace qualifiers $name]
-        if {$ns eq ""} {
-            set ns "::"
-        }
-        dict set result $ns procs $name $procinfo
-    }
-
-    dict for {name classinfo} [dict get $classprocinfodict classes] {
-        set ns [namespace qualifiers $name]
-        if {$ns eq ""} {
-            set ns "::"
-        }
-        dict set result $ns classes $name $classinfo
-    }
-
-    return $result
-}
-
 proc ruff::private::parse_line {line mode current_indent}  {
     # Parses a documentation line and returns its meta information.
     # line - line to be parsed
@@ -979,10 +1018,10 @@ proc ruff::private::parse_line {line mode current_indent}  {
         }
         {^(`{3,})(.*)$} {
             # ```` Fenced code block
-            set modifier [string trim [lindex $matches 2]]
+            set fence_options [string trim [lindex $matches 2]]
             return [list Type fence Indent $indent \
                         Text [lindex $matches 1] \
-                        Modifier $modifier]
+                        Options $fence_options]
         }
         default {
             # Normal text line
@@ -1067,11 +1106,46 @@ proc ruff::private::parse_preformatted_state {statevar} {
     lappend state(body) preformatted $code_block
 }
 
+proc ruff::private::parse_fence_options {option_line} {
+    # Parses options for a fenced block
+    #  option_line - the line containing fence options
+    #
+    # The line is of the form
+    # ```
+    # [option value ...] [command [arg ...]]
+    # ```
+    #
+    # An option begins with the character `-`. The options end at the
+    # first word that does not begin with `-` (skipping option values).
+    # The returned dictionary maps each specified option to a value
+    # with a special key -command holding the rest of the line, i.e. the
+    # command and its arguments
+    # 
+    # Returns a dictionary of the option values.
+
+    set n [llength $option_line]
+    set options [dict create]
+    for {set i 0} {$i < $n} {incr i} {
+        set option [lindex $option_line $i]
+        if {[string index $option 0] ne "-"} {
+            # End of options
+            break
+        }
+        if {[incr i] == $n} {
+            error "Missing value to go with option \"[lindex $option_line $i]\" in diagram."
+        }
+        dict set options $option [lindex $option_line $i]
+    }
+
+    dict set options Command [lrange $option_line $i end]
+    return $options
+}
+
 proc ruff::private::parse_fence_state {statevar} {
     upvar 1 $statevar state
     set marker [dict get $state(parsed) Text]
     set marker_indent  [dict get $state(parsed) Indent]
-    set modifier [dict get $state(parsed) Modifier]
+    set options_line [dict get $state(parsed) Options]
     set code_block {}
 
     # Gobble up any lines until the matching fence
@@ -1098,7 +1172,14 @@ proc ruff::private::parse_fence_state {statevar} {
             lappend code_block $line
         }
     }
-    lappend state(body) fenced [list $code_block $modifier]
+
+    set fence_options [parse_fence_options $options_line]
+    # If there is a caption, create anchor for it
+    if {[dict exists $fence_options -caption]} {
+        $ruff::gFormatter CollectFigureReference $state(scope) [dict get $fence_options -caption]
+    }
+
+    lappend state(body) fenced [list $code_block $fence_options]
     set state(state) body
 }
 
@@ -1491,9 +1572,10 @@ proc ruff::private::parse_normal_state {statevar} {
     }
 }
 
-proc ruff::private::parse_lines {lines {mode proc}} {
+proc ruff::private::parse_lines {lines scope {mode proc}} {
     # Creates a documentation parse structure.
     # lines - List of lines comprising the documentation
+    # scope - scope (generally fqns)
     # mode - Parsing mode, must be one of `proc`, `method`, `docstring`
     #
     # Returns a dictionary representing the documentation.
@@ -1521,6 +1603,7 @@ proc ruff::private::parse_lines {lines {mode proc}} {
     # state around in the state array.
 
     set state(state)  init
+    set state(scope)  $scope
     set state(mode)   $mode
     set state(lines)  $lines
     set state(nlines) [llength $lines]
@@ -1711,9 +1794,10 @@ proc ruff::private::distill_body {text} {
     return $lines
 }
 
-proc ruff::private::extract_docstring {text} {
+proc ruff::private::extract_docstring {text scope} {
     # Parses a documentation string to return a structured text representation.
     # text - documentation string to be parsed
+    # scope - the scope of the text (generally fqns)
     #
     # The command extracts structured text from the given string
     # as described in the documentation for the distill_docstring
@@ -1736,7 +1820,7 @@ proc ruff::private::extract_docstring {text} {
     # Each element may occur multiple times and are expected to be displayed
     # in the order of their occurence.
 
-    set doc [parse_lines [distill_docstring $text] docstring]
+    set doc [parse_lines [distill_docstring $text] $scope docstring]
     set result [dict get $doc body]
     # Just error checking - should not have anykeys other than body
     dict unset doc body
@@ -1946,7 +2030,8 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names
     array set options {}
     set paragraphs {}
 
-    set doc [parse_lines [distill_body $body] $proctype]
+    # XXX
+    set doc [parse_lines [distill_body $body] :: $proctype]
     # doc -> dictionary with keys summary, body, parameters, returns, seealso
     # and synopsis
     dict set doc name $procname
@@ -2179,7 +2264,6 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
     # the namespace of $pattern are returned.
     #
     # Returns a dictionary with keys 'classes' and 'procs'
-
     array set opts {
         -excludeclasses {}
         -excludeprocs {}
@@ -2286,11 +2370,11 @@ proc ruff::private::extract_namespace {ns args} {
     set result [extract_procs_and_classes $pattern {*}$args]
     set preamble [list ]
     if {[info exists ${ns}::_ruff_preamble]} {
-        set preamble [extract_docstring [set ${ns}::_ruff_preamble]]
+        set preamble [extract_docstring [set ${ns}::_ruff_preamble] $ns]
     } elseif {[info exists ${ns}::_ruffdoc]} {
         foreach {heading text} [set ${ns}::_ruffdoc] {
-            lappend preamble {*}[extract_docstring "## $heading"]
-            lappend preamble {*}[extract_docstring $text]
+            lappend preamble {*}[extract_docstring "## $heading" $ns]
+            lappend preamble {*}[extract_docstring $text $ns]
         }
     }
     dict set result preamble $preamble
@@ -2530,6 +2614,8 @@ proc ruff::document {namespaces args} {
     # formats and the generation process.
     #
 
+    variable gFormatter
+
     array set opts {
         -compact 0
         -excludeprocs {}
@@ -2605,6 +2691,7 @@ proc ruff::document {namespaces args} {
     }
 
     set formatter [[load_formatter $opts(-format)] new]
+    set gFormatter $formatter
 
     # Determine output file paths
     array unset private::ns_file_base_cache
@@ -2639,9 +2726,8 @@ proc ruff::document {namespaces args} {
     if {$opts(-preamble) ne ""} {
         # TBD - format of -preamble argument passed to formatters
         # is different so override what was passed in.
-        lappend args -preamble [extract_docstring $opts(-preamble)]
+        lappend args -preamble [extract_docstring $opts(-preamble) ::]
     }
-
     set classprocinfodict [extract_namespaces $namespaces \
                                -excludeprocs $opts(-excludeprocs) \
                                -excludeclasses $opts(-excludeclasses) \

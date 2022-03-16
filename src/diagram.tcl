@@ -9,6 +9,48 @@ namespace eval ruff::diagram {
 
 }
 
+proc ruff::diagram::OBSOLETEparse_command {command} {
+    # Parses a diagram command
+    #  command - the diagram command line
+    #
+    # The first word of the command line is expected to be
+    # the word "diagram". Following is a list of option value pairs that begin
+    # character `-` followed by the diagrammer command.
+    #
+    # If the diagrammer command is not present, a default is supplied.
+    #
+    # Returns a pair consisting of a (possibly empty) option dictionary and the
+    # diagrammer command.
+
+    set command [lassign $command first]
+    if {$first ne "diagram"} {
+        error "Internal error: command is not a diagram."
+    }
+    if {[llength $command] == 0} {
+        return [list [dict create] [program_option -diagrammer]]
+    }
+
+    set n [llength $command]
+    set options [dict create]
+    for {set i 0} {$i < $n} {incr i} {
+        set option [lindex $command $i]
+        if {[string index $option 0] ne "-"} {
+            # End of options
+            break
+        }
+        if {[incr i] == $n} {
+            error "Missing value to go with option \"[lindex $command $i]\" in diagram."
+        }
+        dict set options $option [lindex $command $i]
+    }
+    if {$i == $n} {
+        set diagrammer [program_option -diagrammer]
+    } else {
+        set diagrammer [lrange $command $i end]
+    }
+    return [list $options $diagrammer]
+}
+
 proc ruff::diagram::generate {text generator args} {
     set commands [info commands generators::$generator]
     if {[llength $commands] == 1} {

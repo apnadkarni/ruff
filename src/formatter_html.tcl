@@ -61,6 +61,12 @@ oo::class create ruff::formatter::Html {
         return "[ns_file_base $ns]#[my Anchor $ns $heading]"
     }
 
+    method FigureReference {ns caption} {
+        # Returns a link name to use for a figure
+        return "[ns_file_base $ns]#[my Anchor $ns $caption]"
+    }
+
+
     method SymbolReference {ns symbol} {
         # Implements the [Formatter.SymbolReference] method for HTML.
         set ref [ns_file_base $ns]
@@ -364,28 +370,42 @@ oo::class create ruff::formatter::Html {
         return
     }
 
-    method AddFenced {lines modifier scope} {
+    method AddFenced {lines fence_options scope} {
         # Adds a list of fenced lines to document content.
         #  lines - Preformatted text as a list of lines.
-        #  modifier - string appended to the fence, e.g.
+        #  fence_options - options controlling generation and layout
         #  scope - The documentation scope of the content.
 
         # See if it is a modifier we specialize, else just pass
         # it to default implementation.
-        if {[lindex $modifier 0] eq "diagram"} {
-            if {[llength $modifier] == 1} {
-                # No diagrammer specified in the block header. See if
-                # an option is set or use the default
-                set modifier [program_option -diagrammer]
-            } else {
-                set modifier [lrange $modifier 1 end]
-            }
-            set image_url [ruff::diagram::generate [join $lines \n] {*}$modifier]
-            append Document "\n<img class='ruff-diagram' src='$image_url'></img>\n"
-            return
+
+        if {[dict exists $fence_options -caption]} {
+            set caption [dict get $fence_options -caption]
+            set id "id='[my Anchor $scope $caption]'"
+        } else {
+            set id ""
         }
 
-        next $lines $modifier $scope
+        if {[dict exists $fence_options -align]} {
+            append Document "\n<figure $id class='ruff-figure ruff-[dict get $fence_options -align]'>"
+        } else {
+            append Document "\n<figure class='ruff-figure'>"
+        }
+        if {[dict exists $fence_options Command] &&
+            [lindex [dict get $fence_options Command] 0] eq "diagram"} {
+            set diagrammer [lrange [dict get $fence_options Command] 1 end]
+            if {[llength $diagrammer] == 0} {
+                set diagrammer [program_option -diagrammer]
+            }
+            set image_url [ruff::diagram::generate [join $lines \n] {*}$diagrammer]
+            append Document "\n<img class='ruff-diagram' src='$image_url'></img>"
+        } else {
+            append Document [my AddPreformattedText [join $lines \n] $scope]
+        }
+        if {[info exists caption]} {
+            append Document "\n<figcaption class='ruff-caption'>$caption</figcaption>"
+        }
+        append Document "\n</figure>"
         return
     }
 

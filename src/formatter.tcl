@@ -14,6 +14,7 @@ oo::class create ruff::formatter::Formatter {
     constructor {} {
         # Base class for output formatters.
         namespace path [linsert [namespace path] 0 ::ruff ::ruff::private]
+        set References [dict create]
     }
 
     method Option {opt {default {}}} {
@@ -172,10 +173,10 @@ oo::class create ruff::formatter::Formatter {
         return
     }
 
-    method AddFenced {lines modifier scope} {
+    method AddFenced {lines fence_options scope} {
         # Adds a list of fenced lines to document content.
         #  lines - Preformatted text as a list of lines.
-        #  modifier - string appended to the fence, e.g. 
+        #  fence_options - options specified with the fence, e.g. diagram ...
         #  scope - The documentation scope of the content.
         # [Formatter] provides a base implementation that ignores the
         # modifier and treats the lines as preformatted lines.
@@ -380,6 +381,23 @@ oo::class create ruff::formatter::Formatter {
         dict set References $symbol $reference
         return $ref
     }
+
+    method CollectFigureReference {ns caption {ref {}}} {
+        # Adds a reference for a figure in a namespace to the cross-reference
+        # table.
+        #  ns     - Namespace containing the figure
+        #  caption - Figure caption
+        #  ref    - The reference to use. If empty, the reference is constructed
+        #           from the caption.
+        # Returns the reference for the added heading.
+        if {$ref eq ""} {
+            set ref [my FigureReference $ns $caption]
+        }
+        set reference [dict create type symbol ref $ref]
+        dict set References $caption $reference
+        return $ref
+    }
+    export CollectFigureReference
 
     method Reference? {lookup refvar} {
         # Looks up the cross-reference table.
@@ -983,7 +1001,6 @@ oo::class create ruff::formatter::Formatter {
         #    If undefined, the string "Reference" is used.
 
         set Namespaces [dict keys $ns_info]
-        set References [dict create]
 
         array set Options \
             [list \

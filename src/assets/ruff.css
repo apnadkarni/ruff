@@ -637,8 +637,10 @@ span.ns_scope a[href]:hover {
 .ruff-bd pre {
   color: var(--ruff-bd-code-color);
   background-color: var(--ruff-bd-code-background-color);
+  /* - now inside <figure> which already has a margin
   margin-top: 1em;
   margin-left: 1em;
+  */
   padding: 5px;
   font-family: Consolas, "Courier New", monospace;
   font-size: smaller;
@@ -717,10 +719,29 @@ span.ns_scope a[href]:hover {
   color: var(--ruff-bd-tip-color);
 }
 
+.ruff-figure {
+  margin: 1em;
+}
+
 .ruff-diagram {
-  text-align: center;
-  display: block;
-  max-width: 95%;
-  margin: auto;
+  margin: 10px;
+  /* max-width: 95%; */
   height: auto;
+}
+
+.ruff-left {
+    text-align: left;
+    margin: auto;
+}
+.ruff-center {
+    text-align: center;
+    margin: auto;
+}
+.ruff-right {
+    text-align: right;
+    margin: auto;
+}
+
+.ruff-caption {
+    font-style: italic;
 }
