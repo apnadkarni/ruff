@@ -436,6 +436,25 @@ namespace eval ruff {
         will silently ignore them and do the default processing on the
         block.
 
+        The fenced block below illustrates use of the options.
+
+        ````
+        ``` -align center -caption "An example"
+        This is a
+        center-aligned
+        fenced block
+        with a caption
+        ```
+        ````
+
+        ``` -align center -caption "An example"
+        This is a
+        center-aligned
+        fenced block
+        with a caption
+        ```
+
+        These options are generally more useful with diagrams.
 
         ## Embedding diagrams
 
@@ -582,14 +601,10 @@ namespace eval ruff {
 
         ### Diagram options
 
-        The following options may be used with `diagram`. They need to be placed
-        after the `diagram` token and before the diagrammer command itself.
+        The options allowed for [fenced blocks][Fenced blocks]may be used with
+        `diagram`.
 
-        `-align ALIGNMENT` - Aligns the diagram as per `ALIGNMENT` which may
-        be specified as `left`, `right` or `center`.
-        `-caption CAPTION` - Adds a caption below the diagram.
-
-        Below is the centered version of the previous example.
+        Below is a captioned and centered version of the previous example.
 
         ````
         ``` -align center -caption "Centered diagram with caption" diagram ditaa --scale 0.8

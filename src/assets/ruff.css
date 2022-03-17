@@ -647,6 +647,8 @@ span.ns_scope a[href]:hover {
   line-height: 1.2em;
   white-space: pre-wrap;
   overflow-wrap: break-word;
+  display: inline-block;
+  text-align: left;
 }
 
 .ruff-bd a[href], .ruff-bd a[href]:visited {
@@ -720,28 +722,25 @@ span.ns_scope a[href]:hover {
 }
 
 .ruff-figure {
-  margin: 1em;
+  margin: 0.5em 1em;
 }
-
-.ruff-diagram {
-  margin: 10px;
-  /* max-width: 95%; */
-  height: auto;
+.ruff-snippet {
+  background-color: var(--ruff-bd-code-background-color);
 }
 
 .ruff-left {
-    text-align: left;
-    margin: auto;
+  text-align: left;
 }
 .ruff-center {
-    text-align: center;
-    margin: auto;
+  text-align: center;
 }
 .ruff-right {
-    text-align: right;
-    margin: auto;
+  text-align: right;
 }
 
 .ruff-caption {
-    font-style: italic;
+  font-style: italic;
+  font-size: smaller;
+  /* Do not want caption in color of ruff-snippet class in <figure> */
+  background-color: var(--ruff-bd-background-color);
 }

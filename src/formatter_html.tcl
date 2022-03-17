@@ -386,10 +386,9 @@ oo::class create ruff::formatter::Html {
             set id ""
         }
 
+        set fig_classes ruff-figure
         if {[dict exists $fence_options -align]} {
-            append Document "\n<figure $id class='ruff-figure ruff-[dict get $fence_options -align]'>"
-        } else {
-            append Document "\n<figure class='ruff-figure'>"
+            append fig_classes " ruff-[dict get $fence_options -align]"
         }
         if {[dict exists $fence_options Command] &&
             [lindex [dict get $fence_options Command] 0] eq "diagram"} {
@@ -397,9 +396,11 @@ oo::class create ruff::formatter::Html {
             if {[llength $diagrammer] == 0} {
                 set diagrammer [program_option -diagrammer]
             }
+            append Document "\n<figure $id class='$fig_classes'>"
             set image_url [ruff::diagram::generate [join $lines \n] {*}$diagrammer]
-            append Document "\n<img class='ruff-diagram' src='$image_url'></img>"
+            append Document "\n<img src='$image_url'></img>"
         } else {
+            append Document "\n<figure $id class='ruff-snippet $fig_classes'>"
             append Document [my AddPreformattedText [join $lines \n] $scope]
         }
         if {[info exists caption]} {

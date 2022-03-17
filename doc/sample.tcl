@@ -74,7 +74,7 @@ namespace eval ruff::sample {
         explicit, e.g. <https://ruff.magicsplat.com>.
 
 
-        ### Preformatted blocks
+        ### Fenced blocks
 
         ````
         ```
@@ -84,6 +84,13 @@ namespace eval ruff::sample {
         this paragraph.
         ```
         ````
+
+        ```
+        Lines consisting of *3* or more backquotes can be used
+        to bracket unformatted content
+        like
+        this paragraph.
+        ```
 
         The remaining sections show how commands and classes are documented.
         Click on the *Show source* link to see the underlying source code
