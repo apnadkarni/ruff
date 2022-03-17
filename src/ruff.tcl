@@ -601,7 +601,7 @@ namespace eval ruff {
 
         ### Diagram options
 
-        The options allowed for [fenced blocks][Fenced blocks]may be used with
+        The options allowed for [fenced blocks][Fenced blocks] may be used with
         `diagram`.
 
         Below is a captioned and centered version of the previous example.
@@ -669,7 +669,8 @@ namespace eval ruff {
 
         ### Markdown formatter
 
-        The Markdown formatter generates output in generic Markdown syntax.
+        The Markdown formatter generates output in generic Github-flavored
+        Markdown syntax and expects support for tables in that format.
         It includes cross-linking but does not include a table of contents,
         tooltips or source code display. On the other hand, it allows conversion
         to other formats using external tools.
@@ -728,13 +729,6 @@ proc ruff::private::read_asset_file {fn encoding} {
     set data [read $fd]
     close $fd
     return $data
-}
-
-# TBD - is this needed
-proc ruff::private::TBDNeeded?identity {s} {
-    # Returns the passed string unaltered.
-    # Used as a stub to "no-op" some transformations
-    return $s
 }
 
 proc ruff::private::ns_canonicalize {name} {
@@ -1189,6 +1183,7 @@ proc ruff::private::parse_fence_state {statevar} {
     }
 
     set fence_options [parse_fence_options $options_line]
+    dict set fence_options Fence $marker
     # If there is a caption, create anchor for it
     if {[dict exists $fence_options -caption]} {
         $ruff::gFormatter CollectFigureReference $state(scope) [dict get $fence_options -caption]

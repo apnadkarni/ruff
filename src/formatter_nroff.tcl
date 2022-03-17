@@ -208,6 +208,22 @@ oo::class create ruff::formatter::Nroff {
         return
     }
 
+    method AddFenced {lines fence_options scope} {
+        # See [Formatter.AddFenced].
+        # Adds a list of fenced lines to document content.
+        #  lines - Preformatted text as a list of lines.
+        #  fence_options - options specified with the fence, e.g. diagram ...
+        #  scope - The documentation scope of the content.
+        # Only obeys -caption option, ignores all else
+        append Body [nr_p] [nr_inn $Indentation] [nr_nofill]  \n
+        append Body [join $lines \n]
+        if {[dict exists $fence_options -caption]} {
+            append Body \n\n [nr_ulp [dict get $fence_options -caption]] \n
+        }
+        append Body [nr_fill] [nr_out]
+        return
+    }
+
     method AddSynopsis {synopsis scope} {
         # Adds a Synopsis section to the document content.
         #  synopsis - List of alternating elements comprising the command portion

@@ -53,18 +53,23 @@ oo::class create ruff::formatter::Markdown {
     }
 
     method HeadingReference {ns heading} {
-        # Implements the [Formatter.HeadingReference] method for HTML.
+        # Implements the [Formatter.HeadingReference] method for Markdown.
         return "[ns_file_base $ns .html]#[my Anchor $ns $heading]"
     }
 
     method SymbolReference {ns symbol} {
-        # Implements the [Formatter.SymbolReference] method for HTML.
+        # Implements the [Formatter.SymbolReference] method for Markdown.
         set ref [ns_file_base $ns .html]
         # Reference to the global namespace is to the file itself.
         if {$ns eq "::" && $symbol eq ""} {
             return $ref
         }
         return [append ref "#[my Anchor $symbol]"]
+    }
+
+    method FigureReference {ns caption} {
+        # Implements the [Formatter.FigureReference] method for Markdown.
+        return "[ns_file_base $ns .html]#[my Anchor $ns $caption]"
     }
 
     method Begin {} {
@@ -252,6 +257,25 @@ oo::class create ruff::formatter::Markdown {
         #  text  - Preformatted text.
         #  scope - The documentation scope of the content.
         append Document "\n```\n$text\n```\n"
+        return
+    }
+
+    method AddFenced {lines fence_options scope} {
+        # See [Formatter.AddFenced].
+        # Adds a list of fenced lines to document content.
+        #  lines - Preformatted text as a list of lines.
+        #  fence_options - options specified with the fence, e.g. diagram ...
+        #  scope - The documentation scope of the content.
+        # Only obeys -caption option, ignores all else
+
+        # Do not hardcode fence since the lines may themself contain something
+        # that looks like a fence.
+        set fence [dict get $fence_options Fence]
+        append Document \n $fence \n [join $lines \n] \n $fence \n
+        if {[dict exists $fence_options -caption]} {
+            append Document \n\n* [dict get $fence_options -caption] *\n\n
+        }
+
         return
     }
 
@@ -491,7 +515,7 @@ oo::class create ruff::formatter::Markdown {
 
         method extension {} {
             # Returns the default file extension to be used for output files.
-            return html
+            return md
         }
 
         forward FormatInline my ToMarkdown
