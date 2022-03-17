@@ -2658,7 +2658,7 @@ proc ruff::document {namespaces args} {
         set opts(-makeindex) [expr {$opts(-pagesplit) ne "none"}]
     }
     if {$opts(-pagesplit) eq "none" && $opts(-makeindex)} {
-        app::log_error "Option -makeindex ignored if -pagesplit is specified as none."
+        app::log_error "Option -makeindex ignored when -pagesplit is specified as none."
         set opts(-makeindex) false
     }
     if {![info exists opts(-linkassets)]} {

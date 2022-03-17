@@ -550,7 +550,9 @@ oo::class create ruff::formatter::Html {
             return "<$hlevel class='$cssclass'>$heading</$hlevel>"
         }
 
-        if {$scope ne "" && [my Reference? $scope scope_ref]} {
+        # If the scope is the document top scope, no need to add uplink since
+        # the "Top" link is essentially the same.
+        if {$scope ne "" && $scope ne $DocumentNamespace && [my Reference? $scope scope_ref]} {
             set links "<a href='[dict get $scope_ref ref]'>[namespace tail $scope]</a>, "
         }
         if {[my Option -pagesplit none] eq "none"} {
