@@ -393,7 +393,7 @@ oo::class create ruff::formatter::Formatter {
         if {$ref eq ""} {
             set ref [my FigureReference $ns $caption]
         }
-        set reference [dict create type symbol ref $ref]
+        set reference [dict create type figure ref $ref]
         dict set References $caption $reference
         return $ref
     }
@@ -408,7 +408,7 @@ oo::class create ruff::formatter::Formatter {
         # returns 0 without modifying the variable
         #
         # The value stored in $refvar is a dictionary with keys `type`
-        # (`heading` or `symbol`) and `ref` (the reference).
+        # (`heading`, `symbol` or `figure`) and `ref` (the reference).
         if {[dict exists $References $lookup]} {
             upvar 1 $refvar ref
             set ref [dict get $References $lookup]
@@ -424,7 +424,7 @@ oo::class create ruff::formatter::Formatter {
         #  refvar - Name of a variable in the caller's context to store result.
         #
         # If resolved successfully, the variable $refvar in the caller's
-        # contains a dictionary with keys type (`heading` or `symbol`),
+        # contains a dictionary with keys type (`heading`, `symbol` or `figure`),
         # the ref, and label (display label).
         #
         # Returns 1 if the reference exists and stores it in $refvar otherwise
@@ -1255,8 +1255,12 @@ oo::class create ruff::formatter::Formatter {
                                 set txt [my Escape [dict get $code_link label]]
                             }
                             set title $txt
-                            if {[dict get $code_link type] eq "symbol"} {
-                                set css "class='ruff_cmd'"
+                            switch [dict get $code_link type] {
+                                symbol {set css "class='ruff_cmd'"}
+                                figure {
+                                    # TBD - figure numbering ?
+                                }
+                                heading {}
                             }
                             incr index [string length $m]
                             set match_found 1
