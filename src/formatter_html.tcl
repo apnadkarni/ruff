@@ -383,6 +383,7 @@ oo::class create ruff::formatter::Html {
             set caption [dict get $fence_options -caption]
             set id "id='[my Anchor $scope $caption]'"
         } else {
+            set caption ""
             set id ""
         }
 
@@ -397,13 +398,16 @@ oo::class create ruff::formatter::Html {
                 set diagrammer [program_option -diagrammer]
             }
             append Document "\n<figure $id class='$fig_classes'>"
-            set image_url [ruff::diagram::generate [join $lines \n] {*}$diagrammer]
+            set image_url [ruff::diagram::generate \
+                               [join $lines \n] \
+                               [ruff::private::sanitize_filename $caption] \
+                               {*}$diagrammer]
             append Document "\n<img src='$image_url'></img>"
         } else {
             append Document "\n<figure $id class='ruff-snippet $fig_classes'>"
             append Document [my AddPreformattedText [join $lines \n] $scope]
         }
-        if {[info exists caption]} {
+        if {$caption ne ""} {
             append Document "\n<figcaption class='ruff-caption'>$caption</figcaption>"
         }
         append Document "\n</figure>"

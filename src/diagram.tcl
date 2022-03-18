@@ -51,10 +51,22 @@ proc ruff::diagram::OBSOLETEparse_command {command} {
     return [list $options $diagrammer]
 }
 
-proc ruff::diagram::generate {text generator args} {
-    set commands [info commands generators::$generator]
-    if {[llength $commands] == 1} {
-        return [[lindex $commands 0] $text {*}$args]
+proc ruff::diagram::generate {text filename generator args} {
+    variable diagram_counter
+
+    if {$filename eq ""} {
+        set filename diagram[incr diagram_counter]
+    }
+    set url "assets/$filename.svg"
+    set fd [open [file join [program_option -outdir] $url] wb]
+    try {
+        set commands [info commands generators::$generator]
+        if {[llength $commands] == 1} {
+            [lindex $commands 0] $fd $text {*}$args
+            return $url
+        }
+    } finally {
+        close $fd
     }
     error "Unknown diagram generator \"$generator\"."
 }
@@ -109,33 +121,21 @@ proc ruff::diagram::generators::kroki_generate_http {text input_format fd} {
     return
 }
 
-proc ruff::diagram::generators::kroki {text {input_format ditaa} args} {
+proc ruff::diagram::generators::kroki {fd text {input_format ditaa} args} {
     variable kroki_image_counter
     kroki_init
-    set url "assets/kroki[incr kroki_image_counter].svg"
-    set fd [open [file join [program_option -outdir] $url] wb]
-    try {
-        kroki_generate $text $input_format $fd
-    } finally {
-        close $fd
-    }
-    return $url
+    kroki_generate $text $input_format $fd
 }
 
 ###
 # ditaa diagrammer
 
-proc ruff::diagram::generators::ditaa {text args} {
+proc ruff::diagram::generators::ditaa {fd text args} {
     variable ditaa_image_counter
-
-    set url "assets/ditaa[incr ditaa_image_counter].svg"
-    set fd [open [file join [program_option -outdir] $url] wb]
 
     set image_fd [open |[list {*}[auto_execok ditaa] - - --svg {*}$args] r+]
     puts $image_fd $text
     close $image_fd w
     puts $fd [read $image_fd]
     close $image_fd
-
-    return $url
 }

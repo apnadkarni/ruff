@@ -774,6 +774,10 @@ proc ruff::private::program_option {opt} {
     return $ProgramOptions($opt)
 }
 
+proc ruff::private::sanitize_filename {s} {
+    return [regsub -all {[^-\w_]} $s -]
+}
+
 proc ruff::private::ns_file_base {ns_or_class {ext {}}} {
     # Returns the file name to use for documenting namespace $ns.
     # ns_or_class - the namespace or class for the file

@@ -24,7 +24,9 @@ and
 
 ## Release notes for 2.2
 
-* Support for diagrams in documentation.
+* Support for embedded text formatted diagrams (ditaa, PlantUML etc.)
+* Alignment and captions for fenced blocks.
+* Fixed minor display artifacts.
 
 ## Release notes for 2.1
 
