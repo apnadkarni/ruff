@@ -10,6 +10,7 @@ oo::class create ruff::formatter::Formatter {
     variable Options;    # Document generation options
     variable Namespaces; # Namespaces we are documenting
     variable SortedNamespaces;  # Exactly what it says
+    variable FigureCounter; # Counter for figure captions
 
     constructor {} {
         # Base class for output formatters.
@@ -47,7 +48,6 @@ oo::class create ruff::formatter::Formatter {
         # This method should be overridden by the concrete formatter.
         # It should generate appropriate content for the header and other
         # parts that are not dependent on the actual content.
-        error "Method Begin not overridden."
     }
 
     method DocumentBegin {ns} {
@@ -58,7 +58,7 @@ oo::class create ruff::formatter::Formatter {
         # It should take any actions necessary to create a new document
         # in the documentation set. Subsequent calls to [fmtpara] and
         # other formatting methods should add to this document.
-        error "Method DocumentBegin not overridden."
+        set FigureCounter 0
     }
 
     method DocumentEnd {} {
@@ -67,7 +67,6 @@ oo::class create ruff::formatter::Formatter {
         # Returns the completed document.
         #
         # This method should be overridden by the concrete formatter.
-        error "Method DocumentEnd not overridden."
     }
 
     method AddHeading {level text scope {tooltip {}}} {
@@ -393,7 +392,11 @@ oo::class create ruff::formatter::Formatter {
         if {$ref eq ""} {
             set ref [my FigureReference $ns $caption]
         }
-        set reference [dict create type figure ref $ref]
+        incr FigureCounter
+        set reference [dict create \
+                           type figure \
+                           ref $ref \
+                           label "[::msgcat::mc Figure] $FigureCounter. $caption"]
         dict set References $caption $reference
         return $ref
     }
@@ -451,11 +454,14 @@ oo::class create ruff::formatter::Formatter {
         if {[info exists ref]} {
             upvar 1 $refvar upref
             set upref $ref
-            dict set upref label [trim_namespace $lookup $scope]
+            if {![dict exists $upref label]} {
+                dict set upref label [trim_namespace $lookup $scope]
+            }
             return 1
         }
         return 0
     }
+    export ResolvableReference?
 
     method HeadingReference {ns heading} {
         # Generates a reference for a heading in a namespace.

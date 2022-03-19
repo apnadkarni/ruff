@@ -25,7 +25,7 @@ and
 ## Release notes for 2.2
 
 * Support for embedded text formatted diagrams (ditaa, PlantUML etc.)
-* Alignment and captions for fenced blocks.
+* Alignment and linkable numbered captions for fenced blocks and diagrams.
 * Fixed minor display artifacts.
 
 ## Release notes for 2.1

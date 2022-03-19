@@ -75,6 +75,8 @@ oo::class create ruff::formatter::Markdown {
     method Begin {} {
         # Implements the [Formatter.Begin] method for HTML.
 
+        next
+
         # Generate the header used by all files
         # Currently, it is empty but might change in the future with
         # support for specific dialects which implement metainformation.
@@ -93,6 +95,8 @@ oo::class create ruff::formatter::Markdown {
         # See [Formatter.DocumentBegin].
         # ns - Namespace for this document.
 
+        next $ns
+
         set    NavigationLinks [dict create]
         set    Document $Header
         set    DocumentNamespace $ns
@@ -109,6 +113,9 @@ oo::class create ruff::formatter::Markdown {
 
         set doc $Document
         set Document ""
+
+        next
+
         return $doc
     }
 

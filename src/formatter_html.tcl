@@ -80,6 +80,8 @@ oo::class create ruff::formatter::Html {
     method Begin {} {
         # Implements the [Formatter.Begin] method for HTML.
 
+        next
+
         # Generate the header used by all files
         # set Header {<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">}
         set Header "<!DOCTYPE html>"
@@ -141,6 +143,8 @@ oo::class create ruff::formatter::Html {
         # See [Formatter.DocumentBegin].
         # ns - Namespace for this document.
 
+        next $ns
+
         set    NavigationLinks [dict create]
         set    Document $Header
         append Document "<main class='ruff-layout-main ruff-bd'>"
@@ -160,6 +164,8 @@ oo::class create ruff::formatter::Html {
         # Add the navigation bits and footer
         my Navigation $DocumentNamespace
         append Document $Footer
+
+        next
 
         set doc $Document
         set Document ""
@@ -382,8 +388,15 @@ oo::class create ruff::formatter::Html {
         if {[dict exists $fence_options -caption]} {
             set caption [dict get $fence_options -caption]
             set id "id='[my Anchor $scope $caption]'"
+            if {[my ResolvableReference? $caption $scope ref] && [dict exists $ref label]} {
+                # May have "Figure X" added
+                set display_caption [dict get $ref label]
+            } else {
+                set display_caption $caption
+            }
         } else {
             set caption ""
+            set display_caption ""
             set id ""
         }
 
@@ -407,8 +420,8 @@ oo::class create ruff::formatter::Html {
             append Document "\n<figure $id class='ruff-snippet $fig_classes'>"
             append Document [my AddPreformattedText [join $lines \n] $scope]
         }
-        if {$caption ne ""} {
-            append Document "\n<figcaption class='ruff-caption'>$caption</figcaption>"
+        if {$display_caption ne ""} {
+            append Document "\n<figcaption class='ruff-caption'>$display_caption</figcaption>"
         }
         append Document "\n</figure>"
         return

@@ -42,6 +42,8 @@ oo::class create ruff::formatter::Nroff {
     method Begin {} {
         # Implements the [Formatter.Begin] method for nroff.
 
+        next
+
         # Generate the header used by all files
         # Currently, it is empty but might change in the future with
         # support for specific dialects which implement metainformation.
@@ -61,6 +63,8 @@ oo::class create ruff::formatter::Nroff {
         # See [Formatter.DocumentBegin].
         # ns - Namespace for this document.
         set ns [string trimleft $ns :]
+
+        next $ns
 
         set DocumentNamespace $ns
         set Body ""
@@ -100,7 +104,11 @@ oo::class create ruff::formatter::Nroff {
             append doc [nr_section "SEE ALSO"] $SeeAlso
         }
         append doc $Footer
-        return [nroff_postprocess $doc]
+        set doc [nroff_postprocess $doc]
+
+        next
+
+        return $doc
     }
 
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {

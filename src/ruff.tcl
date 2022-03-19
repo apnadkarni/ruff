@@ -29,8 +29,6 @@ namespace eval ruff {
     variable _ruff_intro {
         # Introduction
 
-        This produces a centered [Centered diagram with caption].
-
         Ruff! (Runtime function formatter) is a documentation generation system
         for programs written in the Tcl programming language. Ruff! uses runtime
         introspection in conjunction with comment analysis to generate reference
@@ -311,7 +309,8 @@ namespace eval ruff {
 
         Ruff! adds
         * definition lists
-        * specialized processing for fenced blocks
+        * specialized processing for fenced blocks with diagramming
+        support, captions and alignment
 
         ## Documenting classes
 
@@ -447,6 +446,8 @@ namespace eval ruff {
         ```
         ````
 
+        This produces
+
         ``` -align center -caption "An example"
         This is a
         center-aligned
@@ -454,7 +455,10 @@ namespace eval ruff {
         with a caption
         ```
 
-        These options are generally more useful with diagrams.
+        The `-caption` option is optional. If specified, it is shown
+        below the output and can be linked to using the value of the option.
+        For example `[An example]` will link as [An example].
+
 
         ## Embedding diagrams
 
@@ -614,7 +618,7 @@ namespace eval ruff {
         ```
         ````
 
-        This produces a centered [Centered diagram with caption].
+        The result is shown in [Centered diagram with caption].
 
         ``` -align center -caption "Centered diagram with caption" diagram ditaa --scale 0.8
         +------------+   Ruff!   +---------------+
