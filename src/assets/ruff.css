@@ -749,3 +749,8 @@ span.ns_scope a[href]:hover {
   /* Do not want caption in color of ruff-snippet class in <figure> */
   background-color: var(--ruff-bd-background-color);
 }
+
+.ruff-figure img {
+    max-width: 100%;
+    height: auto;
+}
