@@ -232,6 +232,21 @@ oo::class create ruff::formatter::Html {
         return [my DocumentEnd]
     }
 
+    method AddProcedureDetail {procinfo} {
+        # Adds the detailed information about a procedure or method
+        #  procinfo - dictionary describing the procedure. See [AddProcedure]
+        #
+        #  The concrete implementation can override this.
+
+        if {[my Option -compact 0]} {
+            append Document "<details><summary class='ruff-expand'><span>Details</span></summary>\n"
+        }
+        next $procinfo
+        if {[my Option -compact 0]} {
+            append Document "</details>\n"
+        }
+    }
+
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
         # Adds heading for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
@@ -248,7 +263,7 @@ oo::class create ruff::formatter::Html {
         set href     [my SymbolReference $ns $fqn]
         set linkinfo [dict create level $level href $href ns $ns]
 
-        # Cosntruct tooltip from synopsis and tooltip
+        # Construct tooltip from synopsis and tooltip
         if {[llength $synopsis]} {
             set tip "<pre>[join [my SynopsisToHtml $synopsis] \n]</pre>"
         }

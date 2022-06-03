@@ -726,6 +726,8 @@ span.ns_scope a[href]:hover {
   color: var(--ruff-bd-tip-color);
 }
 
+/* Classes for figures */
+
 .ruff-figure {
   margin: 0.5em 1em;
 }
@@ -753,4 +755,15 @@ span.ns_scope a[href]:hover {
 .ruff-figure img {
     max-width: 100%;
     height: auto;
+}
+
+/* Classes for "More" expansion */
+.ruff-expand > span {
+    font-size: small;
+    text-decoration: underline;
+}
+
+summary.ruff-expand {
+    /* list-style-type: none; */
+    margin-bottom: 1em;
 }

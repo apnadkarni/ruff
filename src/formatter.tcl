@@ -126,9 +126,8 @@ oo::class create ruff::formatter::Formatter {
         if {[llength $parameters] == 0} {
             return;             # Do not want even heading if not parameters
         }
-        if {![my Option -compact 0]} {
-            my AddHeading parameters [::msgcat::mc Parameters] $scope
-        }
+        my AddHeading parameters [::msgcat::mc Parameters] $scope
+
         # Construct a definition block for the parameters
         set definitions [lmap param $parameters {
             set definition [dict get $param definition]
@@ -198,11 +197,7 @@ oo::class create ruff::formatter::Formatter {
         }
 
         if {$title ne ""} {
-            if {[my Option -compact 0]} {
-                set text "$title: "
-            } else {
-                my AddHeading nonav $title $scope
-            }
+            my AddHeading nonav $title $scope
         }
 
         set re_inlinelink  {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\]\s*\(\s*((?:[^\s\)]+|\([^\s\)]+\))+)?(\s+([\"'])(.*)?\4)?\s*\)}
@@ -237,9 +232,8 @@ oo::class create ruff::formatter::Formatter {
         #  synopsis - List of alternating elements comprising, in turn,
         #             the command portion and the parameter list.
         # [Formatter] provides a base implementation that may be overridden.
-        if {![my Option -compact 0]} {
-            my AddHeading nonav Synopsis $scope
-        }
+
+        my AddHeading nonav Synopsis $scope
         my AddPreformatted [lmap {cmd params} $synopsis {
             concat $cmd $params
         }] $scope
@@ -270,6 +264,47 @@ oo::class create ruff::formatter::Formatter {
         # Forwards are formatted like methods
         my AddProgramElementHeading method $fqn
         my AddParagraph "Forwarded to `[dict get $fwdinfo forward]`." $scope
+    }
+
+    method AddProcedureDetail {procinfo} {
+        # Adds the detailed information about a procedure or method
+        #  procinfo - dictionary describing the procedure. See [AddProcedure]
+        #
+        #  The concrete implementation can override this.
+
+        dict with procinfo {
+            # Creates the following locals
+            #  proctype, display_name, fqn, synopsis, parameters, summary,
+            #  body, seealso, returns, source
+            #
+            # Only the fqn and proctype are mandatory.
+        }
+
+        set scope [namespace qualifiers $fqn]
+
+        if {[info exists parameters]} {
+            my AddParameters $parameters $scope
+        }
+
+        if {[info exists body] && [llength $body]} {
+            my AddHeading nonav [::msgcat::mc Description] $scope
+            my AddParagraphs $body $scope
+        }
+
+        if {[info exists returns]} {
+            my AddHeading nonav [::msgcat::mc "Return value"] $scope
+            my AddParagraph $returns $scope
+        }
+
+        if {[info exist seealso]} {
+            my AddReferences $seealso $scope [::msgcat::mc "See also"]
+        }
+
+        if {[my Option -includesource 0] && [info exists source]} {
+            my AddSource $source $scope
+        }
+
+        return
     }
 
     method AddProcedure {procinfo} {
@@ -323,31 +358,7 @@ oo::class create ruff::formatter::Formatter {
             my AddSynopsis $synopsis $scope
         }
 
-        if {[info exists parameters]} {
-            my AddParameters $parameters $scope
-        }
-
-        if {[info exists body] && [llength $body]} {
-            if {![my Option -compact 0]} {
-                my AddHeading nonav [::msgcat::mc Description] $scope
-            }
-            my AddParagraphs $body $scope
-        }
-
-        if {[info exists returns]} {
-            if {![my Option -compact 0]} {
-                my AddHeading nonav [::msgcat::mc "Return value"] $scope
-            }
-            my AddParagraph $returns $scope
-        }
-
-        if {[info exist seealso]} {
-            my AddReferences $seealso $scope [::msgcat::mc "See also"]
-        }
-
-        if {[my Option -includesource 0] && [info exists source]} {
-            my AddSource $source $scope
-        }
+        my AddProcedureDetail $procinfo
 
         return
 
@@ -897,9 +908,7 @@ oo::class create ruff::formatter::Formatter {
         my AddProgramElementHeading class $fqn
         set scope $fqn
         if {[info exists method_summaries]} {
-            if {![my Option -compact 0]} {
-                my AddHeading nonav "Method summary" $scope
-            }
+            my AddHeading nonav "Method summary" $scope
             # The method names need to be escaped and linked.
             my AddDefinitions [lmap definition $method_summaries {
                 set term [dict get $definition term]
@@ -982,6 +991,8 @@ oo::class create ruff::formatter::Formatter {
         #   -autopunctuate BOOLEAN - If `true`, the first letter of definition
         #    descriptions (including parameter descriptions) is capitalized
         #    and a period added at the end if necessary.
+        #   -compact BOOLEAN - If `true`, the a formatter-dependent compact
+        #    form is generated.
         #   -preamble DICT - a dictionary indexed by a namespace. Each value is
         #    a flat list of pairs consisting of a heading and
         #    corresponding content. These are inserted into the document

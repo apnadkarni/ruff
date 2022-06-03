@@ -647,19 +647,23 @@ namespace eval ruff {
 
         When generating multipage output, the toplevel generated page contains
         links to the other pages which contain per-namespace documentation.
-        The preamble (passed as the `-preamble` option to the [document] command) 
+        The preamble (passed as the `-preamble` option to the [document] command)
         is also placed in this page.
 
         ### HTML formatter
 
-        The internal HTML formatter offers (in the author's humble opinion) the
-        best cross-linking and navigation support with a table of contents in
-        addition to cosmetic enhancements such as tooltips and optional
-        hiding/display of source code. It is also the simplest to use as no
-        other external tools are required.
+        The internal HTML formatter offers
+
+        * A table of contents in a movable pane and tooltips
+        * Cross referencing
+        * Theming support
+        * Optional compact output with expandable content for details
+        * Toggles for source code display
+
+        It is also the simplest to use as no other external tools are required.
 
         The following is a simple example of generating the documentation for
-        Ruff! itself in a single page format:
+        Ruff! itself in a single page format.
 
         ```
         ruff::document ::ruff -title "Ruff! reference"
@@ -667,9 +671,10 @@ namespace eval ruff {
 
         To generate documentation, including private namespaces, in multipage
         format:
-        ````
+
+        ```
         ruff::document ::ruff -recurse true -pagesplit namespace -outdir ./docs -title "Ruff! internal reference"
-        ````
+        ```
 
         ### Markdown formatter
 
@@ -2546,8 +2551,9 @@ proc ruff::document {namespaces args} {
     #  descriptions (including parameter descriptions) is capitalized
     #  and a period added at the end if necessary.
     # -compact BOOLEAN - If `true`, documentation is generated in a more
-    #  compact form, primarily by omitting headers within procedure and method
-    #  definitions.
+    #  compact form if supported by the formatter. For the built-in HTML formatter
+    #  this results in procedure and method details being placed in collapsed
+    #  sections that can be expanded on demand.
     # -diagrammer `DIAGRAMARGS` - arguments to pass to `diagram` processor
     #  if none are specified in the diagram block header. Defaults to
     #  `kroci ditaa`
