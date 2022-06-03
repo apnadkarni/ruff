@@ -18,7 +18,7 @@ proc ruff::private::document_self {args} {
                         -pagesplit namespace \
                         -makeindex true \
                         -includeprivate false \
-                        -compact 0 \
+                        -compact 1 \
                         -locale en \
                         -autopunctuate true \
                         -navigation {left sticky}
