@@ -721,7 +721,10 @@ span.ns_scope a[href]:hover {
   line-height: 1;
 }
 
-#indexUL .ruff-tiptext {
+.ruff-bd #indexUL .ruff-tiptext,
+.ruff-bd #indexUL .ruff-tiptext pre,
+.ruff-bd #indexUL .ruff-tiptext pre .ruff_cmd,
+.ruff-bd #indexUL .ruff-tiptext pre .ruff_arg {
   background-color: var(--ruff-bd-tip-background-color);
   color: var(--ruff-bd-tip-color);
 }
