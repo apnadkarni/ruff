@@ -22,6 +22,13 @@ and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
 
+## Release notes for 2.3
+
+* Collapsible details section for procedure description option
+`-compact 1` is specified. Note generated output with `-compact 1` has changed.
+* Bug fix. Ensure diagrams fit in page width
+* Bug fix. Index page tooltip synopsis visibility in dark themes.
+
 ## Release notes for 2.2
 
 * Support for embedded text formatted diagrams (ditaa, PlantUML etc.)
