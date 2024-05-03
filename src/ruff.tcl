@@ -6,7 +6,7 @@
 # ...a document generator using introspection
 #
 
-package require Tcl 8.6
+package require Tcl
 if {[catch {
     package require textutil::adjust
     package require textutil::tabify
@@ -19,11 +19,21 @@ msgcat::mcload [file join [file dirname [info script]] msgs]
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 2.3.0
+    variable version 2.4b0
     proc version {} {
         # Returns the Ruff! version.
         variable version
         return $version
+    }
+
+    proc tcl9 {} {
+        if {[package vsatisfies [package require Tcl] 9]} {
+            proc tcl9 {} {return true}
+        } else {
+            proc tcl9 {} {return false}
+            
+        }
+        tcl9
     }
 
     variable _ruff_intro {
@@ -1199,7 +1209,7 @@ proc ruff::private::parse_fence_state {statevar} {
     dict set fence_options Fence $marker
     # If there is a caption, create anchor for it
     if {[dict exists $fence_options -caption]} {
-        $ruff::gFormatter CollectFigureReference $state(scope) [dict get $fence_options -caption]
+        $::ruff::gFormatter CollectFigureReference $state(scope) [dict get $fence_options -caption]
     }
 
     lappend state(body) fenced [list $code_block $fence_options]
@@ -2466,8 +2476,17 @@ proc ruff::private::get_ooclass_method_path {class_name method_name} {
     }
 
     #ruff - next in the search path is the class itself
-    if {[lsearch -exact [info class methods $class_name -private] $method_name] >= 0} {
-        lappend method_path $class_name
+    if {[tcl9]} {
+        # In Tcl 9, -private behaves differently at least in 9.0b2
+        # See https://core.tcl-lang.org/tcl/info/36e5517a6850c193
+        if {[lsearch -exact [info class methods $class_name] $method_name] >= 0 ||
+            [lsearch -exact [info class methods $class_name -private] $method_name] >= 0} {
+            lappend method_path $class_name
+        }
+    } else {
+        if {[lsearch -exact [info class methods $class_name -private] $method_name] >= 0} {
+            lappend method_path $class_name
+        }
     }
 
     #ruff - Last in the search order are the superclasses (in recursive fashion)
@@ -2487,7 +2506,7 @@ proc ruff::private::get_ooclass_method_path {class_name method_name} {
 }
 
 proc ruff::private::locate_ooclass_method {class_name method_name} {
-    # Locates the classe that implement the specified method of a class
+    # Locates the class that implements the specified method of a class
     # class_name - name of the class to which the method belongs
     # method_name - method name being searched for
     #

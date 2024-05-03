@@ -5,6 +5,47 @@ for programs written in the Tcl programming language. Ruff! uses runtime
 introspection in conjunction with comment analysis to generate reference
 documentation for Tcl programs with minimal effort on the programmer's part.
 
+## Why Ruff!
+
+Ruff! produces documentation that not only requires less duplication
+of effort from the programmer, but is also more complete, more
+accurate and more maintainable.
+
+* Comments in source code do not have to be reproduced for documentation
+purposes.
+
+* Ruff! requires minimal markup in the comments making it lightweight
+as well as reducing clutter.
+
+* Supports inline formatting using Markdown syntax.
+
+* Embedded diagrams in multiple formats
+
+* Program elements like command arguments, defaults and
+class relationships like inheritance are automatically derived.
+
+* Maintenance is less of a burden as documentation is automatically
+updated with source modification such as changes to defaults, addition of
+mix-ins etc.
+
+On the output side,
+
+* Ruff! supports multiple formats (currently HTML, Markdown and nroff).
+
+* Generated documentation can optionally be split across multiple pages.
+
+* Hyperlinks between program elements, and optionally source code,
+make navigation easy and efficient.
+
+* A table of contents and optional searchable index permits quick
+location of command and class documentation.
+
+* Class relationships are extracted
+and the full API for a class, with inherited and mixed-in methods, is
+flattened and summarized.
+
+* HTML output supports user-selectable themes.
+
 See https://ruff.magicsplat.com for features and reference documentation.
 
 For additional examples of Ruff! generated documentation, see
@@ -16,15 +57,20 @@ For additional examples of Ruff! generated documentation, see
 [baltip](https://aplsimple.github.io/en/tcl/baltip/baltip.html),
 [hl-tcl](https://aplsimple.github.io/en/tcl/hl_tcl/hl_tcl.html),
 [tcl-promise](https://tcl-promise.magicsplat.com),
+[tomato](https://htmlpreview.github.io/?https://raw.githubusercontent.com/nico-robert/tomato/master/documentation/tomato.html),
 [obex](https://tcl-obex.magicsplat.com),
 [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
 
+## Release notes for 2.4
+
+* Support for Tcl 9
+
 ## Release notes for 2.3
 
-* Collapsible details section for procedure description option
+* Collapsible details section for procedure description option when
 `-compact 1` is specified. Note generated output with `-compact 1` has changed.
 * Bug fix. Ensure diagrams fit in page width
 * Bug fix. Index page tooltip synopsis visibility in dark themes.
