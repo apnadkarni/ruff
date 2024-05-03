@@ -240,9 +240,10 @@ oo::class create ruff::formatter::Formatter {
         return
     }
 
-    method AddSource {source scope} {
+    method AddSource {source scope procname} {
         # Adds a Source code section to the document content.
         #  source - Source code fragment.
+        #  procname - not used
         # [Formatter] provides a base implementation that may be overridden.
         my AddHeading nonav Source $scope
         my AddPreformattedText $source $scope
@@ -301,7 +302,7 @@ oo::class create ruff::formatter::Formatter {
         }
 
         if {[my Option -includesource 0] && [info exists source]} {
-            my AddSource $source $scope
+            my AddSource $source $scope $fqn
         }
 
         return

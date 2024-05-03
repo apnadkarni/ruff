@@ -470,11 +470,19 @@ oo::class create ruff::formatter::Html {
         return
     }
 
-    method AddSource {source scope} {
+    method AddSource {source scope procname} {
         # Adds a Source code section to the document content.
         #  source - Source code fragment.
         #  scope  - The documentation scope of the content.
-        set src_id [my NewSourceId]
+        #  procname - proc name used to generate stable id - see bug #78
+
+        # See bug #78 set src_id [my NewSourceId]
+        set src_id [string map {:: _} $procname]
+        set src_id [string map {: _ \" _ < _ > _ # _ $ _ ? _ ! _ . _ ( _ ) _} $src_id]
+        set src_id [string trimleft $src_id _]
+        if {$src_id eq {}} {
+            set src_id [my NewSourceId]
+        }
         append Document "<div class='ruff_source'>"
         append Document "<p class='ruff_source_link'>"
         append Document "<a id='l_$src_id' href=\"javascript:toggleSource('$src_id')\">Show source</a>"
