@@ -19,7 +19,7 @@ msgcat::mcload [file join [file dirname [info script]] msgs]
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 2.4.1
+    variable version 2.4.2
     proc version {} {
         # Returns the Ruff! version.
         variable version
@@ -2160,6 +2160,8 @@ proc ruff::private::extract_ooclass {classname args} {
     # forwards - a list of forwarded methods, each element in the
     #  list being a dictionary with keys 'name' and 'forward'
     #  corresponding to the forwarded method name and the forwarding command.
+    # properties - a dictionary keyed by 'readable' and 'writeable' specifying
+    #  oo::configurable properties
     # mixins - a list of names of classes mixed into the class
     # superclasses - a list of names of classes which are direct
     #   superclasses of the class
@@ -2177,7 +2179,7 @@ proc ruff::private::extract_ooclass {classname args} {
     array set opts $args
 
     set result [dict create methods {} external_methods {} \
-                    filters {} forwards {} \
+                    filters {} forwards {} properties {} \
                     mixins {} superclasses {} subclasses {} \
                     name $classname \
                    ]
@@ -2244,7 +2246,12 @@ proc ruff::private::extract_ooclass {classname args} {
     dict set result name $classname;   # TBD - should we fully qualify this?
     dict set result external_methods $external_methods
     dict set result filters [info class filters $classname]
-    dict set result mixins [info class mixins $classname]
+    dict set result mixins [lmap mixin [info class mixins $classname] {
+        if {[string match "::oo::*" $mixin]} {
+            continue
+        }
+        set mixin
+    }]
     dict set result subclasses [info class subclasses $classname]
     # We do not want to list ::oo::object which is a superclass
     # of all classes.
@@ -2255,6 +2262,13 @@ proc ruff::private::extract_ooclass {classname args} {
         }
     }
     dict set result superclasses $classes
+    if {[tcl9]} {
+        dict set result properties readable [lsort [info class properties $classname -all -readable]]
+        dict set result properties writable [lsort [info class properties $classname -all -writable]]
+    } else {
+        dict set result properties readable {}
+        dict set result properties writable {}
+    }
 
     return $result
 }

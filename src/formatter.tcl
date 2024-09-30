@@ -776,6 +776,7 @@ oo::class create ruff::formatter::Formatter {
             # Creates the following locals
             # name - name of class
             # superclasses - list of superclasses
+            # properties - dictionary keyed by "readable" "writable"
             # mixins - list of mixin classes
             # subclasses - list of subclasses
             # external_methods - list of {method class} pairs
@@ -841,7 +842,11 @@ oo::class create ruff::formatter::Formatter {
                 } else {
                     set referenced_class $imp_class
                 }
-                lappend method_summaries [list term $method_name definition [list "See [markup_reference $referenced_class.$method_name]"]]
+                if {$referenced_class eq "::oo::configuresupport::configurable"} {
+                    lappend method_summaries [list term $method_name definition [list "Configure properties."]]
+                } else {
+                    lappend method_summaries [list term $method_name definition [list "See [markup_reference $referenced_class.$method_name]"]]
+                }
             }
         }
 
@@ -878,7 +883,7 @@ oo::class create ruff::formatter::Formatter {
         set result [dict create fqn $fqn display_name $display_name]
         foreach key {
             superclasses subclasses mixins method_summaries mixins
-            filters methods constructor destructor forwards
+            filters methods constructor destructor forwards properties
         } {
             if {[info exists $key]} {
                 dict set result $key [set $key]
@@ -894,6 +899,7 @@ oo::class create ruff::formatter::Formatter {
         #  display_name - Name of class for display purposes.
         #  superclasses - List of superclasses.
         #  subclasses - List of subclasses.
+        #  properties - dictionary keyed by "readable", "writable"
         #  mixins - List of mixins.
         #  filters - List of filter methods.
         #  method_summaries - Definition list mapping method name to description.
@@ -923,6 +929,25 @@ oo::class create ruff::formatter::Formatter {
                     dict set definition term [markup_code $term]
                 }
             }] $scope none
+        }
+        if {[info exists properties]} {
+            set rprops [dict get $properties readable]
+            set wprops [dict get $properties writable]
+            if {[llength $rprops] || [llength $wprops]} {
+                my AddHeading nonav "Properties" $scope
+                if {[llength $rprops]} {
+                    set proplist [lmap prop $rprops {
+                        markup_code $prop
+                    }]
+                    my AddParagraphText "Readable: [join $proplist {, }]" $scope
+                }
+                if {[llength $wprops]} {
+                    set proplist [lmap prop $wprops {
+                        markup_code $prop
+                    }]
+                    my AddParagraphText "Writable: [join $proplist {, }]" $scope
+                }
+            }
         }
         foreach var {superclasses mixins subclasses filters} {
             if {[info exists $var]} {

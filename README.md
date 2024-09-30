@@ -66,7 +66,8 @@ and
 
 ## Release notes for 2.4
 
-* Support for Tcl 9
+* Support for TclOO properties in Tcl 9
+
 
 ## Release notes for 2.3
 

@@ -382,3 +382,14 @@ ruff::sample::MetaClass create ruff::sample::MetaClassInstance {
         # A method of a class created from a metaclass
     }
 }
+
+if {[package vsatisfies [package require Tcl] 9]} {
+    oo::configurable create ruff::sample::ConfigurableClass {
+        property rprop -kind readable
+        property wprop -kind writable
+        property rwprop
+        constructor {} {
+            # A class with properties
+        }
+    }
+}
