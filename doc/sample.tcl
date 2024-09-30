@@ -100,6 +100,21 @@ namespace eval ruff::sample {
         1*, *Figure 2* etc.. The numbering is across the entire document set,
         not per page, by design.
 
+        The fence can be followed by a language specifier (any string)
+        *without any intervening whitespace.
+
+        ````
+        ```tcl
+        set lang "This is Tcl code"
+        ```
+        ````
+
+        ```tcl
+        set lang "This is Tcl code"
+        ```
+
+        Not all formatters make use of the language specifier.
+
         ### Diagrams
 
         Diagrams can be embedded in several formats such as `ditaa`,

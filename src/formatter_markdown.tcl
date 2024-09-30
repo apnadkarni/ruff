@@ -278,7 +278,8 @@ oo::class create ruff::formatter::Markdown {
         # Do not hardcode fence since the lines may themself contain something
         # that looks like a fence.
         set fence [dict get $fence_options Fence]
-        append Document \n $fence \n [join $lines \n] \n $fence \n
+        set lang [dict get $fence_options Language]
+        append Document \n $fence$lang \n [join $lines \n] \n $fence \n
         if {[dict exists $fence_options -caption]} {
             append Document \n\n* [dict get $fence_options -caption] *\n\n
         }

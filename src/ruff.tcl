@@ -424,11 +424,16 @@ namespace eval ruff {
         of a fenced block is
 
         ````
-        ``` ?option value...? ?transform arg...?
+        ```?language? ?option value...? ?transform arg...?
         some text
         lines
         ```
         ````
+
+        The `language` token is optional and specifies the programming language
+        for the preformatted lines. If present, it must immediately follow
+        the backquote without intervening whitespace. Some formatters make
+        use of the language to colorize the output.
 
         The supported options are
 
@@ -441,7 +446,7 @@ namespace eval ruff {
         without modification. The only transform currently implemented is
         `diagram` and is described in [Embedding diagrams].
 
-        Formatters that do not support the options or the transforms
+        Formatters that do not support the language, options or the transforms
         will silently ignore them and do the default processing on the
         block.
 
@@ -1048,11 +1053,12 @@ proc ruff::private::parse_line {line mode current_indent}  {
                         Term "[lindex $matches 1][lindex $matches 2]" \
                         Text [lindex $matches 3]]
         }
-        {^(`{3,})(.*)$} {
+        {^(`{3,})(\S*)(.*)$} {
             # ```` Fenced code block
-            set fence_options [string trim [lindex $matches 2]]
+            set fence_options [string trim [lindex $matches 3]]
             return [list Type fence Indent $indent \
                         Text [lindex $matches 1] \
+                        Language [lindex $matches 2] \
                         Options $fence_options]
         }
         default {
@@ -1178,6 +1184,7 @@ proc ruff::private::parse_fence_state {statevar} {
     set marker [dict get $state(parsed) Text]
     set marker_indent  [dict get $state(parsed) Indent]
     set options_line [dict get $state(parsed) Options]
+    set lang [dict get $state(parsed) Language]
     set code_block {}
 
     # Gobble up any lines until the matching fence
@@ -1207,6 +1214,7 @@ proc ruff::private::parse_fence_state {statevar} {
 
     set fence_options [parse_fence_options $options_line]
     dict set fence_options Fence $marker
+    dict set fence_options Language $lang
     # If there is a caption, create anchor for it
     if {[dict exists $fence_options -caption]} {
         $::ruff::gFormatter CollectFigureReference $state(scope) [dict get $fence_options -caption]
@@ -2228,10 +2236,10 @@ proc ruff::private::extract_ooclass {classname args} {
             # Error, may be it is a forwarded method
             if {! [catch {
                 set forward [info class forward $classname $name]
-            }]} {
+            } res]} {
                 dict lappend result forwards [dict create name $name forward $forward]
             } else {
-                ruff::app::log_error "Could not introspect method $name in class $classname"
+                ruff::app::log_error "Could not introspect method $name in class $classname: $res"
             }
         }
     }
