@@ -139,8 +139,10 @@ oo::class create ruff::formatter::Nroff {
         } elseif {$type eq "class"} {
             # Classes without constructors will not have a synopsis
             # Make one up
-            append Synopsis [nr_bldp "$name create OBJNAME"] [nr_br]
-            append Synopsis [nr_bldp "$name new"] [nr_br]
+            if {[llength [info class constructor $fqn]] == 0} {
+                append Synopsis [nr_bldp "$name create OBJNAME"] [nr_br]
+                append Synopsis [nr_bldp "$name new"] [nr_br]
+            }
         }
         return
     }
