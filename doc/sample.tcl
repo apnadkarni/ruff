@@ -402,9 +402,22 @@ if {[package vsatisfies [package require Tcl] 9]} {
     oo::configurable create ruff::sample::ConfigurableClass {
         property rprop -kind readable
         property wprop -kind writable
-        property rwprop
+        property rwprop -set {
+            # This is a special function for setting a rw property
+            #
+            # Some more information about the same
+        } -get {
+            # This is a special function for reading a rw property
+        }
+
         constructor {} {
             # A class with properties
+        }
+    }
+    oo::configurable create ruff::sample::DerivedConfigurableClass {
+        superclass ruff::sample::ConfigurableClass
+        property derivedprop -get {
+            # This is a derived property.
         }
     }
 }

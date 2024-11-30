@@ -31,7 +31,6 @@ namespace eval ruff {
             proc tcl9 {} {return true}
         } else {
             proc tcl9 {} {return false}
-            
         }
         tcl9
     }
@@ -324,16 +323,23 @@ namespace eval ruff {
 
         ## Documenting classes
 
-        Documentation for classes primarily concerns documentation of its methods.
-        The format for method documentation is exactly as described above for
-        procedures. Information about class relationships is automatically
-        collected and need not be explicitly provided. Note that unlike for
-        procedures and methods, Tcl does not provide a means to retrieve the
-        body of the class so that comments can be extracted from them. Thus
-        to document information about the class as a whole, you can either
-        include it in the comments for the constructor, which is often a
-        reasonable place for such information, or include it in the general
-        information section as described in the next section.
+        Class documentation includes methods, properties, superclasses and
+        mixins.
+
+        The format for method documentation is as described above for
+        procedures. If a property has specialized setter and getter methods,
+        their documentation is extracted in the same fashion except that
+        only paragraph text is considered and other elements like definition
+        lists or diagrams are ignored.
+
+        Information about superclasses and mixins is automatically collected and
+        need not be explicitly provided. Note that unlike for procedures and
+        methods, Tcl does not provide a means to retrieve the body of the class
+        so that comments can be extracted from them. Thus to document
+        information about the class as a whole, you can either include it in the
+        comments for the constructor, which is often a reasonable place for such
+        information, or include it in the general information section as
+        described in the next section.
 
         Classes created from user-defined metaclasses are also included
         in the generated documentation.
@@ -2018,7 +2024,20 @@ proc ruff::private::extract_ooclass_method {class method} {
             set params {}
         }
         default {
-            foreach {params body} [info class definition $class $method] break
+            set method_type [info class methodtype $class $method]
+            switch $method_type {
+                method {
+                    lassign [info class definition $class $method] params body
+                }
+                PropertyGetter -
+                PropertySetter {
+                    # Cook up a dummy record
+                    return [extract_proc_or_method method $method {} {} {} $class]
+                }
+                default {
+                    error "Unknown method type [info class methodtype $class $method]"
+                }
+            }
         }
     }
 
@@ -2168,8 +2187,11 @@ proc ruff::private::extract_ooclass {classname args} {
     # forwards - a list of forwarded methods, each element in the
     #  list being a dictionary with keys 'name' and 'forward'
     #  corresponding to the forwarded method name and the forwarding command.
-    # properties - a dictionary keyed by 'readable' and 'writeable' specifying
-    #  oo::configurable properties
+    # properties - a dictionary keyed by property name. Keys of the nested
+    #  dictionary are 'readable' (if present readable property),
+    #  'writable' (if present, writable property),
+    #  'readprop' (if present, a non-default getter method definition),
+    #  'writeprop' (if present, a non-default setter method definition),
     # mixins - a list of names of classes mixed into the class
     # superclasses - a list of names of classes which are direct
     #   superclasses of the class
@@ -2192,19 +2214,32 @@ proc ruff::private::extract_ooclass {classname args} {
                     name $classname \
                    ]
 
+    set property_methods {}
     if {$opts(-includeprivate)} {
         set all_local_methods [info class methods $classname -private]
         set all_methods [info class methods $classname -all -private]
     } else {
         set all_local_methods [info class methods $classname]
         set all_methods [info class methods $classname -all]
+        if {[tcl9]} {
+            # Property method are private but we need them to extract
+            # property documentations.
+            foreach name [info class methods $classname -all -private] {
+                if {[regexp {<(ReadProp|WriteProp)(-.+)>} $name]} {
+                    lappend property_methods $name
+                }
+            }
+        }
     }
-    set public_methods [info class methods $classname -all]
+    set public_methods [concat [info class methods $classname -all] $property_methods]
     set external_methods {}
 
-    foreach name [lsort -dictionary $all_methods] {
+    # Dictionary to hold property information
+    set properties {}
+
+    foreach name [concat [lsort -dictionary $all_methods] $property_methods] {
         set implementing_class [locate_ooclass_method $classname $name]
-        if {[lsearch -exact $all_local_methods $name] < 0} {
+        if {$name ni $property_methods && [lsearch -exact $all_local_methods $name] < 0} {
             # Skip the destroy method which is standard and
             # appears in all classes.
             if {$implementing_class ne "::oo::object" &&
@@ -2231,7 +2266,11 @@ proc ruff::private::extract_ooclass {classname args} {
         } msg]} {
             dict set method_info visibility $visibility
             #dict set method_info name $name
-            dict lappend result methods $method_info
+            if {[regexp {<(ReadProp|WriteProp)(-.+)>} $name -> prop_method_type prop_name]} {
+                dict set properties $prop_name [string tolower $prop_method_type] $method_info
+            } else {
+                dict lappend result methods $method_info
+            }
         } else {
             # Error, may be it is a forwarded method
             if {! [catch {
@@ -2239,7 +2278,8 @@ proc ruff::private::extract_ooclass {classname args} {
             } res]} {
                 dict lappend result forwards [dict create name $name forward $forward]
             } else {
-                ruff::app::log_error "Could not introspect method $name in class $classname: $res"
+                # Log original error
+                ruff::app::log_error "Could not introspect method $name in class $classname: $msg"
             }
         }
     }
@@ -2271,13 +2311,18 @@ proc ruff::private::extract_ooclass {classname args} {
     }
     dict set result superclasses $classes
     if {[tcl9]} {
-        dict set result properties readable [lsort [info class properties $classname -all -readable]]
-        dict set result properties writable [lsort [info class properties $classname -all -writable]]
-    } else {
-        dict set result properties readable {}
-        dict set result properties writable {}
+        set local_props [info class properties $classname -readable]
+        foreach prop_name [info class properties $classname -all -readable] {
+            dict set properties $prop_name readable {}
+            dict set properties $prop_name inherited [expr {$prop_name ni $local_props}]
+        }
+        set local_props [info class properties $classname -writable]
+        foreach prop_name [info class properties $classname -all -writable] {
+            dict set properties $prop_name writable {}
+            dict set properties $prop_name inherited [expr {$prop_name ni $local_props}]
+        }
     }
-
+    dict set result properties $properties
     return $result
 }
 

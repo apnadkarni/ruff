@@ -930,24 +930,33 @@ oo::class create ruff::formatter::Formatter {
                 }
             }] $scope none
         }
-        if {[info exists properties]} {
-            set rprops [dict get $properties readable]
-            set wprops [dict get $properties writable]
-            if {[llength $rprops] || [llength $wprops]} {
-                my AddHeading nonav "Properties" $scope
-                if {[llength $rprops]} {
-                    set proplist [lmap prop $rprops {
-                        markup_code $prop
-                    }]
-                    my AddParagraphText "Readable: [join $proplist {, }]" $scope
+        if {[info exists properties] && [dict size $properties]} {
+            my AddHeading nonav "Properties" $scope
+            set property_defs [list ]
+            foreach prop_name [lsort [dict keys $properties]] {
+                set prop_rw {}
+                foreach rw {readable writable} {
+                    if {[dict exists $properties $prop_name $rw]} {
+                        lappend prop_rw $rw
+                    }
                 }
-                if {[llength $wprops]} {
-                    set proplist [lmap prop $wprops {
-                        markup_code $prop
-                    }]
-                    my AddParagraphText "Writable: [join $proplist {, }]" $scope
+                set term [markup_code $prop_name]
+                set prop_text [list "[join $prop_rw {, }]."]
+                foreach rw {readprop writeprop} {
+                    if {[dict exists $properties $prop_name $rw summary]} {
+                        lappend prop_text {*}[dict get $properties $prop_name $rw summary]
+                    }
+                    if {[dict exists $properties $prop_name $rw body]} {
+                        foreach {body_elem_type body_elem} [dict get $properties $prop_name $rw body] {
+                            if {$body_elem_type eq "paragraph"} {
+                                lappend prop_text {*}$body_elem
+                            }
+                        }
+                    }
                 }
+                lappend property_defs [list term $term definition $prop_text]
             }
+            my AddDefinitions $property_defs $scope
         }
         foreach var {superclasses mixins subclasses filters} {
             if {[info exists $var]} {
