@@ -1981,9 +1981,9 @@ proc ruff::private::extract_ensemble {ens} {
     set definitions [lmap subcmd $subcmds {
         list term "\[$subcmd\]\[[dict get $ens_subcmds $subcmd real_cmd]\]" definition [dict get $ens_subcmds $subcmd summary]
     }]
-    lappend body paragraph "The ensemble supports the following subcommands:"
+    lappend body paragraph [list "The ensemble supports the following subcommands:"]
     lappend body definitions $definitions
-    lappend body paragraph "Refer to the documentation of each subcommand for details."
+    lappend body paragraph [list "Refer to the documentation of each subcommand for details."]
 
     dict set ens_info name $ens
     dict set ens_info body $body

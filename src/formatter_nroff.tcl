@@ -256,7 +256,7 @@ oo::class create ruff::formatter::Nroff {
 
         # Do not confuse this synopsis with the synopsis section!
 
-        append Body [nr_inn $Indentation]; # Indent the synopsis
+        append Body [nr_inn $Indentation] \n; # Indent the synopsis
         foreach {cmds params} $synopsis {
             set line "[nr_bldp [join $cmds { }]]"
             if {[llength $params]} {
