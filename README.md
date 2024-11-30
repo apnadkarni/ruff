@@ -64,6 +64,12 @@ and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
 
+## Release notes for 2.5
+
+* Better documentation of TclOO properties to include custom
+setter/getter descriptions
+* Bug fixes in nroff output.
+
 ## Release notes for 2.4
 
 * Support for TclOO properties in Tcl 9
