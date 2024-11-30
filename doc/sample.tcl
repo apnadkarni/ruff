@@ -403,11 +403,11 @@ if {[package vsatisfies [package require Tcl] 9]} {
         property rprop -kind readable
         property wprop -kind writable
         property rwprop -set {
-            # This is a special function for setting a rw property
+            # This is a special function for setting a rw property.
             #
-            # Some more information about the same
+            # Some more information about the same.
         } -get {
-            # This is a special function for reading a rw property
+            # This is a special function for reading a rw property.
         }
 
         constructor {} {

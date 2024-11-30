@@ -19,20 +19,20 @@ msgcat::mcload [file join [file dirname [info script]] msgs]
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 2.4.2
+    variable version 2.5.0
     proc version {} {
         # Returns the Ruff! version.
         variable version
         return $version
     }
 
-    proc tcl9 {} {
+    proc Tcl9 {} {
         if {[package vsatisfies [package require Tcl] 9]} {
-            proc tcl9 {} {return true}
+            proc Tcl9 {} {return true}
         } else {
-            proc tcl9 {} {return false}
+            proc Tcl9 {} {return false}
         }
-        tcl9
+        Tcl9
     }
 
     variable _ruff_intro {
@@ -2017,7 +2017,7 @@ proc ruff::private::extract_ooclass_method {class method} {
 
     switch -exact -- $method {
         constructor {
-            foreach {params body} [info class constructor $class] break
+            lassign [info class constructor $class] params body
         }
         destructor  {
             set body [info class destructor $class]
@@ -2221,7 +2221,7 @@ proc ruff::private::extract_ooclass {classname args} {
     } else {
         set all_local_methods [info class methods $classname]
         set all_methods [info class methods $classname -all]
-        if {[tcl9]} {
+        if {[Tcl9]} {
             # Property method are private but we need them to extract
             # property documentations.
             foreach name [info class methods $classname -all -private] {
@@ -2310,7 +2310,7 @@ proc ruff::private::extract_ooclass {classname args} {
         }
     }
     dict set result superclasses $classes
-    if {[tcl9]} {
+    if {[Tcl9]} {
         set local_props [info class properties $classname -readable]
         foreach prop_name [info class properties $classname -all -readable] {
             dict set properties $prop_name readable {}
@@ -2543,7 +2543,7 @@ proc ruff::private::get_ooclass_method_path {class_name method_name} {
     }
 
     #ruff - next in the search path is the class itself
-    if {[tcl9]} {
+    if {[Tcl9]} {
         # In Tcl 9, -private behaves differently at least in 9.0b2
         # See https://core.tcl-lang.org/tcl/info/36e5517a6850c193
         if {[lsearch -exact [info class methods $class_name] $method_name] >= 0 ||

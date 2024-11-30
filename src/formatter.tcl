@@ -232,7 +232,6 @@ oo::class create ruff::formatter::Formatter {
         #  synopsis - List of alternating elements comprising, in turn,
         #             the command portion and the parameter list.
         # [Formatter] provides a base implementation that may be overridden.
-
         my AddHeading nonav Synopsis $scope
         my AddPreformatted [lmap {cmd params} $synopsis {
             concat $cmd $params
@@ -905,9 +904,9 @@ oo::class create ruff::formatter::Formatter {
         #  method_summaries - Definition list mapping method name to description.
         #  methods - Dictionary of method definitions in the format generated
         #    by [TransformProcOrMethod].
-        #  forwards - forwarded methods
         #  constructor - Constructor definition in the same format.
         #  destructor - Destructor definition in the same format.
+        #  forwards - forwarded methods
 
         dict with classinfo {
             # Creates locals for all the classinfo keys listed above.
@@ -965,7 +964,12 @@ oo::class create ruff::formatter::Formatter {
         }
         if {[info exists constructor]} {
             my AddProcedure $constructor
+        } else {
+            #APN
+            #set base_name [namespace tail $fqn]
+            #my AddSynopsis [list [list $base_name create OBJNAME] {} [list $base_name new] {}] $scope
         }
+
         if {[info exists destructor]} {
             my AddProcedure $destructor
         }

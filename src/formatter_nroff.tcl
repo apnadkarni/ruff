@@ -116,16 +116,32 @@ oo::class create ruff::formatter::Nroff {
         #  type - One of `proc`, `class` or `method`
         #  fqn - Fully qualified name of element.
         #  tooltip - The tooltip lines, if any. Ignore for nroff output.
-
         set level [dict get $HeaderLevels $type]
         set ns    [namespace qualifiers $fqn]
         set name  [namespace tail $fqn]
+        append Body [nr_p] [nr_inn -$Indentation] \n [nr_bldr $name]
         if {[string length $ns]} {
-            append Body [nr_p] [nr_inn -$Indentation] \n [nr_bldr [namespace tail $name]] " ($ns)"
+            append Body " ($ns)"
+            #append Body [nr_p] [nr_inn -$Indentation] \n [nr_bldr $name] " ($ns)"
         } else {
-            append Body [nr_p] [nr_inn -$Indentation] \n [nr_bldr $name]
+            #append Body [nr_p] [nr_inn -$Indentation] \n [nr_bldr $name]
         }
         append Body [nr_out]
+
+        if {[llength $synopsis]} {
+            foreach {cmds params} $synopsis {
+                set line "[nr_bldp [join $cmds { }]]"
+                if {[llength $params]} {
+                    append line " " [nr_ulp [join $params { }]] 
+                }
+                append Synopsis $line [nr_br]
+            }
+        } elseif {$type eq "class"} {
+            # Classes without constructors will not have a synopsis
+            # Make one up
+            append Synopsis [nr_bldp "$name create OBJNAME"] [nr_br]
+            append Synopsis [nr_bldp "$name new"] [nr_br]
+        }
         return
     }
 
@@ -233,10 +249,12 @@ oo::class create ruff::formatter::Nroff {
     }
 
     method AddSynopsis {synopsis scope} {
-        # Adds a Synopsis section to the document content.
+        # Adds a synopsis for a command
         #  synopsis - List of alternating elements comprising the command portion
         #             and the parameter list for it.
         #  scope  - The documentation scope of the content.
+
+        # Do not confuse this synopsis with the synopsis section!
 
         append Body [nr_inn $Indentation]; # Indent the synopsis
         foreach {cmds params} $synopsis {
@@ -244,7 +262,6 @@ oo::class create ruff::formatter::Nroff {
             if {[llength $params]} {
                 append line " " [nr_ulp [join $params { }]] 
             }
-            append Synopsis $line [nr_br]
             append Body $line [nr_br]
         }
         append Body [nr_out] \n
@@ -252,7 +269,6 @@ oo::class create ruff::formatter::Nroff {
     }
 
     method Navigation {{highlight_ns {}}} {
-        # TBD - right now, no navigation for markdown.
         return
     }
 

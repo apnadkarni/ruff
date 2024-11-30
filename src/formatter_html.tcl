@@ -464,7 +464,6 @@ oo::class create ruff::formatter::Html {
         #  synopsis - List of alternating elements comprising the command portion
         #             and the parameter list for it.
         #  scope  - The documentation scope of the content.
-
         set lines [my SynopsisToHtml $synopsis]
         append Document "<div class='ruff_synopsis'>[join $lines <br>]</div>\n"
         return
