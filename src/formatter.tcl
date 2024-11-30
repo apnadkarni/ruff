@@ -699,18 +699,19 @@ oo::class create ruff::formatter::Formatter {
                     lappend synopsis "OBJECT $display_name" $param_names
                 }
             } else {
+                set unqual_name [namespace tail $class]
+                set instance_name [string toupper $unqual_name]OBJ
                 switch -exact -- $proc_name {
                     constructor {
-                        set unqual_name [namespace tail $class]
                         set synopsis [list \
                                           "$unqual_name create OBJNAME" \
                                           $arglist \
                                           "$unqual_name new" \
                                           $arglist]
                     }
-                    destructor  {set synopsis [list "OBJECT destroy"]}
+                    destructor  {set synopsis [list "$instance_name destroy"]}
                     default  {
-                        set synopsis [list "OBJECT $display_name" $arglist]
+                        set synopsis [list "$instance_name $display_name" $arglist]
                     }
                 }
             }
