@@ -990,6 +990,9 @@ proc ruff::private::ensembles {pattern} {
     }]
 }
 
+proc ruff::private::propertymethod {name} {
+    return [regexp {<(ReadProp|WriteProp)(-.+)>} $name]
+}
 
 proc ruff::private::sift_names {names} {
     # Given a list of names, separates and sorts them based on their namespace
@@ -2024,7 +2027,15 @@ proc ruff::private::extract_ooclass_method {class method} {
             set params {}
         }
         default {
-            set method_type [info class methodtype $class $method]
+            if {[catch {
+                set method_type [info class methodtype $class $method]
+            } method_type]} {
+                # Could be property methods for *inherited* properties.
+                if {[propertymethod $method]} {
+                    # Cook up a dummy record
+                    return ""
+                }
+            }
             switch $method_type {
                 method {
                     lassign [info class definition $class $method] params body
@@ -2250,9 +2261,11 @@ proc ruff::private::extract_ooclass {classname args} {
         }
 
         # Even if a local method, it may be hidden by a mixin
+        # TBD - should we make a note in the documentation somewhere ?
         if {$implementing_class ne $classname} {
-            # TBD - should we make a note in the documentation somewhere ?
-            app::log_error "Method $name in class $classname is hidden by class $implementing_class."
+            if {![propertymethod $name]} {
+                app::log_error "Method $name in class $classname is hidden by class $implementing_class."
+            }
         }
 
         if {[lsearch -exact $public_methods $name] >= 0} {
@@ -2264,12 +2277,14 @@ proc ruff::private::extract_ooclass {classname args} {
         if {! [catch {
             set method_info [extract_ooclass_method $classname $name]
         } msg]} {
-            dict set method_info visibility $visibility
-            #dict set method_info name $name
-            if {[regexp {<(ReadProp|WriteProp)(-.+)>} $name -> prop_method_type prop_name]} {
-                dict set properties $prop_name [string tolower $prop_method_type] $method_info
-            } else {
-                dict lappend result methods $method_info
+            # Empty results indicate method to be ignored
+            if {[dict size $method_info] != 0} {
+                dict set method_info visibility $visibility
+                if {[regexp {<(ReadProp|WriteProp)(-.+)>} $name -> prop_method_type prop_name]} {
+                    dict set properties $prop_name [string tolower $prop_method_type] $method_info
+                } else {
+                    dict lappend result methods $method_info
+                }
             }
         } else {
             # Error, may be it is a forwarded method
