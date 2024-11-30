@@ -360,7 +360,7 @@ oo::class create ruff::formatter::Html {
                 set term [my ToHtml $term $scope]
             }
             append Document "<tr><td>" \
-                $term \
+                "<nobr>$term</nobr>" \
                 "</td><td>" \
                 $def \
                 "</td></tr>\n"
