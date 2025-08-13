@@ -166,7 +166,7 @@ namespace eval ruff {
 
         ````
         tclsh /path/to/ruff.tcl "::NS ::NS2" -preeval "package require mypac" \
-            -outfile docs.html -recurse true -pagesplit none
+                -outfile docs.html -recurse true -pagesplit none
         ````
 
         All arguments passed to the script are passed to the [document]
@@ -725,6 +725,35 @@ namespace eval ruff {
         for Unix manpages. It generates documentation as a single manpage
         or as a page per namespace with the `-pagesplit namespace` option.
         It does not support navigation links or table of contents.
+
+        ## Conditional inclusion or exclusion of blocks
+
+        Ruff! lets you include or exclude blocks for specific formatters.
+        For example, suppose you want to include an HTML table. Because HTML
+        tags aren’t supported by the nroff formatter, the tags will be stripped
+        and the man page will show the block unformatted. 
+
+        To include a block, add the keyword `include` after the `#ruff`
+        statement and provide the formatter name(s) as the argument:
+        
+        ```
+        #ruff include html
+        # <div style="ruff_bd"> <table class="ruff_deflist"> <tbody>
+        # <tr><th>Column1</th><th>Column2</th><th>Column3</th><th>Column4</th><th>Column5</th></tr>
+        # <tr><td>1</td><td>element1</td><td>element2</td><td>element3</td><td>element4</td></tr>
+        # <tr><td>2</td><td>element5</td><td>element6</td><td>element7</td><td>element8</td></tr>
+        # </tbody> </table> </div>
+        ```
+
+        You can provide multiple formatter names using the syntax `#ruff include {html markdown}`.
+        
+        The exclude directive uses the same syntax; instead of including a block
+        for certain formatters, it excludes the block for the specified formatters.
+        See a full example in the sample.tcl file, in the procedure
+        `ruff::sample::proc_with_conditional_formatter_block`.
+
+        Important: For this to work properly, each block must be separated from other
+        comment blocks by a blank line both before and after it.
     }
 
     namespace eval private {
@@ -1776,8 +1805,11 @@ proc ruff::private::distill_body {text} {
     # first line of code are treated as documentation lines.
     # If any tabs are present, they are replaced with spaces assuming
     # a tab stop width of 8.
+    variable gFormatter
+    set formatter [string tolower [lindex [split [info object class $::ruff::gFormatter] ::] end]]
     set lines {}
     set state init;             # init, collecting or searching
+    set includeExcludeFlag false
     foreach line [split $text \n] {
         set line [textutil::tabify::untabify2 $line]
         set line [string trim $line]; # Get rid of whitespace
@@ -1803,7 +1835,39 @@ proc ruff::private::distill_body {text} {
             # anywhere in the passed in text is considered the start
             # of a documentation block. All subsequent contiguous
             # comment lines are considered documentation lines.
+            # If after #ruff the words `include` or `exclude` appears 
+            # with further arguments, the conditional mode is
+            # activated, and arguments are used to decide if we should 
+            # include or exclude next lines processing for certain
+            # formatter.
             if {[string match "#ruff*" $line]} {
+                if {[regexp -nocase {^\s*#ruff\s+include\s+(?:\{([^\}]*)\}|(\S+))\s*$} $line -> braced single]} {
+                    if {$braced ne ""} {
+                        set names [lrange $braced 0 end]
+                    } else {
+                        set names [list $single]
+                    }
+                    if {$formatter ne $names} {
+                        set state searching
+                        set includeExcludeFlag false
+                        continue
+                    } else {
+                        set includeExcludeFlag true
+                    }
+                } elseif {[regexp -nocase {^\s*#ruff\s+exclude\s+(?:\{([^\}]*)\}|(\S+))\s*$} $line -> braced single]} {
+                    if {$braced ne ""} {
+                        set names [lrange $braced 0 end]
+                    } else {
+                        set names [list $single]
+                    }
+                    if {$formatter in $names} {
+                        set state searching
+                        set includeExcludeFlag false
+                        continue
+                    } else {
+                        set includeExcludeFlag true
+                    }
+                }
                 set state collecting
                 #ruff
                 # Note a #ruff on a line by itself will terminate
@@ -1811,10 +1875,11 @@ proc ruff::private::distill_body {text} {
                 set line [string trimright $line]
                 if {$line eq "#ruff"} {
                     lappend lines {}
-                } else {
+                } elseif {!$includeExcludeFlag} {
                     #ruff If #ruff is followed by additional text
                     # on the same line, it is treated as a continuation
-                    # of the previous text block.
+                    # of the previous text block, if that text block is 
+                    # not part of `include` or `exclude` statement
                     lappend lines [string range $line 6 end]
                 }
             }
