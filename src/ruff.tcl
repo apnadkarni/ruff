@@ -96,6 +96,7 @@ namespace eval ruff {
         [apave](https://aplsimple.github.io/en/tcl/pave/apave.html),
         [baltip](https://aplsimple.github.io/en/tcl/baltip/baltip.html),
         [hl-tcl](https://aplsimple.github.io/en/tcl/hl_tcl/hl_tcl.html),
+        [SpiceGenTcl](https://georgtree.github.io/SpiceGenTcl/),
         [promise](https://tcl-promise.magicsplat.com),
         [obex](https://tcl-obex.magicsplat.com),
         [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
