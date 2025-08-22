@@ -53,6 +53,7 @@ For additional examples of Ruff! generated documentation, see
 [iocp](https://iocp.magicsplat.com),
 [cffi](https://cffi.magicsplat.com),
 [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html),
+[SpiceGenTcl](https://georgtree.github.io/SpiceGenTcl/),
 [apave](https://aplsimple.github.io/en/tcl/pave/apave.html),
 [baltip](https://aplsimple.github.io/en/tcl/baltip/baltip.html),
 [hl-tcl](https://aplsimple.github.io/en/tcl/hl_tcl/hl_tcl.html),
@@ -63,6 +64,11 @@ For additional examples of Ruff! generated documentation, see
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
+
+## Release notes for 2.6
+
+* Added `#ruff include|exclude` directive to include or exclude sections
+for specific formatters (thanks to George Yashin).
 
 ## Release notes for 2.5
 
