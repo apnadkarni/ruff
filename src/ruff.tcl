@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2019, Ashok P. Nadkarni
+# Copyright (c) 2009-2025, Ashok P. Nadkarni
 # All rights reserved.
 # See the file LICENSE in the source root directory for license.
 
@@ -396,7 +396,7 @@ namespace eval ruff {
         but other formatters might not.
 
         Text enclosed in `[]` is checked whether it references a section heading
-        or a program element name (namespaces, classes, methods, procedures). If
+        or a program element name (namespaces, classes, methods, procedures). If
         so, it is replaced by a link to the section or documentation of that
         element. If the text is not a fully qualified name, it is treated
         relative to the namespace or class within whose documentation the link
@@ -651,6 +651,93 @@ namespace eval ruff {
         Note that not all formatters support these options. Those not
         understood by the formatter will be silently ignored.
 
+        ## Ruff! directives
+
+        Ruff! directives allow finer control of how content is processed.
+        Directives have the prefix `#ruff`. There are currently two directives
+        defined -- `#ruff` and `#ruffopt`.
+
+        ### The #ruff directive
+
+        The `#ruff` directive may only be used in procedure and method
+        bodies and not in documentation strings processed through
+        namespace `_ruff_preamble` variables. It is used to mark comments
+        within a procedure or method body that should be processed
+        as Ruff! content even though they do not appear in the initial
+        comment section at the top of the body.
+        The rest of the line after the `#ruff` directive and
+        subsequent contiguous comment lines are considered
+        documentation lines. Note that this means that `#ruff` on
+        a line by itself (possibly with trailing whitespace) is a
+        blank line and terminates the previous documentation
+        block with succeeding lines comprising a new block.
+        On the other hand, if `#ruff` is followed by
+        additional text on the same line, it will continue the
+        previous documentation block as there will be no blank
+        line separator.
+
+        The `#ruff` directive is useful for documenting options and features
+        adjacent to their implementation as opposed to at the top of the
+        procedure body.
+
+        ### The #ruffopt directive
+
+        The `#ruffopt` directive may be used within procedure bodies as well
+        as `_ruff_preamble` documentation strings. It is used to for settings
+        that control certain aspects of content processing and has the
+        general form
+
+            #ruffopt ?SETTING ?VALUE?...?
+
+        The only setting currently supported are `includedformats` and
+        `excludedformats`. Their use is described in [Conditional inclusion].
+
+        ## Conditional inclusion
+
+        Ruff! lets you conditionally include or exclude content based on
+        the formatter in use. This is accomplished through the `includedformats`
+        and `excludedformats` settings passed to the `#ruffopt` content
+        directive using the following syntax.
+
+            #ruffopt includedformats LISTOFFORMATS
+            #ruffopt excludedformats LISTOFFORMATS
+
+        For example, to only enable content for HTML
+
+            #ruffopt includedformats html
+
+        Or, to exclude HTML and Markdown
+
+            #ruffopt excludedformats {html markdown}
+
+        Directives are effective until the end of the documentation string
+        or procedure body. To only have conditional inclusion to have effect
+        for a fragment, you need to reset to default formatters by excluding
+        none as in the following example.
+
+            #ruffopt includedformats html
+            <div style="ruff_bd"> <table class="ruff_deflist"> <tbody>
+            <tr><th>Column1</th><th>Column2</th><th>Column3</th><th>Column4</th><th>Column5</th></tr>
+            <tr><td>1</td><td>element1</td><td>element2</td><td>element3</td><td>element4</td></tr>
+            <tr><td>2</td><td>element5</td><td>element6</td><td>element7</td><td>element8</td></tr>
+            </tbody> </table> </div>
+            #ruffopt excludedformats {}
+
+        #ruffopt includedformats html
+        <div style="ruff_bd"> <table class="ruff_deflist"> <tbody>
+        <tr><th>Column1</th><th>Column2</th><th>Column3</th><th>Column4</th><th>Column5</th></tr>
+        <tr><td>1</td><td>element1</td><td>element2</td><td>element3</td><td>element4</td></tr>
+        <tr><td>2</td><td>element5</td><td>element6</td><td>element7</td><td>element8</td></tr>
+        </tbody> </table> </div>
+        #ruffopt excludedformats {}
+
+        The generated content for the fragment above will only show in the HTML
+        output. However, succeeding content will be included for all formatters.
+
+        For an example of using in documenting procedures as opposed to documentation
+        strings as above, see [::ruff::sample::proc_with_conditional_content] in the sample
+        code.
+
         ## Output
 
         Ruff! is designed to support multiple output formats through pluggable
@@ -727,34 +814,6 @@ namespace eval ruff {
         or as a page per namespace with the `-pagesplit namespace` option.
         It does not support navigation links or table of contents.
 
-        ## Conditional inclusion or exclusion of blocks
-
-        Ruff! lets you include or exclude blocks for specific formatters.
-        For example, suppose you want to include an HTML table. Because HTML
-        tags aren’t supported by the nroff formatter, the tags will be stripped
-        and the man page will show the block unformatted. 
-
-        To include a block, add the keyword `include` after the `#ruff`
-        statement and provide the formatter name(s) as the argument:
-        
-        ```
-        #ruff include html
-        # <div style="ruff_bd"> <table class="ruff_deflist"> <tbody>
-        # <tr><th>Column1</th><th>Column2</th><th>Column3</th><th>Column4</th><th>Column5</th></tr>
-        # <tr><td>1</td><td>element1</td><td>element2</td><td>element3</td><td>element4</td></tr>
-        # <tr><td>2</td><td>element5</td><td>element6</td><td>element7</td><td>element8</td></tr>
-        # </tbody> </table> </div>
-        ```
-
-        You can provide multiple formatter names using the syntax `#ruff include {html markdown}`.
-        
-        The exclude directive uses the same syntax; instead of including a block
-        for certain formatters, it excludes the block for the specified formatters.
-        See a full example in the sample.tcl file, in the procedure
-        `ruff::sample::proc_with_conditional_formatter_block`.
-
-        Important: For this to work properly, each block must be separated from other
-        comment blocks by a blank line both before and after it.
     }
 
     namespace eval private {
@@ -1760,6 +1819,7 @@ proc ruff::private::distill_docstring {text} {
     # If any tabs are present, they are replaced with spaces assuming
     # a tab stop width of 8.
 
+    set lineSettings [dict create SkipLine 0]
     set lines {}
     set state init
     foreach line [split $text \n] {
@@ -1790,7 +1850,18 @@ proc ruff::private::distill_docstring {text} {
             set line [string range $line $prefix_len end]
         }
 
-        lappend lines $line
+        #ruff
+        # A `#ruffopt` directive may appear within a documentation string,
+        # even within a literal block!. If you really want a line beginning with
+        # `#ruffopt` to be treated as a literal and not a directive, you have
+        # to use one of the literal mechanisms that do not have `#ruffopt`
+        # starting the line, for example indentation. This is really only an
+        # issue when documenting Ruff! itself.
+        if {[regexp {^(#ruffopt\S*)(.*)$} $line -> directive rest]} {
+            set lineSettings [process_ruffopt $lineSettings $rest]
+        } elseif {![dict get $lineSettings SkipLine]} {
+            lappend lines $line
+        }
     }
 
     # Returns a list of lines.

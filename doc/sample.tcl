@@ -299,8 +299,8 @@ proc ruff::sample::character_at {text {pos 0}} {
     }
 }
 
-proc ruff::sample::proc_with_conditional_formatter_block {} {
-    # This is a proc with the blocks that are put into resulted file depending on the selected formatter. 
+proc ruff::sample::proc_with_conditional_content {} {
+    # This is a proc that uses `#ruffopt` directive to select content based formatter.
     #
     #ruffopt includedformats html
     # <div style="ruff_bd"> <table class="ruff_deflist"> <tbody>
