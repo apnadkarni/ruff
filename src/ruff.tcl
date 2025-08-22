@@ -1759,14 +1759,14 @@ proc ruff::private::distill_docstring {text} {
     #
     # If any tabs are present, they are replaced with spaces assuming
     # a tab stop width of 8.
-    
+
     set lines {}
     set state init
     foreach line [split $text \n] {
         set line [textutil::tabify::untabify2 $line]
         if {[regexp {^\s*$} $line]} {
             #ruff
-            # Initial blank lines are skipped and 
+            # Initial blank lines are skipped and
             # multiple empty lines are compressed into one empty line.
             if {$state eq "collecting"} {
                 lappend lines ""
@@ -1797,7 +1797,163 @@ proc ruff::private::distill_docstring {text} {
     return $lines
 }
 
+proc ruff::private::process_ruffopt {currentSettings newOpts} {
+    # Processes a `#ruffopts` line
+    #   currentSettings - dictionary containing current settings
+    #   newOpts - arguments passed to the `#ruffopts` directive
+    # Currently on the `excludedformats` and `includedformats` options are
+    # defined for `#ruffopts`.
+    #
+    # The dictionary passed through `currentSettings` may contain the boolean key
+    # SkipLine (no others are currently defined). This function will set
+    # the value of this based on the `includedformats` and `excludedformats`
+    # `#ruffopt` options. Callers should skip documentation lines if this
+    # value is true.
+    #
+    # Returns the modified value for currentSettings.
+
+    variable ProgramOptions
+
+    if {![string is list $newOpts]} {
+        # Generate better error message than the default list one
+        error "The #ruffopt directive must be followed by a valid Tcl list. \"$rest\" is not a interpretable as a list"
+    }
+    set n [llength $newOpts]
+    for {set i 0} {$i < $n} {incr i} {
+        set opt [lindex $newOpts $i]
+        if {[incr i] == $n} {
+            # Everything currently require a value to be specified
+            error "No value specified for #ruffopt option $opt"
+        }
+        set optval [lindex $newOpts $i]
+        switch $opt {
+            excludedformats {
+                #ruff
+                # The `excludedformats` `#ruffopt` option value is a list
+                # of output formats for which documentation lines
+                # are to be skipped. By default, it is the empty list.
+                # The SkipLine value is set to true in the returned settings
+                # if the current formatter is in this list.
+                if {![string is list $optval]} {
+                    error "The option value \"$optval\" for excludedformats is not a list."
+                }
+                dict set currentSettings SkipLine [expr {$ProgramOptions(-format) in $optval}]
+            }
+            includedformats {
+                #ruff
+                
+                # The `includedformats` `#ruffopt` option value is a list of
+                # output formats for which succeeding documentation lines are to
+                # be processed. Its default value is the list containing all
+                # formats. The SkipLine setting is set to false in the returned
+                # settings if the current formatter is in this list.
+                if {![string is list $optval]} {
+                    error "The option value \"$optval\" for includedformats is not a list."
+                }
+                dict set currentSettings SkipLine [expr {$ProgramOptions(-format) ni $optval}]
+            }
+        }
+    }
+    return $currentSettings
+}
+
 proc ruff::private::distill_body {text} {
+    # Given a procedure or method body,
+    # returns the documentation lines as a list.
+    # text - text to be processed to collect all documentation lines.
+    #
+    # The first block of contiguous comment lines preceding the
+    # first line of code are treated as documentation lines.
+    # If any tabs are present, they are replaced with spaces assuming
+    # a tab stop width of 8.
+
+    set lineSettings [dict create SkipLine 0]
+    set lines {}
+    set state init;             # init, collecting or searching
+    foreach line [split $text \n] {
+        set line [textutil::tabify::untabify2 $line]
+        set line [string trim $line]; # Get rid of whitespace
+        if {$line eq ""} {
+            # Blank lines.
+            # If in init state, we will stay in init state
+            if {$state ne "init"} {
+                set state searching
+            }
+            continue
+        }
+
+        if {[string index $line 0] ne "#"} {
+            # Not a comment
+            set state searching
+            continue
+        }
+
+        # Check for directives irrespective of state.
+        if {[regexp {^(#ruff\S*)(.*)$} $line -> directive rest]} {
+            switch -exact $directive {
+                "#ruff" {
+                    #ruff
+                    # The string `#ruff` at the beginning of a comment line is a
+                    # directive that indicates the block should be processed as
+                    # a Ruff! documentation block. The rest of the line and
+                    # subsequent contiguous comment lines are considered
+                    # documentation lines. Note that this means that `#ruff` on
+                    # a line by itself (possibly with trailing whitespace) is a
+                    # blank line and terminates the previous documentation
+                    # block with succeeding lines comprising a new block.
+                    # On the other hand, if `#ruff` is followed by
+                    # additional text on the same line, it will continue the
+                    # previous documentation block as there will be no blank
+                    # line separator.
+                    if {![dict get $lineSettings SkipLine]} {
+                        lappend lines [string range $rest 1 end]
+                    }
+                    set state collecting
+                }
+                "#ruffopt" {
+                    #ruff
+                    # The string `#ruffopt` is a directive to set or reset
+                    # certain processing options. The characters following the
+                    # directive must be a well formed Tcl list.
+                    # For a list of processing options see [process_ruffopt].
+                    set lineSettings [process_ruffopt $lineSettings $rest]
+                }
+                default {
+                    error "Unknown Ruff directive \"$line\""
+                }
+            }
+        } elseif {$state ne "searching" && ![dict get $lineSettings SkipLine]} {
+            # At this point, state is init or collecting and the line is
+            #  - a comment line
+            #  - not a directive
+            #  - and not being skipped
+
+            if {$line eq "#"} {
+                # Empty comment line
+                lappend lines {}
+                continue;       # No change in state
+            }
+
+            #ruff
+            # The leading comment character and a single space (if present)
+            # are trimmed from the returned lines.
+            if {[string index $line 1] eq " "} {
+                lappend lines [string range $line 2 end]
+            } else {
+                lappend lines [string range $line 1 end]
+            }
+            set state collecting
+            continue
+        } else {
+            # State is "searching" and not a directive so ignore.
+        }
+    }
+
+    # Returns a list of lines that comprise the raw documentation.
+    return $lines
+}
+
+proc ruff::private::xdistill_body {text} {
     # Given a procedure or method body,
     # returns the documentation lines as a list.
     # text - text to be processed to collect all documentation lines.
@@ -2883,6 +3039,7 @@ proc ruff::document {namespaces args} {
 
     set formatter [[load_formatter $opts(-format)] new]
     set gFormatter $formatter
+    set ProgramOptions(-format) $opts(-format)
 
     # Determine output file paths
     array unset private::ns_file_base_cache
