@@ -176,11 +176,23 @@ namespace eval ruff::sample {
 
         Images can be specified using either Markdown or HTML:
 
+        #ruffopt excludedformats nroff
         * ![alt img](assets/ruff-logo.png) `![alt img](assets/ruff-logo.png)`
         * <img src='assets/ruff-logo.png' alt='logo'/> `<img src='assets/ruff-logo.png' alt='logo'/>`
         * <img src="assets/ruff-logo.png" alt=""/> `<img src="assets/ruff-logo.png" alt=""/>`
 
         <!-- The empty alt above is for testing bugfix #49 -->
+
+        #ruffopt includedformats nroff
+        ```
+        * ![alt img](assets/ruff-logo.png) `![alt img](assets/ruff-logo.png)`
+        * <img src='assets/ruff-logo.png' alt='logo'/> `<img src='assets/ruff-logo.png' alt='logo'/>`
+        * <img src="assets/ruff-logo.png" alt=""/> `<img src="assets/ruff-logo.png" alt=""/>`
+        ```
+
+        #ruffopt includedformats {html markdown}
+
+        #ruffopt excludedformats {}
 
 
         The remaining sections show how commands and classes are documented.
