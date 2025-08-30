@@ -176,11 +176,23 @@ namespace eval ruff::sample {
 
         Images can be specified using either Markdown or HTML:
 
+        #ruffopt excludedformats nroff
         * ![alt img](assets/ruff-logo.png) `![alt img](assets/ruff-logo.png)`
         * <img src='assets/ruff-logo.png' alt='logo'/> `<img src='assets/ruff-logo.png' alt='logo'/>`
         * <img src="assets/ruff-logo.png" alt=""/> `<img src="assets/ruff-logo.png" alt=""/>`
 
         <!-- The empty alt above is for testing bugfix #49 -->
+
+        #ruffopt includedformats nroff
+        ```
+        * ![alt img](assets/ruff-logo.png) `![alt img](assets/ruff-logo.png)`
+        * <img src='assets/ruff-logo.png' alt='logo'/> `<img src='assets/ruff-logo.png' alt='logo'/>`
+        * <img src="assets/ruff-logo.png" alt=""/> `<img src="assets/ruff-logo.png" alt=""/>`
+        ```
+
+        #ruffopt includedformats {html markdown}
+
+        #ruffopt excludedformats {}
 
 
         The remaining sections show how commands and classes are documented.
@@ -299,17 +311,17 @@ proc ruff::sample::character_at {text {pos 0}} {
     }
 }
 
-proc ruff::sample::proc_with_conditional_formatter_block {} {
-    # This is a proc with the blocks that are put into resulted file depending on the selected formatter. 
-
-    #ruff include html
+proc ruff::sample::proc_with_conditional_content {} {
+    # This is a proc that uses `#ruffopt` directive to select content based formatter.
+    #
+    #ruffopt includedformats html
     # <div style="ruff_bd"> <table class="ruff_deflist"> <tbody>
     # <tr><th>Column1</th><th>Column2</th><th>Column3</th><th>Column4</th><th>Column5</th></tr>
     # <tr><td>1</td><td>element1</td><td>element2</td><td>element3</td><td>element4</td></tr>
     # <tr><td>2</td><td>element5</td><td>element6</td><td>element7</td><td>element8</td></tr>
     # </tbody> </table> </div>
-
-    #ruff exclude {html markdown}
+    #
+    #ruffopt excludedformats {html markdown}
     #```
     # ┌─────────┬──────────┬──────────┬──────────┬──────────┐
     # │ Column1 │ Column2  │ Column3  │ Column4  │ Column5  │
@@ -318,8 +330,8 @@ proc ruff::sample::proc_with_conditional_formatter_block {} {
     # │ 2       │ element5 │ element6 │ element7 │ element8 │
     # └─────────┴──────────┴──────────┴──────────┴──────────┘
     #```
-
-    #ruff include markdown
+    #
+    #ruffopt includedformats markdown
     #| Column1 | Column2  | Column3  | Column4  | Column5  |
     #|---------|----------|----------|----------|----------|
     #| 1       | element1 | element2 | element3 | element4 |

@@ -67,8 +67,8 @@ and
 
 ## Release notes for 2.6
 
-* Added `#ruff include|exclude` directive to include or exclude sections
-for specific formatters (thanks to George Yashin).
+* Added `#ruff includeformatters|excludeformatters` directives to include or
+exclude content for specific formatters (thanks to George Yashin).
 
 ## Release notes for 2.5
 
