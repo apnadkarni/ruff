@@ -1,3 +1,4 @@
+package require Tcl 9
 source [file join [file dirname [file dirname [file normalize [info script]]]] src ruff.tcl]
 
 proc ruff::private::distribute {{dir {}}} {
@@ -55,7 +56,7 @@ proc ruff::private::distribute {{dir {}}} {
     set curdir [pwd]
     try {
         cd [file join $dir ..]
-        exec {*}[auto_execok zip.exe] -r ${outname}.zip $outname
+        zipfs mkzip ${outname}.zip $outname
     } finally {
         cd $curdir
     }

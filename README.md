@@ -125,8 +125,5 @@ This release mainly has cosmetic changes in presentation.
 * [Bug fixes](https://github.com/apnadkarni/ruff/issues?q=is%3Aissue+is%3Aclosed+milestone%3Av2.0+label%3Abug)
 
 
-
-See https://ruff.magicsplat.com/ruff.html#History.
-
 NOTE 2.0 HAS SEVERAL INCOMPATIBILITIES VIS-A-VIS 1.x IN OPTIONS AND GENERATED
-OUTPUT FORMAT. See above link for details.
+OUTPUT FORMAT. See above Release notes for 2.0.
