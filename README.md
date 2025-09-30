@@ -58,7 +58,7 @@ For additional examples of Ruff! generated documentation, see
 [baltip](https://aplsimple.github.io/en/tcl/baltip/baltip.html),
 [hl-tcl](https://aplsimple.github.io/en/tcl/hl_tcl/hl_tcl.html),
 [tcl-promise](https://tcl-promise.magicsplat.com),
-[tomato](https://htmlpreview.github.io/?https://raw.githubusercontent.com/nico-robert/tomato/master/documentation/tomato.html),
+[tomato](https://nico-robert.github.io/tomato/),
 [obex](https://tcl-obex.magicsplat.com),
 [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
 and
