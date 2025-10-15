@@ -733,7 +733,10 @@ span.ns_scope a[href]:hover {
 
 .ruff-figure {
   margin: 0.5em 1em;
+  padding-right: 25px; /* To avoid the Copy button hiding the text */
+  position: relative;
 }
+
 .ruff-snippet {
   background-color: var(--ruff-bd-code-background-color);
 }
@@ -769,4 +772,56 @@ span.ns_scope a[href]:hover {
 summary.ruff-expand {
     /* list-style-type: none; */
     margin-bottom: 1em;
+}
+
+/* Code copy button */
+.ruff-copy-btn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: var(--ruff-bd-code-background-color);
+    color: var(--ruff-bd-minor-color);
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.7;
+}
+
+.ruff-copy-btn:hover {
+    opacity: 0.75;
+    background: var(--ruff-bd-background-color);
+    color: var(--ruff-bd-color);
+}
+
+.ruff-copy-btn svg {
+    width: 14px;
+    height: 14px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ruff-copy-btn.copied {
+    background: #dcfce7;
+    color: #16a34a;
+    opacity: 1;
+    border-color: #16a34a;
+}
+
+/* Suitable for dark themes */
+.ruff-theme-dark .ruff-copy-btn.copied,
+.ruff-theme-solar .ruff-copy-btn.copied,
+.ruff-theme-slate .ruff-copy-btn.copied {
+    background: #1e4620;
+    color: #86efac;
+    border-color: #86efac;
 }
