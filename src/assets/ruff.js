@@ -120,3 +120,48 @@ function ruffMoveNavPane() {
         ruffSetNavSide(navSide);
     }
 })();
+
+// Global icon SVGs for the copy button.
+const COPY_ICON_SVG = `<svg viewBox="0 0 24 24">
+    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+</svg>`;
+
+const COPIED_ICON_SVG = `<svg viewBox="0 0 24 24">
+    <polyline points="20 6 9 17 4 12"></polyline>
+</svg>`;
+
+// Create the copy button automatically after the DOM is loaded.
+document.addEventListener('DOMContentLoaded', function() {
+    const figures = document.querySelectorAll('.ruff-snippet.ruff-figure');
+    
+    figures.forEach(function(figure) {
+        const button = document.createElement('button');
+        button.className = 'ruff-copy-btn';
+        button.title = 'Copy text';
+        button.onclick = function() {copyTextRuffFigure(this);};
+        button.innerHTML = COPY_ICON_SVG;
+        figure.insertBefore(button, figure.firstChild);
+    });
+});
+
+// Copies the content of a figure element to the clipboard.
+function copyTextRuffFigure(bouton) {
+    const figure = bouton.closest('.ruff-figure');
+    const pre = figure.querySelector('pre');
+    const texte = pre.innerText;
+    
+    navigator.clipboard.writeText(texte).then(() => {
+        bouton.innerHTML = COPIED_ICON_SVG;
+        bouton.classList.add('copied');
+        
+        setTimeout(() => {
+            // Reset the button after a short delay.
+            bouton.innerHTML = COPY_ICON_SVG;
+            bouton.classList.remove('copied');
+        }, 1000);
+    }).catch(err => {
+        console.error('Error copying text:', err);
+        alert('Not possible to copy the text.');
+    });
+}
