@@ -1,5 +1,5 @@
 /* To minimize:
-csso -i ruff.css -o ruff-min.cscsso -i ruff.css -o ruff-min.css
+csso -i ruff.css -o ruff-min.css
 */
 :root {
   --ruff-grid-template-rows: min-content 1fr;
