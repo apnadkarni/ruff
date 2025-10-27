@@ -733,8 +733,11 @@ span.ns_scope a[href]:hover {
 
 .ruff-figure {
   margin: 0.5em 1em;
-  padding-right: 25px; /* To avoid the Copy button hiding the text */
   position: relative;
+}
+
+.ruff-figure pre {
+  padding-right: 25px; /* To avoid the Copy button hiding the text */
 }
 
 .ruff-snippet {

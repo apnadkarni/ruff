@@ -19,7 +19,7 @@ msgcat::mcload [file join [file dirname [info script]] msgs]
 
 namespace eval ruff {
     # If you change version here, change in pkgIndex.tcl as well
-    variable version 2.6.0
+    variable version 2.7.0
     proc version {} {
         # Returns the Ruff! version.
         variable version
@@ -123,7 +123,8 @@ namespace eval ruff {
 
         ## Credits
 
-        Ruff! is authored by [Ashok P. Nadkarni](https://www.magicsplat.com).
+        Ruff! is authored by [Ashok P. Nadkarni](https://www.magicsplat.com) with
+        contributions from George Yashin and Nicolas Robert.
 
         It uses the `textutil` package from
         [tcllib](https://core.tcl-lang.org/tcllib), a modified version of the

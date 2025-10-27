@@ -65,6 +65,10 @@ and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
 
+## Release notes for 2.7
+
+* Added a copy button for fenced blocks (thanks @nico-robert).
+
 ## Release notes for 2.6
 
 * Added `#ruff includeformatters|excludeformatters` directives to include or
