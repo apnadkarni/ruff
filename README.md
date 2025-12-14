@@ -53,6 +53,8 @@ For additional examples of Ruff! generated documentation, see
 [iocp](https://iocp.magicsplat.com),
 [cffi](https://cffi.magicsplat.com),
 [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html),
+[MAWT](https://www.tcl3d.org/mawt/download/MawtReference.html),
+[PAWT](https://www.tcl3d.org/pawt/download/PawtReference.html),
 [SpiceGenTcl](https://georgtree.github.io/SpiceGenTcl/),
 [apave](https://aplsimple.github.io/en/tcl/pave/apave.html),
 [baltip](https://aplsimple.github.io/en/tcl/baltip/baltip.html),
