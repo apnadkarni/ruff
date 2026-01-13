@@ -53,7 +53,7 @@ proc ruff::private::document_self {args} {
     if {$opts(-includeprivate)} {
         lappend common_args -recurse 1 -includeprivate 1
     } else {
-        lappend common_args -excludeprocs {^[_A-Z]}
+        lappend common_args -onlyexports 1
     }
     switch -exact -- $opts(-format) {
         markdown {

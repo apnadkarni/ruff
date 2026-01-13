@@ -200,6 +200,10 @@ namespace eval ruff::sample {
         for the procedure or method from which the documentation was generated.
     }
 
+    # Export all procs starting with lower case
+    namespace export {[a-z]*}
+
+    # An ensemble example
     namespace eval ensemble_proc {
         proc cmdA {} {
             # Implements cmdA for an ensemble procedure

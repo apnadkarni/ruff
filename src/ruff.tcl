@@ -26,6 +26,9 @@ namespace eval ruff {
         return $version
     }
 
+    # Export all procs starting with lower case
+    namespace export {[a-z]*}
+
     proc Tcl9 {} {
         if {[package vsatisfies [package require Tcl] 9]} {
             proc Tcl9 {} {return true}
@@ -2647,10 +2650,19 @@ proc ruff::private::get_metaclasses {} {
     return $metaclasses
 }
 
-proc ruff::private::extract_procs_and_classes {pattern args} {
+proc ruff::private::matched_any_pattern {value patterns} {
+    foreach pattern $patterns {
+        if {[string match $pattern $value]} {
+            return 1
+        }
+    }
+    return 0
+}
+
+proc ruff::private::extract_procs_and_classes {ns args} {
     # Extracts metainformation for procs and classes 
     #
-    # pattern - glob-style pattern to match against procedure and class names
+    # ns - namespace containing the procs and classes.
     # -excludeclasses REGEXP - If specified, any classes whose names
     #  match `REGEXPR` will not be included in the documentation.
     # -excludeprocs REGEXP - If specified, any procedures whose names
@@ -2661,6 +2673,8 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
     #  Default is false.
     # -includeimports BOOLEAN - if true commands imported from other
     #  namespaces are also included. Default is false.
+    # -onlyexports BOOLEAN - if true, only procs exported from the namespace
+    #  are included.
     #
     # The value of the classes key in the returned dictionary is
     # a dictionary whose keys are class names and whose corresponding values
@@ -2669,9 +2683,6 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
     # are proc names and whose corresponding values are in the format
     # as returned by extract_proc.
     #
-    # Note that only the program elements in the same namespace as
-    # the namespace of $pattern are returned.
-    #
     # Returns a dictionary with keys 'classes' and 'procs'
     array set opts {
         -excludeclasses {}
@@ -2679,8 +2690,13 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
         -include {procs classes}
         -includeprivate false
         -includeimports false
+        -onlyexports false
     }
     array set opts $args
+
+    # Note the canonicalize is required to handle ns == "::" which
+    # will create :::: in matching pattern otherwise
+    set pattern [ns_canonicalize ${ns}::*]
 
     set classes [dict create]
     if {"classes" in $opts(-include)} {
@@ -2713,12 +2729,18 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
         }
     }
 
+    set export_patterns [namespace eval $ns {namespace export}]
     set procs [dict create]
     if {"procs" in $opts(-include)} {
         # Collect procs
         foreach proc_name [info procs $pattern] {
+            set proc_tail [namespace tail $proc_name]
             if {$opts(-excludeprocs) ne "" &&
-                [regexp $opts(-excludeprocs) [namespace tail $proc_name]]} {
+                [regexp $opts(-excludeprocs) $proc_tail]} {
+                continue
+            }
+            if {$opts(-onlyexports) &&
+                ![matched_any_pattern $proc_tail $export_patterns]} {
                 continue
             }
             if {(! $opts(-includeimports)) &&
@@ -2736,8 +2758,13 @@ proc ruff::private::extract_procs_and_classes {pattern args} {
         }
         # Collect ensembles
         foreach ens_name [ensembles $pattern] {
+            set ens_tail [namespace tail $ens_name]
             if {$opts(-excludeprocs) ne "" &&
-                [regexp $opts(-excludeprocs) [namespace tail $ens_name]]} {
+                [regexp $opts(-excludeprocs) $ens_tail]} {
+                continue
+            }
+            if {$opts(-onlyexports) &&
+                ![matched_any_pattern $ens_tail $export_patterns]} {
                 continue
             }
             if {(! $opts(-includeimports)) &&
@@ -2773,10 +2800,7 @@ proc ruff::private::extract_namespace {ns args} {
     # See [extract_docstring] for format of the `preamble` value
     # and [extract_procs_and_classes] for the others.
 
-    # Note the canonicalize is required to handle ns == "::" which
-    # will create :::: in matching pattern otherwise
-    set pattern [ns_canonicalize ${ns}::*]
-    set result [extract_procs_and_classes $pattern {*}$args]
+    set result [extract_procs_and_classes $ns {*}$args]
     set preamble [list ]
     if {[info exists ${ns}::_ruff_preamble]} {
         set preamble [extract_docstring [set ${ns}::_ruff_preamble] $ns]
@@ -2993,6 +3017,8 @@ proc ruff::document {namespaces args} {
     #  do not support stickiness and will resort to scrolling behaviour.
     #  box (see below). Only supported by the `html` formatter.
     #  (Default `scrolled`)
+    # -onlyexports BOOLEAN - if true, only procs exported from namespaces
+    #  are included.
     # -outdir DIRPATH - Specifies the output directory path. Defaults to the
     #  current directory.
     # -outfile FILENAME - Specifies the name of the output file.
@@ -3044,6 +3070,7 @@ proc ruff::document {namespaces args} {
         -include {procs classes}
         -includeprivate false
         -includesource false
+        -onlyexports false
         -preamble ""
         -recurse false
         -pagesplit none
@@ -3151,6 +3178,7 @@ proc ruff::document {namespaces args} {
     set classprocinfodict [extract_namespaces $namespaces \
                                -excludeprocs $opts(-excludeprocs) \
                                -excludeclasses $opts(-excludeclasses) \
+                               -onlyexports $opts(-onlyexports) \
                                -include $opts(-include) \
                                -includeprivate $opts(-includeprivate)]
 
@@ -3258,6 +3286,7 @@ source [file join $::ruff::private::ruff_dir diagram.tcl]
 # The app namespace is for commands the application might want to
 # override
 namespace eval ruff::app {
+    namespace export {[a-z]*}
 }
 
 
