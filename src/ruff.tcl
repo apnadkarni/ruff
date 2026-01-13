@@ -378,6 +378,29 @@ namespace eval ruff {
         generating multipage output this forms the content of the main
         documentation page.
 
+        ### Per-namespace options
+
+        A namespace can override certain global options passed to the
+        [document] command by storing a dictionary defining one or more
+        options in a variable `_ruff_ns_opts` in the namespace. For
+        example,
+
+        ```
+        namespace eval ns {
+            variable _ruff_ns_opts {
+                -onlyexports true
+                -excludeprocs private*
+            }
+        }
+        ```
+
+        will override the `-onlyexports` and `-excludeprocs` passed
+        to the [document] command.
+
+        The options that can be overridden by a namespace are `-excludeclasses`,
+        `-excludeprocs`, `-includeimports`, `-includeprivate` and
+        `-onlyexports`. See [document] for their semantics.
+
         ## Inline formatting
 
         Once documentation blocks are parsed as above, their content is subject
@@ -2659,10 +2682,10 @@ proc ruff::private::matched_any_pattern {value patterns} {
     return 0
 }
 
-proc ruff::private::extract_procs_and_classes {ns args} {
-    # Extracts metainformation for procs and classes 
+proc ruff::private::extract_procs_and_classes {fqns args} {
+    # Extracts metainformation for procs and classes
     #
-    # ns - namespace containing the procs and classes.
+    # fqns - fully qualified namespace containing the procs and classes.
     # -excludeclasses REGEXP - If specified, any classes whose names
     #  match `REGEXPR` will not be included in the documentation.
     # -excludeprocs REGEXP - If specified, any procedures whose names
@@ -2694,9 +2717,16 @@ proc ruff::private::extract_procs_and_classes {ns args} {
     }
     array set opts $args
 
-    # Note the canonicalize is required to handle ns == "::" which
+    # Override with any namespace specific settings
+    upvar 0 ${fqns}::_ruff_ns_opts ns_opts
+    if {[info exists ns_opts]} {
+        array set opts [dict filter $ns_opts key -excludeclasses -excludeprocs \
+                            -includeprivate -includeimports -onlyexports]
+    }
+
+    # Note the canonicalize is required to handle fqns == "::" which
     # will create :::: in matching pattern otherwise
-    set pattern [ns_canonicalize ${ns}::*]
+    set pattern [ns_canonicalize ${fqns}::*]
 
     set classes [dict create]
     if {"classes" in $opts(-include)} {
@@ -2729,7 +2759,7 @@ proc ruff::private::extract_procs_and_classes {ns args} {
         }
     }
 
-    set export_patterns [namespace eval $ns {namespace export}]
+    set export_patterns [namespace eval $fqns {namespace export}]
     set procs [dict create]
     if {"procs" in $opts(-include)} {
         # Collect procs
@@ -2788,9 +2818,9 @@ proc ruff::private::extract_procs_and_classes {ns args} {
 }
 
 
-proc ruff::private::extract_namespace {ns args} {
+proc ruff::private::extract_namespace {fqns args} {
     # Extracts metainformation for procs and objects in a namespace
-    # ns - namespace to examine
+    # fqns - fully qualified namespace to examine
     #
     # Any additional options are passed on to the extract command.
     #
@@ -2800,14 +2830,14 @@ proc ruff::private::extract_namespace {ns args} {
     # See [extract_docstring] for format of the `preamble` value
     # and [extract_procs_and_classes] for the others.
 
-    set result [extract_procs_and_classes $ns {*}$args]
+    set result [extract_procs_and_classes $fqns {*}$args]
     set preamble [list ]
-    if {[info exists ${ns}::_ruff_preamble]} {
-        set preamble [extract_docstring [set ${ns}::_ruff_preamble] $ns]
-    } elseif {[info exists ${ns}::_ruffdoc]} {
-        foreach {heading text} [set ${ns}::_ruffdoc] {
-            lappend preamble {*}[extract_docstring "## $heading" $ns]
-            lappend preamble {*}[extract_docstring $text $ns]
+    if {[info exists ${fqns}::_ruff_preamble]} {
+        set preamble [extract_docstring [set ${fqns}::_ruff_preamble] $fqns]
+    } elseif {[info exists ${fqns}::_ruffdoc]} {
+        foreach {heading text} [set ${fqns}::_ruffdoc] {
+            lappend preamble {*}[extract_docstring "## $heading" $fqns]
+            lappend preamble {*}[extract_docstring $text $fqns]
         }
     }
     dict set result preamble $preamble
@@ -2816,7 +2846,7 @@ proc ruff::private::extract_namespace {ns args} {
 
 proc ruff::private::extract_namespaces {namespaces args} {
     # Extracts metainformation for procs and objects in one or more namespace
-    # namespaces - list of namespace to examine
+    # namespaces - list of fully qualified namespace to examine
     #
     # Any additional options are passed on to the extract_namespace command.
     #
@@ -2826,8 +2856,8 @@ proc ruff::private::extract_namespaces {namespaces args} {
     # Returns a dictionary with the namespace information.
 
     set result [dict create]
-    foreach ns $namespaces {
-        dict set result $ns [extract_namespace $ns {*}$args]
+    foreach fqns $namespaces {
+        dict set result $fqns [extract_namespace $fqns {*}$args]
     }
     return $result
 }

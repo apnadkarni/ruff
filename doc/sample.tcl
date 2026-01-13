@@ -200,9 +200,6 @@ namespace eval ruff::sample {
         for the procedure or method from which the documentation was generated.
     }
 
-    # Export all procs starting with lower case
-    namespace export {[a-z]*}
-
     # An ensemble example
     namespace eval ensemble_proc {
         proc cmdA {} {
@@ -219,6 +216,17 @@ namespace eval ruff::sample {
         }
         namespace export *
         namespace ensemble create
+    }
+
+    variable _ruff_ns_opts [dict create -excludeclasses ExcludedClass \
+                               -excludeprocs excluded.* \
+                               -onlyexports false]
+
+    proc excluded_proc {} {}
+    oo::class create ExcludedClass {
+        construct {} {
+            # This class should not show up in the documentation.
+        }
     }
 }
 
