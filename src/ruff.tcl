@@ -3314,6 +3314,11 @@ proc ruff::document {namespaces args} {
         set fn [private::ns_file_base $ns]
         set fd [open [file join $opts(-outdir) $fn] w]
         fconfigure $fd -encoding utf-8
+        if {$opts(-format) eq "nroff"} {
+            # On Unix, nroff, or at least tbl, does not recognize directives
+            # with CRLF line endings. So always force LF for nroff.
+            fconfigure $fd -translation lf
+        }
         if {[catch {
             puts $fd $doc
         } msg]} {

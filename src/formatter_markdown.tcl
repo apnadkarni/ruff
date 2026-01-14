@@ -247,6 +247,19 @@ oo::class create ruff::formatter::Markdown {
         return
     }
 
+    method AddTable {table scope} {
+        # Adds a table to document content.
+        #  table  - Dictionary describing table
+        #  scope  - The documentation scope of the content.
+        # See [Formatter.AddTable].
+        # The table dictionary has keys `lines`, `rows` and optionally `header`,
+        # `alignments` containing the raw lines, a list of cell content, header row,
+        # and a list of cell alignments respectively.
+
+        # Markdown->Markdown. Just spit out the original lines
+        append Document \n [join [dict get $table lines] \n] \n
+    }
+
     method AddBullets {bullets scope} {
         # See [Formatter.AddBullets].
         #  bullets  - The list of bullets.

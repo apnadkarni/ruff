@@ -213,6 +213,65 @@ oo::class create ruff::formatter::Nroff {
         return
     }
 
+    method AddTable {table scope} {
+        # Adds a table to document content.
+        #  table  - Dictionary describing table
+        #  scope  - The documentation scope of the content.
+        # See [Formatter.AddTable].
+        # The table dictionary has keys `lines`, `rows` and optionally `header`,
+        # `alignments` containing the raw lines, a list of cell content, header row,
+        # and a list of cell alignments respectively.
+        #
+        # Tables are exported using .TS macros which require `tbl` support.
+
+        set rows [dict get $table rows]
+
+        # Need to find a separator character that does not occur in the text
+        # Pipe character repeated as first choice and last resort
+        foreach sep {| : ^ % ! |} {
+            if {[string first $sep $rows] < 0} {
+                break
+            }
+        }
+
+        if {[dict exists $table header]} {
+            set header [dict get $table header]
+            set ncols [llength $header]
+        } else {
+            set ncols [llength [lindex $rows 0]]
+        }
+
+        if {[dict exists $table alignments]} {
+            set tbl_alignments {}
+            foreach align [dict get $table alignments] {
+                switch $align {
+                    left   {lappend tbl_alignments l}
+                    center {lappend tbl_alignments c}
+                    right  {lappend tbl_alignments r}
+                    default  {lappend tbl_alignments l}
+                }
+            }
+        } else {
+            set tbl_alignments [lrepeat $ncols l]
+        }
+
+        append Body [nr_ts] \n
+        append Body "tab($sep) box;" \n
+        append Body "[join $tbl_alignments][nr_period]" \n
+        if {[info exists header]} {
+            append Body [join [lmap cell $header {
+                my ToNroff $cell $scope
+            }] $sep] \n
+        }
+        foreach row $rows {
+            append Body [join [lmap cell $row {
+                my ToNroff $cell $scope
+            }] $sep] \n
+        }
+        append Body [nr_te] \n
+        return
+    }
+
     method AddBullets {bullets scope} {
         # See [Formatter.AddBullets].
         #  bullets  - The list of bullets.
@@ -568,6 +627,9 @@ namespace eval ruff::formatter::nroff {
     proc nr_read    {fn}        {return [nroffMarkup [dt_read $fn]]}
     proc nr_cs      {}          {return \n\1.CS\n}
     proc nr_ce      {}          {return \n\1.CE\n}
+    proc nr_ts      {}          {return \n\1.TS}
+    proc nr_te      {}          {return \n\1.TE}
+    proc nr_period  {}          {return \1.}
 
     proc nr_section {name} {
         if {![regexp {[ 	]} $name]} {

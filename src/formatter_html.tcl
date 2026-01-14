@@ -389,7 +389,7 @@ oo::class create ruff::formatter::Html {
         } else {
             set alignments {}
         }
-        append Document "<table class='ruff_deflist'>\n"
+        append Document "<table class='ruff_table'>\n"
         if {[dict exists $table header]} {
             append Document "<thead>\n"
             append Document "<tr>"
