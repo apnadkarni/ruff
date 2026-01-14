@@ -262,6 +262,7 @@ oo::class create ruff::formatter::Nroff {
             append Body [join [lmap cell $header {
                 my ToNroff $cell $scope
             }] $sep] \n
+            append Body _ \n; # Horizontal rule
         }
         foreach row $rows {
             append Body [join [lmap cell $row {

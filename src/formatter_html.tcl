@@ -394,7 +394,7 @@ oo::class create ruff::formatter::Html {
             append Document "<thead>\n"
             append Document "<tr>"
             foreach cell [dict get $table header] align $alignments {
-                append Document "<td$styles($align)>[my ToHtml $cell]</td>"
+                append Document "<th$styles($align)>[my ToHtml $cell]</th>"
             }
             append Document "</tr>\n"
             append Document "</thead>\n"

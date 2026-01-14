@@ -49,6 +49,8 @@ csso -i ruff.css -o ruff-min.css
   --ruff-bd-table-border: #808080;
   --ruff-bd-code-color: var(--ruff-bd-color);
   --ruff-bd-code-background-color: whitesmoke;
+  --ruff-bd-th-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-th-color: var(--ruff-nav-color);
   --ruff-bd-h-background-color: inherit;
   --ruff-bd-h-color: #968C83;
   /* H1 - special treatment to match navigation pane */
@@ -92,6 +94,8 @@ csso -i ruff.css -o ruff-min.css
   --ruff-bd-code-color: var(--ruff-bd-color);
   --ruff-bd-code-background-color: #cfebf7;
   --ruff-bd-code-background-color: #cffcff;
+  --ruff-bd-th-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-th-color: var(--ruff-nav-color);
   --ruff-bd-h-background-color: inherit;
   --ruff-bd-h-color: #968C83;
   /* H1 - special treatment to match navigation pane */
@@ -133,6 +137,8 @@ csso -i ruff.css -o ruff-min.css
   --ruff-bd-table-border: #808080;
   --ruff-bd-code-color: inherit;
   --ruff-bd-code-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-th-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-th-color: var(--ruff-nav-color);
   --ruff-bd-h-background-color: inherit;
   --ruff-bd-h-color: lightblue;
   /* H1 - special treatment to match navigation pane */
@@ -174,6 +180,8 @@ csso -i ruff.css -o ruff-min.css
   --ruff-bd-table-border: #808080;
   --ruff-bd-code-color: inherit;
   --ruff-bd-code-background-color: #003641;
+  --ruff-bd-th-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-th-color: var(--ruff-nav-color);
   --ruff-bd-h-background-color: inherit;
   --ruff-bd-h-color: cornsilk;
   /* H1 - special treatment to match navigation pane */
@@ -216,6 +224,8 @@ csso -i ruff.css -o ruff-min.css
   --ruff-bd-table-border: #808080;
   --ruff-bd-code-color: #ecdbba;
   --ruff-bd-code-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-th-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-th-color: var(--ruff-nav-color);
   --ruff-bd-h-background-color: inherit;
   --ruff-bd-h-color: lightsteelblue;
   /* H1 - special treatment to match navigation pane */
@@ -258,6 +268,8 @@ csso -i ruff.css -o ruff-min.css
   --ruff-bd-table-border: #808080;
   --ruff-bd-code-color: var(--ruff-bd-color);
   --ruff-bd-code-background-color: whitesmoke;
+  --ruff-bd-th-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-th-color: var(--ruff-nav-color);
   --ruff-bd-h-background-color: inherit;
   --ruff-bd-h-color: var(--ruff-nav-background-color);
   /* H1 - special treatment to match navigation pane */
@@ -299,6 +311,8 @@ csso -i ruff.css -o ruff-min.css
   --ruff-bd-table-border: #808080;
   --ruff-bd-code-color: var(--ruff-bd-color);
   --ruff-bd-code-background-color: #fff0f0;
+  --ruff-bd-th-background-color: var(--ruff-nav-background-color);
+  --ruff-bd-th-color: var(--ruff-nav-color);
   --ruff-bd-h-background-color: inherit;
   --ruff-bd-h-color: var(--ruff-nav-background-color);
   /* H1 - special treatment to match navigation pane */
@@ -566,7 +580,7 @@ span.ns_scope a[href]:hover {
   color: var(--ruff-bd-h1-color);
 }
 
-.ruff-bd table.ruff_deflist {
+.ruff-bd table.ruff_deflist, .ruff-bd table.ruff_table {
   margin: 1em;
   margin-top: 0.5em;
   border: thin solid;
@@ -575,7 +589,7 @@ span.ns_scope a[href]:hover {
   padding: 4px;
 }
 
-.ruff-bd .ruff_deflist td {
+.ruff-bd .ruff_deflist td, .ruff-bd .ruff_table td {
   border: thin solid;
   border-color: #808080;
   vertical-align: top;
@@ -584,12 +598,15 @@ span.ns_scope a[href]:hover {
   padding-top: 0.1em;
 }
 
-.ruff-bd .ruff_deflist th {
+.ruff-bd .ruff_deflist th, .ruff-bd .ruff_table th {
   border: thin solid;
   border-color: #808080;
+  font-size: 93%;
+  font-weight: normal;
   padding: 0.3em;
   padding-top: 0.1em;
-  background-color: #CCCCCC;
+  background-color: var(--ruff-bd-th-background-color);
+  color: var(--ruff-bd-th-color);
 }
 
 .ruff-bd h1 {

@@ -314,13 +314,44 @@ namespace eval ruff {
 
         ### Tables
 
+        Ruff supports basic Markdown-formatted tables with a header and
+        configurable horizontal alignment. Each row of the table must be
+        appear on a single line. All rows should have the same number of
+        cells. The following is an example of a table with each column
+        aligned differently.
+
+        ```
+        |Left Aligned|Center Aligned|Right Aligned|Unaligned|
+        |:-|:-:|-:|--|
+        |Cell 0,0|Cell 0,1|Cell 0,2|Cell 0,3
+        |Cell 1,0|Cell 1,1|Cell 1,2|Cell 1,3
+        ```
+
+        This is displayed as
+        |Left Aligned|Center Aligned|Right Aligned|Unaligned|
+        |:-|:-:|-:|--|
+        |Cell 0,0|Cell 0,1|Cell 0,2|Cell 0,3
+        |Cell 1,0|Cell 1,1|Cell 1,2|Cell 1,3
+
+        The header and separator may be omitted. For example,
+
+        ```
+        |Cell 0,0|Cell 0,1|Cell 0,2|
+        |Cell 1,0|Cell 1,1|Cell 1,2|
+        ```
+
+        is displayed as
+
         |Cell 0,0|Cell 0,1|Cell 0,2|
         |Cell 1,0|Cell 1,1|Cell 1,2|
 
-        |Left Aligned|Center Aligned|Right Aligned|
-        |:-|:-:|-:|
-        |Cell 0,0|Cell 0,1|Cell 0,2|
-        |Cell 1,0|Cell 1,1|Cell 1,2|
+        Note however, that if the Markdown formatter is used and its output
+        is passed to another Markdown processor, the latter may not support
+        tables without headers.
+
+        In the case of the `nroff` output, the `tbl` program needs to be used to
+        format the table. On many systems, `man` and `nroff` will automatically
+        invoke it if necessary.
 
         ### Differences from Markdown
 
@@ -1408,6 +1439,7 @@ proc ruff::private::parse_seealso_state {statevar} {
             fence -
             bullet -
             definition -
+            table -
             blank -
             synopsis -
             seealso -
@@ -1453,6 +1485,7 @@ proc ruff::private::parse_synopsis_state {statevar} {
             fence -
             bullet -
             definition -
+            table -
             blank -
             synopsis -
             seealso -
@@ -1501,6 +1534,7 @@ proc ruff::private::parse_returns_state {statevar} {
             fence -
             bullet -
             definition -
+            table -
             blank -
             seealso -
             synopsis -
@@ -1560,6 +1594,7 @@ proc ruff::private::parse_bullets_state {statevar} {
             returns -
             fence -
             definition -
+            table -
             synopsis -
             seealso {
                 # If we are between bullets, this does not continue the list.
@@ -1717,6 +1752,7 @@ proc ruff::private::parse_definitions_state {statevar} {
             fence -
             bullet -
             synopsis -
+            table -
             seealso {
                 if {[dict get $state(parsed) Indent] <= $block_indent} {
                     # List element and list terminated if a block starter
@@ -1797,6 +1833,7 @@ proc ruff::private::parse_normal_state {statevar} {
             synopsis -
             seealso -
             preformatted -
+            table -
             returns {
                 # All special lines terminate normal paragraphs
                 break
