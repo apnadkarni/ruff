@@ -3182,7 +3182,9 @@ proc ruff::document {namespaces args} {
     #  If `namespace`, a separate file is output for every namespace.
     # -preamble TEXT - Any text that should be appear at the beginning
     #  outside of any namespace documentation, for example an introduction
-    #  or overview of a package. `TEXT` is assumed to be in Ruff! syntax.
+    #  or overview of a package. This shows up as the Start page content
+    #  when used with the `-pagesplit namespace` option.
+    #  `TEXT` is assumed to be in Ruff! syntax.
     # -preeval SCRIPT - a script to run before generating documentation. This
     #  is generally used from the command line to load the packages being
     #  documented.
