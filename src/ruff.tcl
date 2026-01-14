@@ -312,6 +312,16 @@ namespace eval ruff {
         * All other lines begin a normal paragraph. The paragraph ends with
         a line of one of the above types.
 
+        ### Tables
+
+        |Cell 0,0|Cell 0,1|Cell 0,2|
+        |Cell 1,0|Cell 1,1|Cell 1,2|
+
+        |Left Aligned|Center Aligned|Right Aligned|
+        |:-|:-:|-:|
+        |Cell 0,0|Cell 0,1|Cell 0,2|
+        |Cell 1,0|Cell 1,1|Cell 1,2|
+
         ### Differences from Markdown
 
         Note that the block level parsing is similar but not identical to
@@ -1126,6 +1136,17 @@ proc ruff::private::sift_names {names} {
     return $namespaces
 }
 
+proc ruff::private::split_table_row {line} {
+    # Splits a line assuming Markdown table row syntax
+    #   line - presumed to have Markdown table row syntax
+    # Returns a list of cell content
+
+    # insert a space between || to handle empty cells
+    return [regexp -inline -all {(?:[^|]|\\\|)+} \
+                [regsub -all {\|(?=\|)} \
+                     [string trim $line] {| }]]
+}
+
 proc ruff::private::parse_line {line mode current_indent}  {
     # Parses a documentation line and returns its meta information.
     # line - line to be parsed
@@ -1177,6 +1198,13 @@ proc ruff::private::parse_line {line mode current_indent}  {
                         RelativeIndent [lindex $indices 2 0] \
                         Term "[lindex $matches 1][lindex $matches 2]" \
                         Text [lindex $matches 3]]
+        }
+        {^\|} {
+            # Simple table
+            return [list Type table \
+                        Indent $indent \
+                        RelativeIndent [lindex $indices 2 0] \
+                        Cells [split_table_row $line]]
         }
         {^(`{3,})(\S*)(.*)$} {
             # ```` Fenced code block
@@ -1610,6 +1638,60 @@ proc ruff::private::parse_bullets_state {statevar} {
     set state(state) body
 }
 
+proc ruff::private::parse_table_state {statevar} {
+    upvar 1 $statevar state
+
+    set block_indent [dict get $state(parsed) Indent]
+    set table [dict create]
+
+    dict lappend table rows [dict get $state(parsed) Cells]
+    # Preserve original lines so we can just directly output original lines for
+    # markdown formatter
+    dict lappend table lines [lindex $state(lines) $state(index)]
+
+    if {[incr state(index)] >= $state(nlines)} {
+        # No more lines
+        lappend state(body) table $table
+        set state(state) body
+        return
+    }
+
+    # Check the next line to see if it is a header separator line
+    set line [lindex $state(lines) $state(index)]
+    if {[regexp {^\s*\|?(?:\s*:?-+:?(?:\s*$|\s*\|))+} $line]} {
+        foreach cell [split_table_row $line] {
+            switch -regexp $cell {
+                {:-*:} {dict lappend table alignments center}
+                {:-+}  {dict lappend table alignments left}
+                {-+:}  {dict lappend table alignments right}
+                default  {dict lappend table alignments {}}
+            }
+        }
+        # Reinterpret first row as header
+        dict set table header [lindex [dict get $table rows] 0]
+        dict set table rows [list]
+        dict lappend table lines $line; # Preserve separator for Markdown
+        incr state(index); # Continue with next line
+    }
+
+    # state(index) contains the index of the next line to process.
+    while {$state(index) < $state(nlines)} {
+        set line [lindex $state(lines) $state(index)]
+        set state(parsed) [parse_line \
+                               $line \
+                               $state(mode) $block_indent]
+        if {[dict get $state(parsed) Type] ne "table"} {
+            break
+        }
+        dict lappend table rows [dict get $state(parsed) Cells]
+        dict lappend table lines $line
+        incr state(index)
+    }
+    lappend state(body) table $table
+    set state(state) body
+    return
+}
+
 proc ruff::private::parse_definitions_state {statevar} {
     upvar 1 $statevar state
 
@@ -1753,7 +1835,7 @@ proc ruff::private::parse_lines {lines scope {mode proc}} {
     #           Not applicable if $mode is `docstring`.
     # body - The main body stored as a list of alternating type and
     #        content elements. The type may be one of `heading`,
-    #        `paragraph`, `list`, `definitions` or `preformatted`.
+    #        `paragraph`, `list`, `definitions`, `table` or `preformatted`.
     # seealso - The *See also* section containing a list of program element
     #           references. Not applicable if $mode is `docstring`.
     # returns - A paragraph describing the return value.
@@ -1761,7 +1843,7 @@ proc ruff::private::parse_lines {lines scope {mode proc}} {
     # synopsis - a list of alternating procname and parameter list
     #           definitions to be used as synopsis instead of the generated
     #           one.
-    #            
+    #
     # Not all elements may be present in the dictionary.
     # A paragraph is returned as a list of lines.
 
@@ -1812,7 +1894,8 @@ proc ruff::private::parse_lines {lines scope {mode proc}} {
             definition   { parse_definitions_state state }
             returns      { parse_returns_state state }
             seealso      { parse_seealso_state state }
-            synopsis      { parse_synopsis_state state }
+            synopsis     { parse_synopsis_state state }
+            table        { parse_table_state state }
             continuation {
                 # TBD - See if we can get rid of continuation state
                 # we do not really use this state.
@@ -2184,6 +2267,8 @@ proc ruff::private::extract_docstring {text scope} {
     # definitions - The corresponding value is a list of dictionaries, each
     #             with the keys `term` and `definition`, the latter being
     #             the list of lines making up the definition.
+    # table       - The corresponding values is a dictionary with keys
+    #             `rows`, `lines`, `alignments` (if there is a header)
     # preformatted - The corresponding value is a list of lines that should
     #             not be formatted.
     #

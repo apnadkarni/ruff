@@ -112,6 +112,18 @@ oo::class create ruff::formatter::Formatter {
         error "Method AddDefinitions not overridden."
     }
 
+    method AddTable {table scope} {
+        # Adds a table to document content.
+        #  table  - Dictionary describing table
+        #  scope  - The documentation scope of the content.
+        # The table dictionary has keys `lines`, `rows` and optionally `header`,
+        # `alignments` containing the raw lines, a list of cell content
+        # and a list of cell alignments respectively.
+        #
+        # This method should be overridden by the concrete formatter.
+        error "Method AddTable not overridden."
+    }
+
     method AddParameters {parameters scope} {
         # Adds a parameters section to document content.
         #  parameters - List of parameter definitions each being a dictionary
@@ -564,6 +576,9 @@ oo::class create ruff::formatter::Formatter {
                 }
                 definitions {
                     my AddDefinitions $content $scope none
+                }
+                table {
+                    my AddTable $content $scope
                 }
                 bullets {
                     my AddBullets $content $scope

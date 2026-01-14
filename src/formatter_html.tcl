@@ -369,6 +369,50 @@ oo::class create ruff::formatter::Html {
         return
     }
 
+    method AddTable {table scope} {
+        # Adds a table to document content.
+        #  table  - Dictionary describing table
+        #  scope  - The documentation scope of the content.
+        # See [Formatter.AddTable].
+        # The table dictionary has keys `lines`, `rows` and optionally `header`,
+        # `alignments` containing the raw lines, a list of cell content, header row,
+        # and a list of cell alignments respectively.
+
+        array set styles {
+            left   { style="text-align:left;"}
+            center { style="text-align:center;"}
+            right  { style="text-align:right;"}
+            {}     {}
+        }
+        if {[dict exists $table alignments]} {
+            set alignments [dict get $table alignments]
+        } else {
+            set alignments {}
+        }
+        append Document "<table class='ruff_deflist'>\n"
+        if {[dict exists $table header]} {
+            append Document "<thead>\n"
+            append Document "<tr>"
+            foreach cell [dict get $table header] align $alignments {
+                append Document "<td$styles($align)>[my ToHtml $cell]</td>"
+            }
+            append Document "</tr>\n"
+            append Document "</thead>\n"
+        }
+        append Document "<tbody>\n"
+        foreach row [dict get $table rows] {
+            append Document "<tr>"
+            foreach cell $row align $alignments {
+                append Document "<td$styles($align)>[my ToHtml $cell]</td>"
+            }
+            append Document "</tr>\n"
+        }
+        append Document "</tbody>\n"
+        append Document "</table>\n"
+        return
+    }
+
+
     method AddBullets {bullets scope} {
         # See [Formatter.AddBullets].
         #  bullets  - The list of bullets.
