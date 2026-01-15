@@ -1336,6 +1336,11 @@ oo::class create ruff::formatter::Formatter {
                             }
                             incr index [string length $m]
                             set match_found 1
+                        } elseif {[is_builtin $lbl]} {
+                            lassign [builtin_url $lbl] url txt
+                            set title $lbl
+                            incr index [string length $m]
+                            set match_found 1
                         } else {
                             app::log_error "Warning: no target found for link \"$lbl\". Assuming markdown reference."
                             set lbl [string tolower $lbl]

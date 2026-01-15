@@ -470,6 +470,13 @@ oo::class create ruff::formatter::Markdown {
                                 append result $pre $txt "\](" $url " " "\"$txt\"" ")"
                             }
                             set match_found 1
+                        } elseif {[is_builtin $lbl]} {
+                            lassign [builtin_url $lbl] url lbl
+                            if {! $display_text_specified} {
+                                set txt $lbl
+                            }
+                            append result $pre $txt "\](" $url ")"
+                            set match_found 1
                         } else {
                             # Not a Ruff! code link. Pass through as is.
                             # We do not pass text through ToMarkdown as it is

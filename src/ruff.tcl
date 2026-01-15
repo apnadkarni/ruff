@@ -1,4 +1,4 @@
-# Copyright (c) 2009-2025, Ashok P. Nadkarni
+# Copyright (c) 2009-2026, Ashok P. Nadkarni
 # All rights reserved.
 # See the file LICENSE in the source root directory for license.
 
@@ -899,6 +899,38 @@ namespace eval ruff {
         variable output_file_ext ""
     }
     namespace path private
+}
+
+proc ruff::private::is_builtin {fqcmd} {
+    variable built_ins
+    fqn! $fqcmd
+    if {![info exists built_ins]} {
+        set built_ins [dict create]
+        set ip [interp create]
+        foreach built_in [$ip eval {
+            set cmds [info commands]
+            foreach ns [namespace children ::] {
+                lappend cmds {*}[info commands ${ns}::*]
+            }
+            set cmds
+        }] {
+            dict set built_ins $built_in $built_in
+        }
+        interp delete $ip
+    }
+    # ::oo::class.create -> ::oo::class
+    set fqcmd [lindex [split $fqcmd .] 0]
+    return [dict exists $built_ins $fqcmd]
+}
+
+proc ruff::private::builtin_url {fqcmd} {
+    if {![is_builtin $fqcmd]} {
+        error "$fqcmd is not a built-in command"
+    }
+
+    # ::oo::class.create -> ::oo::class
+    set fqcmd [lindex [split $fqcmd .] 0]
+    return [list "https://www.tcl-lang.org/man/tcl9.0/TclCmd/index.html" $fqcmd]
 }
 
 proc ruff::private::ruff_dir {} {
