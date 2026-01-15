@@ -908,7 +908,11 @@ proc ruff::private::is_builtin {fqcmd} {
         set built_ins [dict create]
         set ip [interp create]
         foreach built_in [$ip eval {
-            set cmds [info commands]
+            # Force autoloaded procs
+            catch {package require nosuchpackage}
+            set cmds [lmap cmd [info commands] {
+                string cat :: $cmd
+            }]
             foreach ns [namespace children ::] {
                 lappend cmds {*}[info commands ${ns}::*]
             }
@@ -2918,6 +2922,9 @@ proc ruff::private::extract_procs_and_classes {fqns args} {
     if {"procs" in $opts(-include)} {
         # Collect procs
         foreach proc_name [info procs $pattern] {
+            if {[is_builtin $proc_name]} {
+                continue
+            }
             set proc_tail [namespace tail $proc_name]
             if {$opts(-excludeprocs) ne "" &&
                 [regexp $opts(-excludeprocs) $proc_tail]} {
@@ -2942,6 +2949,9 @@ proc ruff::private::extract_procs_and_classes {fqns args} {
         }
         # Collect ensembles
         foreach ens_name [ensembles $pattern] {
+            if {[is_builtin $ens_name]} {
+                continue
+            }
             set ens_tail [namespace tail $ens_name]
             if {$opts(-excludeprocs) ne "" &&
                 [regexp $opts(-excludeprocs) $ens_tail]} {
