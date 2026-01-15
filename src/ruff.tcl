@@ -3418,7 +3418,7 @@ proc ruff::formatters {} {
     # documentation in that format.
     #
     # Returns a list of available formatters.
-    return {html markdown nroff}
+    return {html markdown nroff rst}
 }
 
 # TBD - where is this used
