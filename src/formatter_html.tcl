@@ -578,7 +578,11 @@ oo::class create ruff::formatter::Html {
             }
             foreach ns $ordered_namespaces {
                 set ref  [ns_file_base $ns]
-                set text [string trimleft $ns :]
+                if {$ns eq "::"} {
+                    set text "(Global)"
+                } else {
+                    set text [string trimleft $ns :]
+                }
                 if {$ns eq $highlight_ns} {
                     append Document "<li class='ruff-toc1'><a class='ruff-highlight' href='$ref'>$text</a></li>\n"
                 } else {
@@ -593,7 +597,12 @@ oo::class create ruff::formatter::Html {
             set last_lead_word ""
             dict for {text navinfo} $NavigationLinks {
                 set link [dict get $navinfo LinkInfo]
-                set label [my Escape [string trimleft [dict get $link label] :]]
+                set label [dict get $link label]
+                if {$label eq "::"} {
+                    set label (Global)
+                } else {
+                    set label [my Escape [string trimleft $label :]]
+                }
                 set level  [dict get $link level]
                 set href [dict get $link href]
                 if {[dict get $navinfo Type] eq "proc"} {
