@@ -1249,14 +1249,18 @@ proc ruff::private::parse_line {line mode current_indent}  {
                         Level [string length [lindex $matches 1]] \
                         Text [lindex $matches 2]]
         }
-        {^[-\*]\s+(.*)$} {
+        {^([-\*]|(?:\d+\.))\s+(.*)$} {
             # - a bullet list element
             # Return: bullet lineindent relativetextindent marker text
+            set marker [string range $text 0 [lindex $indices 1 1]]
+            if {[regexp {^\d+.} $marker]} {
+                set marker 1.
+            }
             return [list Type bullet \
                         Indent $indent \
-                        RelativeIndent [lindex $indices 1 0] \
-                        Marker [string index $text 0] \
-                        Text [lindex $matches 1]]
+                        RelativeIndent [lindex $indices 2 0] \
+                        Marker $marker \
+                        Text [lindex $matches 2]]
         }
         {^(\S+)(\s+\S+)?\s+-\s+(.*)$} {
             # term ?term2? - description
@@ -1705,7 +1709,7 @@ proc ruff::private::parse_bullets_state {statevar} {
         lappend list_block $list_elem
     }
 
-    lappend state(body) bullets $list_block
+    lappend state(body) bullets [dict create items $list_block marker $marker]
     set state(state) body
 }
 

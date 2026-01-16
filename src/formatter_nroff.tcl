@@ -273,12 +273,31 @@ oo::class create ruff::formatter::Nroff {
         return
     }
 
-    method AddBullets {bullets scope} {
+    method AddBullets {content scope} {
         # See [Formatter.AddBullets].
-        #  bullets  - The list of bullets.
+        #  content  - Dictionary with keys items and marker
         #  scope    - The documentation scope of the content.
-        foreach lines $bullets {
-            append Body [nr_blt "\n\1\\(bu"] "\n" [my ToNroff [join $lines { }] $scope]
+
+        if {[dict get $content marker] eq "1."} {
+            if {1} {
+                set n 0
+                foreach lines [dict get $content items] {
+                    append Body [nr_enum [incr n]] \n [my ToNroff [join $lines { }] $scope] \n
+                }
+
+            } else {
+                append Body ".nr Li 0\n.in +4\n.ta 2\n\n"
+                foreach lines [dict get $content items] {
+                    append Body ".ti -4\n.nr Li +1\n" \
+                        "\\t\\n\[Li\]. [my ToNroff [join $lines \n] $scope]\n" \
+                        ".br\n"
+                }
+                append Body ".in -4"
+            }
+        } else {
+            foreach lines [dict get $content items] {
+                append Body [nr_blt "\n\1\\(bu"] "\n" [my ToNroff [join $lines { }] $scope]
+            }
         }
         return
     }
