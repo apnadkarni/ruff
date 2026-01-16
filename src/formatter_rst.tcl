@@ -555,8 +555,12 @@ oo::class create ruff::formatter::Rst {
 
         append Document "\n"
         foreach {cmds params} $synopsis {
-            # Format as line block for better control
-            append Document "| ``[join $cmds { }]`` *[join $params { }]*\n"
+            # | means line block. Maybe make it fenced block?
+            append Document "| ``[join $cmds { }]"
+            if {[llength $params]} {
+                append Document " [join $params { }]"
+            }
+            append Document "``\n"
         }
         append Document "\n"
         return
