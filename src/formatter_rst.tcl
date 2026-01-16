@@ -444,6 +444,109 @@ oo::class create ruff::formatter::Rst {
         return
     }
 
+    method AddFenced {lines fence_options scope} {
+        # Adds a list of fenced lines to document content.
+        #  lines - Preformatted text as a list of lines.
+        #  fence_options - options controlling generation and layout
+        #  scope - The documentation scope of the content.
+        # Handles diagrams, captions, and alignment similar to HTML formatter.
+
+        # Process caption
+        if {[dict exists $fence_options -caption]} {
+            set caption [dict get $fence_options -caption]
+            set anchor [my MakeRst2HtmlId $scope $caption]
+            if {[my ResolvableReference? $caption $scope ref] && [dict exists $ref label]} {
+                # May have "Figure X" added
+                set display_caption [dict get $ref label]
+            } else {
+                set display_caption $caption
+            }
+        } else {
+            set caption ""
+            set display_caption ""
+            set anchor ""
+        }
+
+        # Process alignment
+        set align_class ""
+        if {[dict exists $fence_options -align]} {
+            set align_value [dict get $fence_options -align]
+            switch -exact -- $align_value {
+                "left" - "center" - "right" {
+                    set align_class "   :class: align-$align_value\n"
+                }
+            }
+        }
+
+        # Check if this is a diagram
+        if {[dict exists $fence_options Command] &&
+            [lindex [dict get $fence_options Command] 0] eq "diagram"} {
+            set diagrammer [lrange [dict get $fence_options Command] 1 end]
+            if {[llength $diagrammer] == 0} {
+                set diagrammer [program_option -diagrammer]
+            }
+
+            # Generate diagram image
+            set image_url [ruff::diagram::generate \
+                               [join $lines \n] \
+                               [ruff::private::sanitize_filename $caption] \
+                               {*}$diagrammer]
+
+            # Use RST figure directive for diagrams
+            append Document "\n"
+            if {$anchor ne ""} {
+                append Document ".. _$anchor:\n\n"
+            }
+            append Document ".. figure:: $image_url\n"
+            if {$align_class ne ""} {
+                # For figures, :align: is standard RST
+                set align_value [dict get $fence_options -align]
+                append Document "   :align: $align_value\n"
+            }
+
+            if {$display_caption ne ""} {
+                append Document "\n   $display_caption\n"
+            }
+            append Document "\n"
+        } else {
+            # Regular code block - use standard RST literal block wrapped in container
+            set lang [dict get $fence_options Language]
+
+            append Document "\n"
+            if {$anchor ne ""} {
+                append Document ".. _$anchor:\n\n"
+            }
+
+            # Use container directive to support alignment via CSS class
+            if {$align_class ne "" || $display_caption ne ""} {
+                append Document ".. container:: code-block"
+                if {$align_class ne ""} {
+                    set align_value [dict get $fence_options -align]
+                    append Document " align-$align_value"
+                }
+                append Document "\n\n"
+
+                if {$display_caption ne ""} {
+                    append Document "   **$display_caption**\n\n"
+                }
+
+                append Document "   ::\n\n"
+                foreach line $lines {
+                    append Document "      $line\n"
+                }
+            } else {
+                # Simple literal block
+                append Document "::\n\n"
+                foreach line $lines {
+                    append Document "   $line\n"
+                }
+            }
+            append Document "\n"
+        }
+
+        return
+    }
+
     method AddSynopsis {synopsis scope} {
         # Adds a Synopsis section to the document content.
         #  synopsis - List of alternating elements comprising the command portion
@@ -525,6 +628,7 @@ oo::class create ruff::formatter::Rst {
                     } elseif {[regexp -start $index \
                                    "\\A(\\$chr{1,2})((?:\[^\\$chr\\\\]|\\\\\\$chr)*)\\1" \
                                    $text m del sub]} {
+                        # TODO - bold+italicised does not seem to work
                         # Found emphasis or strong
                         append result "$del[my ToRST $sub $scope]$del"
                         incr index [string length $m]
@@ -541,17 +645,17 @@ oo::class create ruff::formatter::Rst {
                     set start [expr $index + [string length $backticks]]
 
                     if {[regexp -start $start -indices $backticks $text terminating_indices]} {
-                        set stop [lindex $terminating_indices 1]
-                        set passthru [string range $text $index $stop]
-                        append result $passthru
-                        incr index [string length $passthru]
+                        set stop [expr {[lindex $terminating_indices 0] - 1}]
+                        set sub [string trim [string range $text $start $stop]]
+                        append result "``" [my Escape $sub] "``"
+                        set index [expr [lindex $terminating_indices 1] + 1]
                         continue
                     }
                 }
                 {[} {
                     # LINKS - check for inline or reference links
                     set match_found 0
-                    
+
                     if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
                         # Inline link - convert to RST format
                         set link_text [my ToRST $txt $scope]

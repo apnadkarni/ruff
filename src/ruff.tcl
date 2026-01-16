@@ -353,6 +353,8 @@ namespace eval ruff {
         format the table. On many systems, `man` and `nroff` will automatically
         invoke it if necessary.
 
+        Not all formatters support alignment of columns.
+
         ### Differences from Markdown
 
         Note that the block level parsing is similar but not identical to
