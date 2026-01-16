@@ -37,26 +37,7 @@ oo::class create ruff::formatter::Rst {
         # by rst2html. Otherwise link to the anchor will fail.
         # Returns an anchor suitable for RST references.
 
-        set parts [lmap arg $args {
-            if {$arg eq ""} continue
-            set arg
-        }]
-
-        # rst2html will replace non-alphanumerics with hyphen,
-        # trim leading and trailing hyphens, collapse multiple
-        # consecutive hyphens, and convert to lower case. We
-        # ensure it need not do any of those conversions.
-        # This can lead to ambiguities but leave it for the time
-        # being.
-        set s [string tolower [join $parts -]]
-        # Replace any non-alphanumeric character with some unlikely
-        # sequence like qz
-        regsub -all {[^a-z0-9]+} $s qz s
-        # Collapse multiple hyphens if any
-        regsub -all -- {-+} $s {-} s
-        # Trim leading/trailing hyphens
-        set s [string trim $s -]
-        return $s
+        return [string tolower [make_id {*}$args]]
     }
 
     method HeadingReference {ns heading} {

@@ -1003,6 +1003,39 @@ proc ruff::private::sanitize_filename {s} {
     return [regsub -all {[^-\w_]} $s -]
 }
 
+proc ruff::private::make_id {args} {
+    # Return an id usable as a unique anchor
+    #  args - list of arbitrary strings
+    # The generated id should ideally meet the following requirements:
+    # - any unique set of args should generate a unique id
+    # - the generated id should be such that it will not be transformed by
+    #   a formatter as that would make linking difficult.
+    # This means that the generated id should not contain any characters other
+    # than alphanumerics and "-" because of the restrictions imposed by
+    # reStructuredText processing by rst2html. Further it trims leading and
+    # trailing "-" and compresses multiple consecutive occurences into a single
+    # "-" so we avoid the - character as well.
+    #
+    # The current implementation replaces non-alphanumerics with their codepoint
+    # value. This is not perfect since (for example) the strings " " and "20"
+    # will not generate the same id but it is unlikely that will clash in
+    # practice.
+
+    # Use qz to join with the hope it will not occur in practice
+    set s [join [lmap arg $args {
+        if {$arg eq ""} continue
+        set arg
+    }] qz]
+
+    foreach {- alnum notalnumchar} [regexp -inline -all {([a-z0-9]*)([^a-z0-9]?)} $s] {
+        append result $alnum
+        if {$notalnumchar ne ""} {
+            append result [format %x [scan $notalnumchar %c]]
+        }
+    }
+    return [string cat x $result]
+}
+
 proc ruff::private::ns_file_base {ns_or_class {ext {}}} {
     # Returns the file name to use for documenting namespace $ns.
     # ns_or_class - the namespace or class for the file
