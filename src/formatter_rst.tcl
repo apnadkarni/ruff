@@ -247,6 +247,138 @@ oo::class create ruff::formatter::Rst {
         return
     }
 
+    method AddTable {table scope} {
+        # Adds a table to document content.
+        #  table  - Dictionary describing table
+        #  scope  - The documentation scope of the content.
+        # See [Formatter.AddTable].
+        # The table dictionary has keys `lines`, `rows` and optionally `header`,
+        # `alignments` containing the raw lines, a list of cell content, header row,
+        # and a list of cell alignments respectively.
+
+        # Get alignments if specified
+        if {[dict exists $table alignments]} {
+            set alignments [dict get $table alignments]
+        } else {
+            set alignments {}
+        }
+
+        append Document "\n"
+
+        # Unlike Markdown, RST requires all rows to have same number of cells
+        # and each cell to be the same width so first calculate column widths
+
+        # Get header and rows
+        set rows [dict get $table rows]
+        set has_header [dict exists $table header]
+        if {$has_header} {
+            set rows [linsert $rows 0 [dict get $table header]]
+        }
+
+        # Calculate column widths
+        set num_cols 0
+        foreach row $rows {
+            set row_len [llength $row]
+            if {$row_len > $num_cols} {
+                set num_cols $row_len
+            }
+        }
+
+        if {$num_cols == 0} {
+            return
+        }
+
+        # Initialize column widths
+        set col_widths {}
+        for {set i 0} {$i < $num_cols} {incr i} {
+            lappend col_widths 0
+        }
+
+        # Loop over all cells, converting to RST and calculating
+        # the cell width.
+        set rst_rows {}
+        foreach row $rows {
+            set rst_row {}
+            for {set i 0} {$i < $num_cols} {incr i} {
+                set cell [my ToRST [lindex $row $i] $scope]
+                lappend rst_row $cell
+                set width [string length $cell]
+                if {$width > [lindex $col_widths $i]} {
+                    lset col_widths $i $width
+                }
+            }
+            lappend rst_rows $rst_row
+        }
+
+        # Output the RST Grid Table
+        # TODO - Grid tables do not seem to support alignment. Should
+        # we use list-table directive instead? Is that RST or Sphinx-only?
+
+        # Top border
+        append Document [my TableBorder $col_widths $alignments top] "\n"
+        # First row or header
+        append Document [my TableRow [lindex $rst_rows 0] $col_widths $alignments] \n
+        set rst_rows [lrange $rst_rows 1 end]
+        if {$has_header} {
+            # Header separator
+            append Document [my TableBorder $col_widths $alignments header] "\n"
+        } else {
+            append Document [my TableBorder $col_widths $alignments bottom] "\n"
+        }
+
+        # Data rows
+        foreach row $rst_rows {
+            append Document [my TableRow $row $col_widths $alignments] \n
+            append Document [my TableBorder $col_widths $alignments bottom] "\n"
+        }
+
+        # Bottom border
+        append Document "\n"
+
+        return
+    }
+
+    method TableRow {cells widths alignments} {
+        # Returns a row formatted as a RST grid table row
+        #  cells - list of cells, each already formatted for RST
+        #  col_widths - width of each column
+        #  alignment - alignment of each column
+        set row [lmap width $widths cell $cells alignment $alignments {
+            my FormatTableCell $cell $width $alignment
+        }]
+        return "| [join $row { | }] |"
+    }
+
+    method TableBorder {widths alignments position} {
+        # Generate a table border line for RST grid tables
+        #  widths - List of column widths
+        #  alignments - List of column alignments
+        #  position - One of top, header, or bottom
+
+        # TODO - alignments ignored.
+
+        set separator [expr {$position eq "header" ? "=" : "-"}]
+        return [string cat + [join [lmap width $widths {
+            string repeat $separator [expr {$width + 2}]
+        }] +] +]
+    }
+
+    method FormatTableCell {text width align} {
+        # Format a table cell with proper padding and alignment
+        #  text - Cell text
+        #  width - Column width
+        #  align - Alignment (left, center, right, or empty)
+
+        # TODO - alignments ignored.
+        set len [string length $text]
+        set padding [expr {$width - $len}]
+
+        if {$padding < 0} {
+            error "Length of text is greater than column width"
+        }
+        return "$text[string repeat { } $padding]"
+    }
+
     method AddBullets {bullets scope} {
         # See [Formatter.AddBullets].
         #  bullets  - The list of bullets.
