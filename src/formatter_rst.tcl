@@ -134,10 +134,17 @@ oo::class create ruff::formatter::Rst {
 
         # Create heading text
         if {[string length $ns]} {
+            set text [namespace tail $name]
+            set text [string cat [my Escape [string index $text 0]] \
+                          [string range $text 1 end]]
             set ns_link [my ToRST [markup_reference $ns]]
-            set heading "[namespace tail $name] \[${ns_link}\]"
+            set heading "[namespace tail $text] \[${ns_link}\]"
         } else {
-            set heading $name
+            # If the name starts with something like "*", it will be treated
+            # as a list! So escape the first char.
+            set text [string cat [my Escape [string index $name 0]] \
+                          [string range $name 1 end]]
+            set heading $text
         }
 
         # Add heading with appropriate underline
@@ -172,13 +179,16 @@ oo::class create ruff::formatter::Rst {
             append Document "\n.. _$anchor:\n\n"
         }
 
+        # If the text starts with something like "*", it will be treated
+        # as a list! So escape the first char.
+        set text [string cat [my Escape [string index $text 0]] [string range $text 1 end]]
         set heading_text [my ToRST $text $scope]
 
         # RST heading with underline
         set char [lindex $HeaderMarkers $level]
         set underline [string repeat $char [string length $heading_text]]
 
-        append Document $heading_text \n $underline \n
+        append Document \n $heading_text \n $underline \n
         return
     }
 
@@ -564,7 +574,7 @@ oo::class create ruff::formatter::Rst {
 
         # RST has fewer special characters than Markdown
         # Main ones are backslash and asterisk/underscore in certain contexts
-        return [string map {\\ \\\\ * \\* _ \\_} $s]
+        return [string map {\\ \\\\ * \\* + \\+ _ \\_} $s]
     }
 
     method ToRST {text {scope {}}} {
