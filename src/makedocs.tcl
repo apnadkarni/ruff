@@ -56,7 +56,7 @@ proc ruff::private::document_self {args} {
         lappend common_args -onlyexports 1
     }
     switch -exact -- $opts(-format) {
-        markdown {
+        rst - markdown {
             document $namespaces {*}$common_args \
                 -outdir $opts(-outdir) \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
@@ -92,9 +92,10 @@ proc ruff::private::document_self {args} {
 
 
 if {[catch {
-    ruff::private::document_self -format html {*}$argv
-    ruff::private::document_self -format nroff {*}$argv
-    ruff::private::document_self -format markdown {*}$argv
+    #ruff::private::document_self -format html {*}$argv
+    #ruff::private::document_self -format nroff {*}$argv
+    #ruff::private::document_self -format markdown {*}$argv
+    ruff::private::document_self -format rst {*}$argv
 } result edict]} {
     puts stderr "Error: $result"
     puts [dict get $edict -errorinfo]
