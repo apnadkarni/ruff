@@ -14,7 +14,7 @@ oo::class create ruff::formatter::Rst {
     variable HeaderLevels;    # Header levels for various headers
     variable HeaderMarkers;   # Characters to use for each header level
     variable NavigationLinks; # Navigation links forming ToC
-    variable UsedAnchors;     # Track anchors to avoid duplicates
+    variable Images;          # Dictionary holding image information
 
     constructor args {
         set HeaderLevels {
@@ -26,7 +26,7 @@ oo::class create ruff::formatter::Rst {
         }
         # HeaderMarkers based on Python conventions
         set HeaderMarkers [list # * = - ^ \"]
-
+        set Images [dict create]
         next {*}$args
     }
 
@@ -85,7 +85,6 @@ oo::class create ruff::formatter::Rst {
         next $ns
 
         set    NavigationLinks [dict create]
-        set    UsedAnchors [dict create]
         set    Document $Header
         set    DocumentNamespace $ns
 
@@ -95,6 +94,13 @@ oo::class create ruff::formatter::Rst {
     method DocumentEnd {} {
         # See [Formatter.DocumentEnd].
 
+        # Add substitutions for images
+        dict for {rst_id image_info} $Images {
+            append Document "\n.. |$rst_id| image:: " \
+                [dict get $image_info url] "\n   :alt: " \
+                [dict get $image_info alt] \n
+
+        }
         # Add the navigation bits and footer
         my Navigation $DocumentNamespace
         append Document $Footer
@@ -408,33 +414,11 @@ oo::class create ruff::formatter::Rst {
         return
     }
 
-    method AddFenced {lines fence_options scope} {
-        # See [Formatter.AddFenced].
-        # Adds a list of fenced lines to document content.
-        #  lines - Preformatted text as a list of lines.
-        #  fence_options - options specified with the fence, e.g. diagram ...
-        #  scope - The documentation scope of the content.
-
-        set lang [dict get $fence_options Language]
-
-        # Use RST code-block directive
-        if {$lang ne ""} {
-            append Document "\n.. code-block:: $lang\n\n"
-        } else {
-            append Document "\n::\n\n"
-        }
-
-        foreach line $lines {
-            append Document "    $line\n"
-        }
-        append Document "\n"
-
-        if {[dict exists $fence_options -caption]} {
-            set caption [dict get $fence_options -caption]
-            append Document "\n*$caption*\n\n"
-        }
-
-        return
+    method AddImage {url alt} {
+        # Returns a RST link to the image url and registers it as a substitution
+        set rst_id [my MakeRst2HtmlId $url]
+        dict set Images $rst_id [dict create url $url alt $alt]
+        return "|$rst_id|"
     }
 
     method AddFenced {lines fence_options scope} {
@@ -649,14 +633,15 @@ oo::class create ruff::formatter::Rst {
                         continue
                     }
                 }
+                {!} -
                 {[} {
-                    # LINKS - check for inline or reference links
+                    # INLINE LINKS AND IMAGES
+                    set ref_type [expr {$chr eq "!" ? "img" : "link"}]
                     set match_found 0
 
                     if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
                         # Inline link - convert to RST format
                         set link_text [my ToRST $txt $scope]
-                        append result "`$link_text <$url>`_"
                         set match_found 1
                     } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
                         if {$lbl eq {}} {
@@ -669,29 +654,36 @@ oo::class create ruff::formatter::Rst {
                         if {[my ResolvableReference? $lbl $scope code_link]} {
                             # RUFF CODE REFERENCE
                             set url [dict get $code_link ref]
-                            if {! $display_text_specified} {
-                                set txt [dict get $code_link label]
+                            if {$display_text_specified} {
+                                set link_text $txt
+                            } else {
+                                set link_text [dict get $code_link label]
                             }
-                            # RST external link format
-                            append result "`$txt <$url>`_"
                             set match_found 1
                         } elseif {[is_builtin $lbl]} {
                             lassign [builtin_url $lbl] url lbl
-                            if {! $display_text_specified} {
-                                set txt $lbl
+                            if {$display_text_specified} {
+                                set link_text $txt
+                            } else {
+                                set link_text $lbl
                             }
-                            # RST external link format
-                            append result "`$txt <$url>`_"
                             set match_found 1
                         } else {
                             # Not a Ruff! code link - pass through as is
                             app::log_error "Warning: no target found for link \"$lbl\". Passing through verbatim."
                             append result [my Escape $m]
-                            set match_found 1
+                            incr index [string length $m]
+                            continue; # Skip the match_found block
                         }
                     }
 
                     if {$match_found} {
+                        # RST external link format
+                        if {$ref_type eq "img"} {
+                            append result [my AddImage $url $link_text]
+                        } else {
+                            append result "`$link_text <$url>`_"
+                        }
                         incr index [string length $m]
                         continue
                     }
