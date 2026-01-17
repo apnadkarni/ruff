@@ -39,6 +39,21 @@ namespace eval ruff::sample {
         across multiple lines
         * Third item
 
+        This is an **numbered list**.
+        ````
+          1. First item
+          1. Second
+          item
+          across multiple lines
+          1. Third item
+        ````
+        This is displayed as
+
+        1. First item
+        1. Second
+        item
+        across multiple lines
+        1. Third item
 
         This is a **definition list**.
         ````

@@ -413,15 +413,16 @@ oo::class create ruff::formatter::Html {
     }
 
 
-    method AddBullets {bullets scope} {
+    method AddBullets {content scope} {
         # See [Formatter.AddBullets].
-        #  bullets  - The list of bullets.
+        #  content  - Dictionary with keys items and marker
         #  scope    - The documentation scope of the content.
-        append Document "<ul class='ruff'>\n"
-        foreach lines $bullets {
+        set tag [expr {[dict get $content marker] eq "1." ? "ol" : "ul"}]
+        append Document "<$tag class='ruff'>\n"
+        foreach lines [dict get $content items] {
             append Document "<li>[my ToHtml [join $lines { }] $scope]</li>\n"
         }
-        append Document "</ul>\n"
+        append Document "</$tag>" \n
         return
     }
 

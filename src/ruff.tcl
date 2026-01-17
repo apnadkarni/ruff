@@ -359,7 +359,6 @@ namespace eval ruff {
         Markdown. Amongst other differences, Ruff! has
 
         * no nested blocks
-        * no numbered lists or multi-paragraph list elements
         * no blockquotes
 
         Ruff! adds
@@ -903,7 +902,6 @@ namespace eval ruff {
 
 proc ruff::private::is_builtin {fqcmd} {
     variable built_ins
-    fqn! $fqcmd
     if {![info exists built_ins]} {
         set built_ins [dict create]
         set ip [interp create]
@@ -921,6 +919,9 @@ proc ruff::private::is_builtin {fqcmd} {
             dict set built_ins $built_in $built_in
         }
         interp delete $ip
+    }
+    if {![fqn? $fqcmd]} {
+        set fqcmd ::$fqcmd
     }
     # ::oo::class.create -> ::oo::class
     set fqcmd [lindex [split $fqcmd .] 0]
@@ -966,7 +967,7 @@ proc ruff::private::fqn? {name} {
 proc ruff::private::fqn! {name} {
     # Raises an error if $name is not a fully qualified name.
     if {![fqn? $name]} {
-        error "\"name\" is not fully qualified."
+        error "\"$name\" is not fully qualified."
     }
 }
 
@@ -1249,14 +1250,18 @@ proc ruff::private::parse_line {line mode current_indent}  {
                         Level [string length [lindex $matches 1]] \
                         Text [lindex $matches 2]]
         }
-        {^[-\*]\s+(.*)$} {
+        {^([-\*]|(?:\d+\.))\s+(.*)$} {
             # - a bullet list element
             # Return: bullet lineindent relativetextindent marker text
+            set marker [string range $text 0 [lindex $indices 1 1]]
+            if {[regexp {^\d+.} $marker]} {
+                set marker 1.
+            }
             return [list Type bullet \
                         Indent $indent \
-                        RelativeIndent [lindex $indices 1 0] \
-                        Marker [string index $text 0] \
-                        Text [lindex $matches 1]]
+                        RelativeIndent [lindex $indices 2 0] \
+                        Marker $marker \
+                        Text [lindex $matches 2]]
         }
         {^(\S+)(\s+\S+)?\s+-\s+(.*)$} {
             # term ?term2? - description
@@ -1705,7 +1710,7 @@ proc ruff::private::parse_bullets_state {statevar} {
         lappend list_block $list_elem
     }
 
-    lappend state(body) bullets $list_block
+    lappend state(body) bullets [dict create items $list_block marker $marker]
     set state(state) body
 }
 

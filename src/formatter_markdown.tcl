@@ -260,13 +260,15 @@ oo::class create ruff::formatter::Markdown {
         append Document \n [join [dict get $table lines] \n] \n
     }
 
-    method AddBullets {bullets scope} {
+    method AddBullets {content scope} {
         # See [Formatter.AddBullets].
-        #  bullets  - The list of bullets.
+        #  content  - Dictionary with keys items and marker
         #  scope    - The documentation scope of the content.
         append Document "\n"
-        foreach lines $bullets {
-            append Document "- [my ToMarkdown [join $lines { }] $scope]\n"
+        foreach lines [dict get $content items] {
+            append Document [dict get $content marker] " " \
+                [my ToMarkdown [join $lines { }] $scope] \
+                \n
         }
         append Document "\n"
         return
