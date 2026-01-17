@@ -424,6 +424,12 @@ span.ns_scope a[href]:hover {
   text-decoration: underline;
 }
 
+blockquote.ruff {
+    border-left: 5px solid #ccc;
+    margin-left: 20px;
+    padding-left: 20px;
+}
+
 /* Tooltip text - see https://www.w3schools.com/css/css_tooltip.asp */
 .ruff-tip {
   position: relative;

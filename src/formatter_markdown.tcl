@@ -190,6 +190,20 @@ oo::class create ruff::formatter::Markdown {
         return
     }
 
+    method AddBlockquote {lines scope} {
+        # See [Formatter.AddBlockquote].
+        #  lines  - The paragraph lines.
+        #  scope - The documentation scope of the content.
+
+        # Paragraphs may be separated by blanks lines within
+        # a single block quote
+
+        append Document \n [join [lmap line $lines {
+            string cat "> " [my ToMarkdown $line]
+        }] \n]
+
+    }
+
     method AddDefinitions {definitions scope {preformatted none}} {
         # See [Formatter.AddDefinitions].
         #  definitions  - List of definitions.

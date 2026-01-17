@@ -1321,6 +1321,12 @@ proc ruff::private::parse_line {line mode current_indent}  {
                         Language [lindex $matches 2] \
                         Options $fence_options]
         }
+        {>} {
+            # Blockquote
+            return [list Type blockquote \
+                        Indent $indent \
+                        Text [string trim [string trimleft $text >]]]
+        }
         default {
             # Normal text line
             if {$mode ne "docstring"} {
@@ -1519,6 +1525,7 @@ proc ruff::private::parse_seealso_state {statevar} {
             blank -
             synopsis -
             seealso -
+            blockquote -
             returns {
                 break
             }
@@ -1564,6 +1571,7 @@ proc ruff::private::parse_synopsis_state {statevar} {
             table -
             blank -
             synopsis -
+            blockquote -
             seealso -
             returns {
                 break
@@ -1614,6 +1622,7 @@ proc ruff::private::parse_returns_state {statevar} {
             blank -
             seealso -
             synopsis -
+            blockquote -
             preformatted -
             returns {
                 # All special lines terminate normal paragraphs
@@ -1666,6 +1675,10 @@ proc ruff::private::parse_bullets_state {statevar} {
         set state(parsed) [parse_line $line $state(mode) $block_indent]
         set text [dict get $state(parsed) Text]
         switch -exact -- [dict get $state(parsed) Type] {
+            blockquote {
+                # Not part of list item, even within a bullet, a la GFM
+                break
+            }
             heading -
             returns -
             fence -
@@ -1828,6 +1841,7 @@ proc ruff::private::parse_definitions_state {statevar} {
             fence -
             bullet -
             synopsis -
+            blockquote -
             table -
             seealso {
                 if {[dict get $state(parsed) Indent] <= $block_indent} {
@@ -1909,6 +1923,7 @@ proc ruff::private::parse_normal_state {statevar} {
             synopsis -
             seealso -
             preformatted -
+            blockquote -
             table -
             returns {
                 # All special lines terminate normal paragraphs
@@ -1933,6 +1948,43 @@ proc ruff::private::parse_normal_state {statevar} {
     }
 }
 
+proc ruff::private::parse_blockquote_state {statevar} {
+    upvar 1 $statevar state
+
+    set block_indent [dict get $state(parsed) Indent]
+    set paragraph [list [dict get $state(parsed) Text]]
+    while {[incr state(index)] < $state(nlines)} {
+        set line [lindex $state(lines) $state(index)]
+        set state(parsed) [parse_line $line $state(mode) $block_indent]
+        switch -exact -- [dict get $state(parsed) Type] {
+            heading -
+            fence -
+            bullet -
+            definition -
+            blank -
+            synopsis -
+            seealso -
+            preformatted -
+            table -
+            returns {
+                # All special lines terminate normal paragraphs
+                break
+            }
+            blockquote -
+            continuation -
+            normal {
+                # Append text at bottom
+            }
+            default {
+                error "Unexpected type [dict get $state(parsed) Type]"
+            }
+        }
+        lappend paragraph [string trim [dict get $state(parsed) Text]]
+    }
+    set state(state) body
+    lappend state(body) blockquote $paragraph
+}
+
 proc ruff::private::parse_lines {lines scope {mode proc}} {
     # Creates a documentation parse structure.
     # lines - List of lines comprising the documentation
@@ -1947,7 +1999,7 @@ proc ruff::private::parse_lines {lines scope {mode proc}} {
     # parameters - List of parameter name and description paragraph pairs.
     #           Not applicable if $mode is `docstring`.
     # body - The main body stored as a list of alternating type and
-    #        content elements. The type may be one of `heading`,
+    #        content elements. The type may be one of `heading`, `blockquote`,
     #        `paragraph`, `list`, `definitions`, `table` or `preformatted`.
     # seealso - The *See also* section containing a list of program element
     #           references. Not applicable if $mode is `docstring`.
@@ -2003,6 +2055,7 @@ proc ruff::private::parse_lines {lines scope {mode proc}} {
                 unset state(parsed)
                 set state(state) body
             }
+            blockquote   { parse_blockquote_state state }
             bullet       { parse_bullets_state state }
             definition   { parse_definitions_state state }
             returns      { parse_returns_state state }
@@ -2382,6 +2435,8 @@ proc ruff::private::extract_docstring {text scope} {
     #             the list of lines making up the definition.
     # table       - The corresponding values is a dictionary with keys
     #             `rows`, `lines`, `alignments` (if there is a header)
+    # blockquote - The corresponding values is a list containing the lines
+    #             for that block quote paragraph.
     # preformatted - The corresponding value is a list of lines that should
     #             not be formatted.
     #
@@ -2604,8 +2659,8 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names
     #  parameters - a list of parameters. Each element of the
     #   list is a dictionary with keys term, definition and optionally default.
     #  body - a list of paragraphs describing the command. The
-    #   list contains heading, preformatted, paragraph, list and definitions
-    #   as described for the [extract_docstring] command.
+    #   list contains heading, blockquote, preformatted, paragraph, list and
+    #   definitions as described for the [extract_docstring] command.
     #  returns - a description of the return value of the command (optional)
     #  summary - a copy of the first paragraph if it was present (optional)
     #  source - the source code of the command (optional)
@@ -2619,7 +2674,6 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names
     array set options {}
     set paragraphs {}
 
-    # XXX
     set doc [parse_lines [distill_body $body] :: $proctype]
     # doc -> dictionary with keys summary, body, parameters, returns, seealso
     # and synopsis
