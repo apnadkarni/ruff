@@ -336,6 +336,40 @@ oo::class create ruff::formatter::Html {
         return
     }
 
+    method AddBlockquote {lines scope} {
+        # See [Formatter.AddBlockquote].
+        #  lines  - The paragraph lines.
+        #  scope - The documentation scope of the content.
+
+        # Paragraphs may be separated by blanks lines within
+        # a single block quote
+        append Document "<blockquote class='ruff'>\n"
+        foreach line $lines {
+            if {[string trim $line] eq ""} {
+                if {[info exists para]} {
+                    append Document "<p class='ruff'>[my ToHtml [string trim [join $para { }]] $scope]</p>\n"
+                    unset para
+                }
+            } else {
+                lappend para $line
+            }
+        }
+        if {[info exists para]} {
+            append Document "<p class='ruff'>[my ToHtml [string trim [join $para { }]] $scope]</p>\n"
+            unset para
+        }
+        append Document "</blockquote>\n"
+    }
+
+    method AddParagraph {lines scope} {
+        # See [Formatter.AddParagraph].
+        #  lines  - The paragraph lines.
+        #  scope - The documentation scope of the content.
+        append Document "<p class='ruff'>[my ToHtml [string trim [join $lines { }]] $scope]</p>\n"
+        return
+    }
+
+
     method AddDefinitions {definitions scope {preformatted none}} {
         # See [Formatter.AddDefinitions].
         #  definitions  - List of definitions.

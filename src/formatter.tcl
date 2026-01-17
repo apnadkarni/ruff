@@ -97,6 +97,14 @@ oo::class create ruff::formatter::Formatter {
         return [my AddParagraph [list $text] $scope]
     }
 
+    method AddBlockquote {lines scope} {
+        # Adds a block quote to document content.
+        #  lines  - List of lines in the paragraph.
+        #  scope - The documentation scope of the content.
+        # This method should be overridden by the concrete formatter.
+        error "Method AddBlockquote not overridden."
+    }
+
     method AddDefinitions {definitions scope {preformatted none}} {
         # Adds a definitions block to document content.
         #  definitions  - List of definitions.
@@ -573,6 +581,9 @@ oo::class create ruff::formatter::Formatter {
                 }
                 paragraph {
                     my AddParagraph $content $scope
+                }
+                blockquote {
+                    my AddBlockquote $content $scope
                 }
                 definitions {
                     my AddDefinitions $content $scope none

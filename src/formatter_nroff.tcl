@@ -179,6 +179,33 @@ oo::class create ruff::formatter::Nroff {
         return
     }
 
+    method AddBlockquote {lines scope} {
+        # See [Formatter.AddBlockquote].
+        #  lines  - The paragraph lines.
+        #  scope - The documentation scope of the content.
+
+        # Paragraphs may be separated by blanks lines within
+        # a single block quote
+
+        append Body [nr_inn +4]
+        foreach line $lines {
+            if {[string trim $line] eq ""} {
+                if {[info exists para]} {
+                    my AddParagraph $para $scope
+                    unset para
+                }
+            } else {
+                lappend para $line
+            }
+        }
+        if {[info exists para]} {
+            my AddParagraph $para $scope
+        }
+
+        append Body [nr_inn -4]
+
+    }
+
     method AddDefinitions {definitions scope {preformatted none}} {
         # See [Formatter.AddDefinitions].
         #  definitions  - List of definitions.
