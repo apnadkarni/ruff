@@ -370,17 +370,19 @@ oo::class create ruff::formatter::Rst {
         return "$text[string repeat { } $padding]"
     }
 
-    method AddBullets {bullets scope} {
+    method AddBullets {content scope} {
         # See [Formatter.AddBullets].
-        #  bullets  - The list of bullets.
+        #  content  - Dictionary with keys items and marker
         #  scope    - The documentation scope of the content.
         append Document "\n"
-        foreach lines $bullets {
+        set marker [dict get $content marker]
+        set marker [expr {$marker eq "1." ? "#." : "-"}]
+        foreach lines [dict get $content items] {
             set bullet_text [my ToRST [join $lines { }] $scope]
             # Handle multi-line bullets with proper indentation
             set bullet_lines [split $bullet_text \n]
             set first_line [lindex $bullet_lines 0]
-            append Document "- $first_line\n"
+            append Document "$marker $first_line\n"
             foreach line [lrange $bullet_lines 1 end] {
                 if {$line ne ""} {
                     append Document "  $line\n"
@@ -683,8 +685,8 @@ oo::class create ruff::formatter::Rst {
                             set match_found 1
                         } else {
                             # Not a Ruff! code link - pass through as is
-                            app::log_error "Warning: no target found for link \"$lbl\". Treating as reference."
-                            append result ":ref:`$lbl`"
+                            app::log_error "Warning: no target found for link \"$lbl\". Passing through verbatim."
+                            append result [my Escape $m]
                             set match_found 1
                         }
                     }
