@@ -359,7 +359,6 @@ namespace eval ruff {
         Markdown. Amongst other differences, Ruff! has
 
         * no nested blocks
-        * no numbered lists or multi-paragraph list elements
         * no blockquotes
 
         Ruff! adds
@@ -903,7 +902,6 @@ namespace eval ruff {
 
 proc ruff::private::is_builtin {fqcmd} {
     variable built_ins
-    fqn! $fqcmd
     if {![info exists built_ins]} {
         set built_ins [dict create]
         set ip [interp create]
@@ -921,6 +919,9 @@ proc ruff::private::is_builtin {fqcmd} {
             dict set built_ins $built_in $built_in
         }
         interp delete $ip
+    }
+    if {![fqn? $fqcmd]} {
+        set fqcmd ::$fqcmd
     }
     # ::oo::class.create -> ::oo::class
     set fqcmd [lindex [split $fqcmd .] 0]
@@ -966,7 +967,7 @@ proc ruff::private::fqn? {name} {
 proc ruff::private::fqn! {name} {
     # Raises an error if $name is not a fully qualified name.
     if {![fqn? $name]} {
-        error "\"name\" is not fully qualified."
+        error "\"$name\" is not fully qualified."
     }
 }
 
