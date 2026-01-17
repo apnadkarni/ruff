@@ -206,6 +206,21 @@ oo::class create ruff::formatter::Rst {
         return
     }
 
+    method AddBlockquote {lines scope} {
+        # Adds a blockquote to document content.
+        #  lines - List of lines to be quoted
+        #  scope - The documentation scope of the content.
+        # See [Formatter.AddBlockquote].
+
+        append Document "\n"
+        foreach line $lines {
+            # RST blockquotes are created by indenting paragraphs
+            append Document "    " [my ToRST $line $scope] \n
+        }
+        append Document "\n"
+        return
+    }
+
     method AddDefinitions {definitions scope {preformatted none}} {
         # See [Formatter.AddDefinitions].
         #  definitions  - List of definitions.
