@@ -956,7 +956,19 @@ proc ruff::private::read_asset_file {fn encoding} {
 }
 
 proc ruff::private::ns_canonicalize {name} {
-    return [regsub -all {:::*} $name ::]
+    return [regsub -all {::+} $name ::]
+}
+
+proc ruff::private::fnn {name} {
+    # Fully normalizes a name
+    #  name - name that may be fully qualified or relative
+    # The returned name is fully qualified and normalized such that
+    # namespace components are separated by exactly two ':' characters.
+    if {![string match ::* $name]} {
+        set name [uplevel 1 {::namespace current}]::$name
+    }
+    regsub -all {::+} $name :: name
+    return $name
 }
 
 proc ruff::private::fqn? {name} {
@@ -982,6 +994,18 @@ proc ruff::private::ns_qualifiers {fqn} {
         return $quals
     }
     return ::
+}
+
+proc ruff::private::fqnn_split {fqnn} {
+    # Returns a pair consisting of the containing namespace and tail component
+    #  fqnn - a fully qualified normalized name
+    fqn! $fqnn
+    set fqns [namespace qualifiers $fqns]
+    if {$fqns eq ""} {
+        return [list :: [namespace tail $fqnn]]
+    } else {
+        return [list $fqns [namespace tail $fqnn]]
+    }
 }
 
 proc ruff::private::ns_member! {fqns name} {
@@ -1172,7 +1196,7 @@ proc ruff::private::symbol_refs_string {words {separator {, }}} {
     return [join [symbol_refs $words] $separator]
 }
 
-proc ruff::private::ensembles {pattern} {
+proc ruff::private::XXXensembles {pattern} {
     # Returns list of ensembles matching the pattern
     # pattern - fully namespace qualified pattern to match
 
@@ -2113,7 +2137,7 @@ proc ruff::private::process_ruffopt {currentSettings newOpts} {
     # Processes a `#ruffopts` line
     #   currentSettings - dictionary containing current settings
     #   newOpts - arguments passed to the `#ruffopts` directive
-    # Currently on the `excludedformats` and `includedformats` options are
+    # Currently only the `excludedformats` and `includedformats` options are
     # defined for `#ruffopts`.
     #
     # The dictionary passed through `currentSettings` may contain the boolean key
@@ -2265,118 +2289,6 @@ proc ruff::private::distill_body {text} {
     return $lines
 }
 
-proc ruff::private::xdistill_body {text} {
-    # Given a procedure or method body,
-    # returns the documentation lines as a list.
-    # text - text to be processed to collect all documentation lines.
-    #
-    # The first block of contiguous comment lines preceding the 
-    # first line of code are treated as documentation lines.
-    # If any tabs are present, they are replaced with spaces assuming
-    # a tab stop width of 8.
-    variable gFormatter
-    set formatter [string tolower [lindex [split [info object class $::ruff::gFormatter] ::] end]]
-    set lines {}
-    set state init;             # init, collecting or searching
-    set includeExcludeFlag false
-    foreach line [split $text \n] {
-        set line [textutil::tabify::untabify2 $line]
-        set line [string trim $line]; # Get rid of whitespace
-        if {$line eq ""} {
-            # Blank lines.
-            # If in init state, we will stay in init state
-            if {$state ne "init"} {
-                set state searching
-            }
-            continue
-        }
-
-        if {[string index $line 0] ne "#"} {
-            # Not a comment
-            set state searching
-            continue
-        }
-
-        # At this point, the line is a comment line
-        if {$state eq "searching"} {
-            #ruff
-            # The string #ruff at the beginning of a comment line
-            # anywhere in the passed in text is considered the start
-            # of a documentation block. All subsequent contiguous
-            # comment lines are considered documentation lines.
-            # If after #ruff the words `include` or `exclude` appears 
-            # with further arguments, the conditional mode is
-            # activated, and arguments are used to decide if we should 
-            # include or exclude next lines processing for certain
-            # formatter.
-            if {[string match "#ruff*" $line]} {
-                if {[regexp -nocase {^\s*#ruff\s+include\s+(?:\{([^\}]*)\}|(\S+))\s*$} $line -> braced single]} {
-                    if {$braced ne ""} {
-                        set names [lrange $braced 0 end]
-                    } else {
-                        set names [list $single]
-                    }
-                    if {$formatter ne $names} {
-                        set state searching
-                        set includeExcludeFlag false
-                        continue
-                    } else {
-                        set includeExcludeFlag true
-                    }
-                } elseif {[regexp -nocase {^\s*#ruff\s+exclude\s+(?:\{([^\}]*)\}|(\S+))\s*$} $line -> braced single]} {
-                    if {$braced ne ""} {
-                        set names [lrange $braced 0 end]
-                    } else {
-                        set names [list $single]
-                    }
-                    if {$formatter in $names} {
-                        set state searching
-                        set includeExcludeFlag false
-                        continue
-                    } else {
-                        set includeExcludeFlag true
-                    }
-                }
-                set state collecting
-                #ruff
-                # Note a #ruff on a line by itself will terminate
-                # the previous text block.
-                set line [string trimright $line]
-                if {$line eq "#ruff"} {
-                    lappend lines {}
-                } elseif {!$includeExcludeFlag} {
-                    #ruff If #ruff is followed by additional text
-                    # on the same line, it is treated as a continuation
-                    # of the previous text block, if that text block is 
-                    # not part of `include` or `exclude` statement
-                    lappend lines [string range $line 6 end]
-                }
-            }
-        } else {
-            # State is init or collecting
-
-            if {$line eq "#"} {
-                # Empty comment line
-                lappend lines {}
-                continue;       # No change in state
-            }
-
-            #ruff
-            # The leading comment character and a single space (if present)
-            # are trimmed from the returned lines.
-            if {[string index $line 1] eq " "} {
-                lappend lines [string range $line 2 end]
-            } else {
-                lappend lines [string range $line 1 end]
-            }
-            set state collecting
-            continue
-        }
-    }
-
-    # Returns a list of lines that comprise the raw documentation.
-    return $lines
-}
 
 proc ruff::private::extract_docstring {text scope} {
     # Parses a documentation string to return a structured text representation.
