@@ -429,7 +429,7 @@ namespace eval ruff {
         namespace eval ns {
             variable _ruff_ns_opts {
                 -onlyexports true
-                -excludeprocs private*
+                -excludeprocs private.*
             }
         }
         ```
@@ -3226,7 +3226,7 @@ proc ruff::document {namespaces args} {
     #  compact form if supported by the formatter. For the built-in HTML formatter
     #  this results in procedure and method details being placed in collapsed
     #  sections that can be expanded on demand.
-    # -diagrammer `DIAGRAMARGS` - arguments to pass to `diagram` processor
+    # -diagrammer DIAGRAMARGS - arguments to pass to `diagram` processor
     #  if none are specified in the diagram block header. Defaults to
     #  `kroci ditaa`
     # -excludeclasses REGEXP - If specified, any classes whose names
