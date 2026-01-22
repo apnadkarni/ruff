@@ -3512,7 +3512,7 @@ proc ruff::formatters {} {
     # documentation in that format.
     #
     # Returns a list of available formatters.
-    return {html markdown nroff rst}
+    return {html markdown nroff rst sphinx}
 }
 
 # TBD - where is this used
