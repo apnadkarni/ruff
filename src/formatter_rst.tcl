@@ -574,8 +574,8 @@ oo::class create ruff::formatter::Rst {
         # Returns the escaped string
 
         # RST has fewer special characters than Markdown
-        # Main ones are backslash and asterisk/underscore in certain contexts
-        return [string map {\\ \\\\ * \\* + \\+ _ \\_} $s]
+        # Main ones are backslash and asterisk in certain contexts
+        return [string map {\\ \\\\ * \\* + \\+} $s]
     }
 
     method ToRST {text {scope {}}} {
