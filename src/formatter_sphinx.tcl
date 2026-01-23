@@ -230,7 +230,11 @@ oo::class create ruff::formatter::Sphinx {
             set underline [string repeat $char [string length $heading_text]]
             append Document \n $heading_text \n $underline \n
         } else {
-            append Document \n "**$heading_text**" \n
+            if {1} {
+                append Document \n ".. rubric:: $heading_text" \n
+            } else {
+                append Document \n "**$heading_text**" \n
+            }
         }
 
         return
@@ -240,6 +244,7 @@ oo::class create ruff::formatter::Sphinx {
         # See [Formatter.AddParagraph].
         #  lines  - The paragraph lines.
         #  scope - The documentation scope of the content.
+
         append Document \n [my ToSphinx [join $lines \n] $scope] \n
         return
     }
@@ -536,7 +541,7 @@ oo::class create ruff::formatter::Sphinx {
         #  s - string to be escaped
         # Returns the escaped string
 
-        return [string map {\\ \\\\ * \\* + \\+ _ \\_} $s]
+        return [string map {\\ \\\\ * \\* + \\+} $s]
     }
 
     method ToSphinx {text {scope {}}} {
@@ -601,7 +606,9 @@ oo::class create ruff::formatter::Sphinx {
                     }
                 }
                 {!} -
-                {[} {
+                "[" {
+                    # Note: "[", not {[} because latter messes Emacs indentation
+                    # LINKS AND IMAGES
                     # INLINE LINKS AND IMAGES
                     set ref_type [expr {$chr eq "!" ? "img" : "link"}]
                     set match_found 0
@@ -683,6 +690,25 @@ oo::class create ruff::formatter::Sphinx {
         # Returns the default file extension to be used for output files.
         return rst
     }
+
+    method finalize {output_dir output_paths} {
+        # Called after all output files are written out.
+        #   output_dir - root of output directory
+        #   output_paths - full paths to files written
+        #
+        # Writes out the Sphinx index.rst main content.
+        set fd [open [file join $output_dir index.rst] w]
+        puts $fd ".. toctree::"
+        puts $fd "   :maxdepth: 5"
+        puts $fd "   :caption: Contents:"
+        puts $fd ""
+        foreach path $output_paths {
+            puts $fd "   [file tail $path]"
+        }
+        close $fd
+        return
+    }
+
 
     forward FormatInline my ToSphinx
 }

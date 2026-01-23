@@ -649,8 +649,9 @@ oo::class create ruff::formatter::Rst {
                     }
                 }
                 {!} -
-                {[} {
-                    # INLINE LINKS AND IMAGES
+                "[" {
+                    # Note: "[", not {[} because latter messes Emacs indentation
+                    # LINKS AND IMAGES
                     set ref_type [expr {$chr eq "!" ? "img" : "link"}]
                     set match_found 0
 

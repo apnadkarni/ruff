@@ -1321,7 +1321,7 @@ proc ruff::private::parse_line {line mode current_indent}  {
                         Language [lindex $matches 2] \
                         Options $fence_options]
         }
-        {>} {
+        {^>} {
             # Blockquote
             return [list Type blockquote \
                         Indent $indent \
@@ -1342,7 +1342,7 @@ proc ruff::private::parse_line {line mode current_indent}  {
                         return [list Type returns Indent $indent Text $text]
                     } else {
                         # Possibly localized. The "Return" should not be part of text
-                        return [list Type returns Indent $indent Text $match]
+                        return [list Type returns Indent $indent Text [string trimleft $match]]
                     }
                 }
                 if {[regexp {^Synopsis\s*:\s*(.*)$} $line -> match]} {
@@ -3482,12 +3482,13 @@ proc ruff::document {namespaces args} {
 
     $formatter copy_assets $ProgramOptions(-outdir)
 
-    $formatter destroy
-
     file mkdir $opts(-outdir)
+    set output_files [list ]
     foreach {ns doc} $docs {
         set fn [private::ns_file_base $ns]
-        set fd [open [file join $opts(-outdir) $fn] w]
+        set path [file join $opts(-outdir) $fn]
+        lappend output_files $path
+        set fd [open $path w]
         fconfigure $fd -encoding utf-8
         if {$opts(-format) eq "nroff"} {
             # On Unix, nroff, or at least tbl, does not recognize directives
@@ -3502,6 +3503,10 @@ proc ruff::document {namespaces args} {
         }
         close $fd
     }
+
+    $formatter finalize $opts(-outdir) $output_files
+    $formatter destroy
+
     return
 }
 
