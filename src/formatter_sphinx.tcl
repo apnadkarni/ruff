@@ -148,9 +148,9 @@ oo::class create ruff::formatter::Sphinx {
                               [string range $text 1 end]]
                 if {[string length $ns]} {
                     set ns_link [my ToSphinx [markup_reference $ns]]
-                    set heading "**class** [namespace tail $text] \[${ns_link}\]"
+                    set heading "[namespace tail $text] \[${ns_link}\]"
                 } else {
-                    set heading "**class** $text"
+                    set heading $text
                 }
 
                 set char [lindex $HeaderMarkers $level]
@@ -184,7 +184,12 @@ oo::class create ruff::formatter::Sphinx {
                 set text [namespace tail $name]
                 set text [string cat [my Escape [string index $text 0]] \
                               [string range $text 1 end]]
-                set heading "**method** $text"
+                if {[string length $ns]} {
+                    set ns_link [my ToSphinx [markup_reference $ns]]
+                    set heading "[namespace tail $text] \[${ns_link}\]"
+                } else {
+                    set heading $text
+                }
 
                 set char [lindex $HeaderMarkers $level]
                 set underline [string repeat $char [string length $heading]]
@@ -399,10 +404,10 @@ oo::class create ruff::formatter::Sphinx {
         #  scope - The documentation scope of the content.
 
         # Use RST literal block
-        append Document "\n::\n\n"
+        append Document "\n.. code-block:: none\n\n"
         set lines [split $text \n]
         foreach line $lines {
-            append Document "    $line\n"
+            append Document "   $line\n"
         }
         append Document "\n"
         return
@@ -481,24 +486,13 @@ oo::class create ruff::formatter::Sphinx {
             }
 
             # Sphinx code-block directive
-            if {$lang ne ""} {
-                append Document ".. code-block:: $lang\n"
-            } else {
-                append Document ".. code-block::\n"
+            if {$lang eq ""} {
+                set lang none; # Prevent random syntax highlighting
             }
+            append Document ".. code-block:: $lang\n"
 
-            # Add Sphinx-specific options
             if {$display_caption ne ""} {
                 append Document "   :caption: $display_caption\n"
-            }
-
-            if {[dict exists $fence_options -linenos]} {
-                append Document "   :linenos:\n"
-            }
-
-            if {[dict exists $fence_options -emphasize-lines]} {
-                set lines_to_emphasize [dict get $fence_options -emphasize-lines]
-                append Document "   :emphasize-lines: $lines_to_emphasize\n"
             }
 
             append Document "\n"
