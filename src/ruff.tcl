@@ -75,7 +75,8 @@ namespace eval ruff {
 
         On the output side,
 
-        * Ruff! supports multiple formats (currently HTML, Markdown and nroff).
+        * Ruff! supports output formats HTML, Markdown, nroff and
+        reStructuredText (experimental).
 
         * Generated documentation can optionally be split across multiple pages.
 
@@ -96,6 +97,7 @@ namespace eval ruff {
         [iocp](https://iocp.magicsplat.com),
         [cffi](https://cffi.magicsplat.com),
         [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html),
+        [PAWT](http://www.pawt.tcl3d.org/download/PawtReference.html),
         [apave](https://aplsimple.github.io/en/tcl/pave/apave.html),
         [baltip](https://aplsimple.github.io/en/tcl/baltip/baltip.html),
         [hl-tcl](https://aplsimple.github.io/en/tcl/hl_tcl/hl_tcl.html),
@@ -362,12 +364,17 @@ namespace eval ruff {
 
         * no nested blocks
         * no blockquotes
-        * underscores are not used for emphasis
+        * underscores are not used for emphasis due to their prevalence in
+        program element names.
 
         Ruff! adds
         * definition lists
         * specialized processing for fenced blocks with diagramming
         support, captions and alignment
+
+        As a general rule, inline formatting should be kept basic and avoid
+        complexities like nested constructs as formatters vary in their
+        capabilities.
 
         ## Documenting classes
 
@@ -838,6 +845,7 @@ namespace eval ruff {
         * Theming support
         * Optional compact output with expandable content for details
         * Toggles for source code display
+        * Copy buttons on source listings
 
         It is also the simplest to use as no other external tools are required.
 
@@ -883,6 +891,12 @@ namespace eval ruff {
         for Unix manpages. It generates documentation as a single manpage
         or as a page per namespace with the `-pagesplit namespace` option.
         It does not support navigation links or table of contents.
+
+        ### Sphinx formatter
+
+        The Sphinx formatter generates documentation in reStructuredText
+        format in the form expected by the Sphinx documentation system. Note
+        it is not directly usable by Python's doctools.
 
     }
 
@@ -3244,6 +3258,9 @@ proc ruff::private::load_formatters {} {
 proc ruff::private::load_formatter {formatter} {
     # Loads the specified formatter implementation
     variable ruff_dir
+    if {$formatter ni [formatters]} {
+        Abort "Unknown output format \"$formatter\"."
+    }
     set class [namespace parent]::formatter::[string totitle $formatter]
     if {![info object isa class $class]} {
         uplevel #0 [list source [file join $ruff_dir formatter_${formatter}.tcl]]
@@ -3518,7 +3535,7 @@ proc ruff::formatters {} {
     # documentation in that format.
     #
     # Returns a list of available formatters.
-    return {html markdown nroff rst sphinx}
+    return {html markdown nroff sphinx}
 }
 
 # TBD - where is this used
@@ -3600,6 +3617,14 @@ proc ruff::app::log_error {msg} {
     # to stderr output. An application using the ruff package
     # can redefine this command after loading ruff.
     puts stderr "$msg"
+}
+
+proc ruff::Abort {msg} {
+    # Log Ruff! error and exit.
+    # msg - the message to be logged
+    #
+    ruff::app::log_error $msg
+    exit 1
 }
 
 package provide ruff $::ruff::version
