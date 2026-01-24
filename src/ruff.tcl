@@ -75,7 +75,8 @@ namespace eval ruff {
 
         On the output side,
 
-        * Ruff! supports multiple formats (currently HTML, Markdown and nroff).
+        * Ruff! supports output formats HTML, Markdown, nroff and
+        reStructuredText (experimental).
 
         * Generated documentation can optionally be split across multiple pages.
 
@@ -96,6 +97,7 @@ namespace eval ruff {
         [iocp](https://iocp.magicsplat.com),
         [cffi](https://cffi.magicsplat.com),
         [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html),
+        [PAWT](http://www.pawt.tcl3d.org/download/PawtReference.html),
         [apave](https://aplsimple.github.io/en/tcl/pave/apave.html),
         [baltip](https://aplsimple.github.io/en/tcl/baltip/baltip.html),
         [hl-tcl](https://aplsimple.github.io/en/tcl/hl_tcl/hl_tcl.html),
@@ -353,6 +355,8 @@ namespace eval ruff {
         format the table. On many systems, `man` and `nroff` will automatically
         invoke it if necessary.
 
+        Not all formatters support alignment of columns.
+
         ### Differences from Markdown
 
         Note that the block level parsing is similar but not identical to
@@ -360,11 +364,17 @@ namespace eval ruff {
 
         * no nested blocks
         * no blockquotes
+        * underscores are not used for emphasis due to their prevalence in
+        program element names.
 
         Ruff! adds
         * definition lists
         * specialized processing for fenced blocks with diagramming
         support, captions and alignment
+
+        As a general rule, inline formatting should be kept basic and avoid
+        complexities like nested constructs as formatters vary in their
+        capabilities.
 
         ## Documenting classes
 
@@ -835,6 +845,7 @@ namespace eval ruff {
         * Theming support
         * Optional compact output with expandable content for details
         * Toggles for source code display
+        * Copy buttons on source listings
 
         It is also the simplest to use as no other external tools are required.
 
@@ -880,6 +891,12 @@ namespace eval ruff {
         for Unix manpages. It generates documentation as a single manpage
         or as a page per namespace with the `-pagesplit namespace` option.
         It does not support navigation links or table of contents.
+
+        ### Sphinx formatter
+
+        The Sphinx formatter generates documentation in reStructuredText
+        format in the form expected by the Sphinx documentation system. Note
+        it is not directly usable by Python's doctools.
 
     }
 
@@ -1000,6 +1017,39 @@ proc ruff::private::program_option {opt} {
 
 proc ruff::private::sanitize_filename {s} {
     return [regsub -all {[^-\w_]} $s -]
+}
+
+proc ruff::private::make_id {args} {
+    # Return an id usable as a unique anchor
+    #  args - list of arbitrary strings
+    # The generated id should ideally meet the following requirements:
+    # - any unique set of args should generate a unique id
+    # - the generated id should be such that it will not be transformed by
+    #   a formatter as that would make linking difficult.
+    # This means that the generated id should not contain any characters other
+    # than alphanumerics and "-" because of the restrictions imposed by
+    # reStructuredText processing by rst2html. Further it trims leading and
+    # trailing "-" and compresses multiple consecutive occurences into a single
+    # "-" so we avoid the - character as well.
+    #
+    # The current implementation replaces non-alphanumerics with their codepoint
+    # value. This is not perfect since (for example) the strings " " and "20"
+    # will not generate the same id but it is unlikely that will clash in
+    # practice.
+
+    # Use qz to join with the hope it will not occur in practice
+    set s [join [lmap arg $args {
+        if {$arg eq ""} continue
+        set arg
+    }] qz]
+
+    foreach {- alnum notalnumchar} [regexp -inline -all {([a-z0-9]*)([^a-z0-9]?)} $s] {
+        append result $alnum
+        if {$notalnumchar ne ""} {
+            append result [format %x [scan $notalnumchar %c]]
+        }
+    }
+    return [string cat x $result]
 }
 
 proc ruff::private::ns_file_base {ns_or_class {ext {}}} {
@@ -1286,7 +1336,7 @@ proc ruff::private::parse_line {line mode current_indent}  {
                         Language [lindex $matches 2] \
                         Options $fence_options]
         }
-        {>} {
+        {^>} {
             # Blockquote
             return [list Type blockquote \
                         Indent $indent \
@@ -1307,7 +1357,7 @@ proc ruff::private::parse_line {line mode current_indent}  {
                         return [list Type returns Indent $indent Text $text]
                     } else {
                         # Possibly localized. The "Return" should not be part of text
-                        return [list Type returns Indent $indent Text $match]
+                        return [list Type returns Indent $indent Text [string trimleft $match]]
                     }
                 }
                 if {[regexp {^Synopsis\s*:\s*(.*)$} $line -> match]} {
@@ -3208,6 +3258,9 @@ proc ruff::private::load_formatters {} {
 proc ruff::private::load_formatter {formatter} {
     # Loads the specified formatter implementation
     variable ruff_dir
+    if {$formatter ni [formatters]} {
+        Abort "Unknown output format \"$formatter\"."
+    }
     set class [namespace parent]::formatter::[string totitle $formatter]
     if {![info object isa class $class]} {
         uplevel #0 [list source [file join $ruff_dir formatter_${formatter}.tcl]]
@@ -3447,12 +3500,13 @@ proc ruff::document {namespaces args} {
 
     $formatter copy_assets $ProgramOptions(-outdir)
 
-    $formatter destroy
-
     file mkdir $opts(-outdir)
+    set output_files [list ]
     foreach {ns doc} $docs {
         set fn [private::ns_file_base $ns]
-        set fd [open [file join $opts(-outdir) $fn] w]
+        set path [file join $opts(-outdir) $fn]
+        lappend output_files $path
+        set fd [open $path w]
         fconfigure $fd -encoding utf-8
         if {$opts(-format) eq "nroff"} {
             # On Unix, nroff, or at least tbl, does not recognize directives
@@ -3467,6 +3521,10 @@ proc ruff::document {namespaces args} {
         }
         close $fd
     }
+
+    $formatter finalize $opts(-outdir) $output_files
+    $formatter destroy
+
     return
 }
 
@@ -3477,7 +3535,7 @@ proc ruff::formatters {} {
     # documentation in that format.
     #
     # Returns a list of available formatters.
-    return {html markdown nroff}
+    return {html markdown nroff sphinx}
 }
 
 # TBD - where is this used
@@ -3559,6 +3617,14 @@ proc ruff::app::log_error {msg} {
     # to stderr output. An application using the ruff package
     # can redefine this command after loading ruff.
     puts stderr "$msg"
+}
+
+proc ruff::Abort {msg} {
+    # Log Ruff! error and exit.
+    # msg - the message to be logged
+    #
+    ruff::app::log_error $msg
+    exit 1
 }
 
 package provide ruff $::ruff::version
