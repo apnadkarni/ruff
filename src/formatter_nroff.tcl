@@ -424,6 +424,7 @@ oo::class create ruff::formatter::Nroff {
         set re_autolink    {\A<(?:(\S+@\S+)|(\S+://\S+))>}
         set re_comment     {\A<!--.*?-->}
         set re_entity      {\A\&\S+;}
+        set re_emph {\A(\*{1,3})((?:[^\*\\]|\\.)*)\1}
 
         while {[set chr [string index $text $index]] ne {}} {
             switch $chr {
@@ -445,8 +446,7 @@ oo::class create ruff::formatter::Nroff {
                         [regexp $re_whitespace [string index $text [expr $index + 1]]]} \
                         {
                             #do nothing (add character at bottom of loop)
-                        } elseif {[regexp -start $index \
-                                       "\\A(\\$chr{1,3})((?:\[^\\$chr\\\\]|\\\\\\$chr)*)\\1" \
+                        } elseif {[regexp -start $index $re_emph \
                                      $text m del sub]} {
                             switch [string length $del] {
                                 1 {

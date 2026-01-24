@@ -554,6 +554,7 @@ oo::class create ruff::formatter::Sphinx {
         set re_inlinelink  {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\]\s*\(\s*((?:[^\s\)]+|\([^\s\)]+\))+)?(\s+([\"'])(.*)?\4)?\s*\)}
         set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\[((?:[^\]]|\[[^\]]*?\])*)\])?}
         set re_entity      {\A\&\S+;}
+        set re_emph {\A(\*{1,3})((?:[^\*\\]|\\.)*)\1}
 
         while {[set chr [string index $text $index]] ne {}} {
             switch $chr {
@@ -577,9 +578,10 @@ oo::class create ruff::formatter::Sphinx {
                     if {[regexp $re_whitespace [string index $result end]] &&
                         [regexp $re_whitespace [string index $text [expr $index + 1]]]} {
                         append result \\*
-                    } elseif {[regexp -start $index \
-                                   "\\A(\\$chr{1,2})((?:\[^\\$chr\\\\]|\\\\\\$chr)*)\\1" \
+                    } elseif {[regexp -start $index $re_emph \
                                    $text m del sub]} {
+                        # *** not supported. Map to **
+                        set del [string range $del 0 1]
                         append result "$del[my ToSphinx $sub $scope]$del"
                         incr index [string length $m]
                         continue
