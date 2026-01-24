@@ -116,7 +116,7 @@ namespace eval ruff::sample {
         not per page, by design.
 
         The fence can be followed by a language specifier (any string)
-        *without any intervening whitespace.
+        *without any intervening whitespace*.
 
         ````
         ```tcl

@@ -357,7 +357,6 @@ oo::class create ruff::formatter::Formatter {
             #
             # Only the fqn and proctype are mandatory.
         }
-
         set scope [namespace qualifiers $fqn]
         if {[info exists summary]} {
             if {[info exists synopsis]} {
@@ -1194,6 +1193,16 @@ oo::class create ruff::formatter::Formatter {
         # Returns the generated documentation index or an empty string
         # if the formatter does not support indexes.
         return [my DocumentIndex]
+    }
+
+    method finalize {output_dir output_paths} {
+        # Called after all output files are written out.
+        #   output_dir - root of output directory
+        #   output_paths - full paths to files written.
+        #
+        # Formatters can override this to write out additional files or do
+        # other finalization.
+        return
     }
 
     method DocumentIndex {} {
