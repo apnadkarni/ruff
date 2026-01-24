@@ -369,6 +369,7 @@ namespace eval ruff {
 
         Ruff! adds
         * definition lists
+        * words beginning with `$` are treated as variable references
         * specialized processing for fenced blocks with diagramming
         support, captions and alignment
 

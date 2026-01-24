@@ -26,6 +26,8 @@ proc ruff::private::document_self {args} {
     array set opts $args
     if {![info exists opts(-outdir)]} {
         set opts(-outdir) [file join [file dirname [ruff_dir]] doc $opts(-format)]
+    } else {
+        set opts(-outdir) [file join $opts(-outdir) $opts(-format)]
     }
 
     if {![namespace exists ::ruff::sample]} {

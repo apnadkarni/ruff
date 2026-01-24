@@ -1245,6 +1245,8 @@ oo::class create ruff::formatter::Formatter {
         set re_comment     {\A<!--.*?-->}
         set re_entity      {\A\&\S+;}
 
+        set re_emph {\A(\*{1,3})((?:[^\*\\]|\\.)*)\1}
+
         while {[set chr [string index $text $index]] ne {}} {
             switch $chr {
                 "\\" {
@@ -1267,7 +1269,7 @@ oo::class create ruff::formatter::Formatter {
                             #do nothing
                         } \
                         elseif {[regexp -start $index \
-                                     "\\A(\\$chr{1,3})((?:\[^\\$chr\\\\]|\\\\\\$chr)*)\\1" \
+                                     $re_emph \
                                      $text m del sub]} \
                         {
                             switch [string length $del] {

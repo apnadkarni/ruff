@@ -78,6 +78,12 @@ namespace eval ruff::sample {
         Basic markdown inline formatting is supported as
         `code`, *emphasis*, **strong** and ***strong emphasis***.
 
+        ````
+        **This is a \\ (backslash) within strong markup.**
+        ````
+
+        **This is a \\ (backslash) within strong markup.**
+
         ### Links
 
         ````
