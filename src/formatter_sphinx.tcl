@@ -9,11 +9,9 @@ oo::class create ruff::formatter::Sphinx {
     # Data members
     variable Document;        # Current document
     variable DocumentNamespace; # Namespace being documented
-    variable Header;          # Common header
     variable Footer;          # Common footer
     variable HeaderLevels;    # Header levels for various headers
     variable HeaderMarkers;   # Characters to use for each header level
-    variable NavigationLinks; # Navigation links forming ToC
     variable Images;          # Dictionary holding image information
 
     constructor args {
@@ -65,7 +63,6 @@ oo::class create ruff::formatter::Sphinx {
         next
 
         # Generate the header used by all files
-        set Header ""
         set titledesc [my Option -title]
 
         # Generate the Footer used by all files
@@ -83,8 +80,7 @@ oo::class create ruff::formatter::Sphinx {
 
         next $ns
 
-        set    NavigationLinks [dict create]
-        set    Document $Header
+        set    Document ""
         set    DocumentNamespace $ns
 
         return
@@ -120,7 +116,8 @@ oo::class create ruff::formatter::Sphinx {
         # Adds heading for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
         #  fqn - Fully qualified name of element.
-        #  tooltip - The tooltip lines, if any, to be displayed in the navigation pane.
+        #  tooltip - The tooltip lines, if any, to be displayed in the
+        #    navigation pane. Not used for Sphinx.
         # Uses Sphinx directives for better semantic markup and indexing.
 
         set level    [dict get $HeaderLevels $type]
@@ -129,29 +126,23 @@ oo::class create ruff::formatter::Sphinx {
 
         # Track anchors for navigation
         set linkinfo [dict create tag h$level href "#$anchor"]
-        if {[llength $tooltip]} {
-            set tip "[my ToSphinx [string trim [join $tooltip { }]] $ns]\n"
-            dict set linkinfo tip $tip
-        }
         set name [namespace tail $fqn]
         dict set linkinfo label $name
-        dict set NavigationLinks $anchor $linkinfo
 
         # Use Sphinx function/class/method directive based on type
         append Document "\n"
 
+        # TODO - combine all these switch cases
         switch -exact -- $type {
             "class" {
                 # Use generic function directive with special index role
                 append Document ".. index::\n   single: $fqn (class)\n\n"
                 append Document ".. _$anchor:\n\n"
 
-                set text [my Literal [namespace tail $name]]
+                set heading [my Literal [namespace tail $name]]
                 if {[string length $ns]} {
                     set ns_link [my ToSphinx [markup_reference $ns]]
-                    set heading "$text \[${ns_link}\]"
-                } else {
-                    set heading $text
+                    append heading " \[${ns_link}\]"
                 }
 
                 set char [lindex $HeaderMarkers $level]
@@ -163,12 +154,10 @@ oo::class create ruff::formatter::Sphinx {
                 append Document ".. index::\n   single: $fqn (procedure)\n\n"
                 append Document ".. _$anchor:\n\n"
 
-                set text [my Literal [namespace tail $name]]
+                set heading [my Literal [namespace tail $name]]
                 if {[string length $ns]} {
                     set ns_link [my ToSphinx [markup_reference $ns]]
-                    set heading "$text \[${ns_link}\]"
-                } else {
-                    set heading $text
+                    append heading " \[${ns_link}\]"
                 }
 
                 set char [lindex $HeaderMarkers $level]
@@ -180,12 +169,10 @@ oo::class create ruff::formatter::Sphinx {
                 append Document ".. index::\n   single: $fqn (method)\n\n"
                 append Document ".. _$anchor:\n\n"
 
-                set text [my Literal [namespace tail $name]]
+                set heading [my Literal [namespace tail $name]]
                 if {[string length $ns]} {
                     set ns_link [my ToSphinx [markup_reference $ns]]
-                    set heading "$text \[${ns_link}\]"
-                } else {
-                    set heading $text
+                    append heading " \[${ns_link}\]"
                 }
 
                 set char [lindex $HeaderMarkers $level]
@@ -202,28 +189,20 @@ oo::class create ruff::formatter::Sphinx {
         #  level   - The numeric or semantic heading level.
         #  text    - The heading text.
         #  scope   - The documentation scope of the content.
-        #  tooltip - Tooltip to display in navigation link.
+        #  tooltip - Tooltip to display in navigation link. Not used for Sphinx.
 
         if {![string is integer -strict $level]} {
             set level [dict get $HeaderLevels $level]
         }
-        set do_link [expr {$level >= [dict get $HeaderLevels nonav] ? false : true}]
+        set do_link [expr {$level < [dict get $HeaderLevels nonav]}]
 
         if {$do_link} {
             set anchor [my MakeSphinxId $scope $text]
             set linkinfo [dict create tag h$level href "#$anchor"]
-            if {$tooltip ne ""} {
-                set tip "[my ToSphinx [join $tooltip { }] $scope]\n"
-                dict set linkinfo tip $tip
-            }
             dict set linkinfo label $text
-            dict set NavigationLinks $anchor $linkinfo
             append Document "\n.. _$anchor:\n\n"
         }
 
-        # If the text starts with something like "*", it will be treated
-        # as a list! So escape the first char.
-        set text [string cat [my Escape [string index $text 0]] [string range $text 1 end]]
         set heading_text [my ToSphinx $text $scope]
 
         # RST heading with underline
@@ -232,11 +211,7 @@ oo::class create ruff::formatter::Sphinx {
             set underline [string repeat $char [string length $heading_text]]
             append Document \n $heading_text \n $underline \n
         } else {
-            if {1} {
-                append Document \n ".. rubric:: $heading_text" \n
-            } else {
-                append Document \n "**$heading_text**" \n
-            }
+            append Document \n ".. rubric:: $heading_text" \n
         }
 
         return
@@ -455,19 +430,14 @@ oo::class create ruff::formatter::Sphinx {
                                {*}$diagrammer]
 
             # Use Sphinx figure directive for diagrams
+            # TODO - How to right align an image with a caption?
+            # Using ..figure allows for a caption but then floats the image
+            # Using ..image does not float the image but cannot have a caption
             append Document "\n"
             if {$anchor ne ""} {
                 append Document ".. _$anchor:\n\n"
             }
             append Document ".. figure:: $image_url\n"
-
-            # TODO - How to right align an image with a caption?
-            # Using ..figure allows for a caption but then floats the image
-            # Using ..image does not float the image but cannot have a caption
-            if {0 && [dict exists $fence_options -align]} {
-                set align_value [dict get $fence_options -align]
-                append Document "   :align: $align_value\n"
-            }
 
             if {$display_caption ne ""} {
                 append Document "\n   $display_caption\n"
@@ -476,15 +446,13 @@ oo::class create ruff::formatter::Sphinx {
         } else {
             # Use Sphinx code-block directive with enhanced options
             set lang [dict get $fence_options Language]
+            if {$lang eq ""} {
+                set lang none; # Prevent random syntax highlighting
+            }
 
             append Document "\n"
             if {$anchor ne ""} {
                 append Document ".. _$anchor:\n\n"
-            }
-
-            # Sphinx code-block directive
-            if {$lang eq ""} {
-                set lang none; # Prevent random syntax highlighting
             }
             append Document ".. code-block:: $lang\n"
 

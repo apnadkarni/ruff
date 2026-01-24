@@ -7,7 +7,8 @@ namespace eval ruff::sample {
 
         The code in this namespace illustrates the various documentation
         features in [Ruff!](ruff.html). The corresponding source is
-        [here](sample.tcl) or click the *Show source* link below each procedure
+        [here](https://raw.githubusercontent.com/apnadkarni/ruff/refs/heads/master/doc/sample.tcl)
+        or click the *Show source* link below each procedure
         or method documentation to see the source from which the
         documentation was generated. See the main [::ruff] documentation
         for a full description.
