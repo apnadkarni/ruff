@@ -25,7 +25,7 @@ proc ruff::private::document_self {args} {
                        ]
     array set opts $args
     if {![info exists opts(-outdir)]} {
-        set opts(-outdir) [file join [file dirname [ruff_dir]] doc $opts(-format)]
+        set opts(-outdir) [file join [file dirname [ruff_dir]] doc out $opts(-format)]
     } else {
         set opts(-outdir) [file join $opts(-outdir) $opts(-format)]
     }
@@ -95,9 +95,9 @@ proc ruff::private::document_self {args} {
 
 if {[catch {
     ruff::private::document_self -format html {*}$argv
-    ruff::private::document_self -format nroff {*}$argv
-    ruff::private::document_self -format markdown {*}$argv
-    ruff::private::document_self -format sphinx {*}$argv
+    #ruff::private::document_self -format nroff {*}$argv
+    #ruff::private::document_self -format markdown {*}$argv
+    #ruff::private::document_self -format sphinx {*}$argv
     #ruff::private::document_self -format rst {*}$argv
 } result edict]} {
     puts stderr "Error: $result"

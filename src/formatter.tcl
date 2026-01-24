@@ -1227,7 +1227,7 @@ oo::class create ruff::formatter::Formatter {
     # Credits: tcllib/Caius markdown module
     # This method is here and not in the Html class because other subclasses
     # (notably markdown) also need to use ruff->html inline conversion.
-    method ToHtml {text {scope {}}} {
+    method XXXToHtml {text {scope {}}} {
         set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
         set index 0
         set result {}
@@ -1254,6 +1254,7 @@ oo::class create ruff::formatter::Formatter {
                     set next_chr [string index $text [expr $index + 1]]
 
                     if {[string first $next_chr {\`*_\{\}[]()#+-.!>|}] != -1} {
+                        # TODO - do we not need [my Escape] here?
                         set chr $next_chr
                         incr index
                     }
@@ -1453,6 +1454,298 @@ oo::class create ruff::formatter::Formatter {
                     # OTHER SPECIAL CHARACTERS
                     set chr [my Escape $chr]
                 }
+                default {
+                    # TODO - do we not need [my Escape] here?
+                }
+            }
+            append result $chr
+            incr index
+        }
+        return $result
+    }
+
+    ###############################
+
+    method ProcessBackslash {input index output} {
+        # Called to handle a backslash in the input stream
+        #  input - input string
+        #  index - index of backslash in the input string
+        #  output - the output collected so far
+        #
+        # The default implementation assumes HTML output format. Derived classes
+        # can derive it for formatters that handle backslashes differently.
+        #
+        # Returns a pair consisting of the string to append to the output
+        # and the number of characters to skip in input string.
+        set next_chr [string index $input $index+1]
+
+        # TODO - do we not need [my Escape] here?
+        if {[string first $next_chr {\`*_\{\}[]()#+-.!>|}] != -1} {
+            return [list $next_chr 2]
+        }
+        # Not a backslash sequence, just process the backslash
+        return [list \\ 1]
+    }
+
+    method ProcessEmphasis {text delim scope} {
+        # Called to handle emphasis in the input stream
+        #  text - string to be emphasized
+        #  delim - one of `*`, `**` or `***` indicating level of emphasis
+        #  scope - Documentation scope for resolving references.
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+        #
+        # Returns a pair consisting of the string to append to the output
+        # and the next index to process in $input.
+
+        switch [string length $delim] {
+            1 {
+                return "<em>[my ToOutput $text $scope]</em>"
+            }
+            2 {
+                return "<strong>[my ToOutput $text $scope]</strong>"
+            }
+            3 {
+                return "<strong><em>[my ToOutput $text $scope]</em></strong>"
+            }
+            default {
+                error "Invalid emphasis delimiter length [string length $delim]."
+            }
+        }
+    }
+    
+    method ProcessLiteral {text} {
+        # Called to handle a backtick in the input stream
+        #  text - string to be formatted as a literal
+        #
+        # The default implementation assumes HTML output format. Derived classes
+        # can derive it for formatters that handle backslashes differently.
+        #
+        # Returns appropriate
+        # and the number of characters to skip in input string.
+
+        return "<code>[my Escape $text]</code>"
+    }
+
+    method ToHtml {args} {
+        return [my ToOutput {*}$args]
+    }
+
+    method ToOutput {text {scope {}}} {
+        set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
+        set index 0
+        set result {}
+
+        set re_backticks   {\A`+}
+        set re_whitespace  {\s}
+        set re_inlinelink  {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\]\s*\(\s*((?:[^\s\)]+|\([^\s\)]+\))+)?(\s+([\"'])(.*)?\4)?\s*\)}
+        # Changed from markdown to require second optional [] to follow first []
+        # without any intervening space. This is to allow consecutive symbol references
+        # not to be interpreted as [ref] [text] instead of [ref] [ref]
+        # set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\s*\[((?:[^\]]|\[[^\]]*?\])*)\])?}
+        set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\[((?:[^\]]|\[[^\]]*?\])*)\])?}
+        set re_htmltag     {\A</?\w+\s*>|\A<\w+(?:\s+\w+=(?:\"[^\"]*\"|\'[^\']*\'))*\s*/?>}
+        set re_autolink    {\A<(?:(\S+@\S+)|(\S+://\S+))>}
+        set re_comment     {\A<!--.*?-->}
+        set re_entity      {\A\&\S+;}
+
+        set re_emph {\A(\*{1,3})((?:[^\*\\]|\\.)*)\1}
+
+        while {[set chr [string index $text $index]] ne {}} {
+            switch $chr {
+                "\\" {
+                    # ESCAPES
+                    lassign [my ProcessBackslash $text $index $result] chr n
+                    append result $chr
+                    incr index $n
+                    continue
+                }
+                {*} {
+                    # EMPHASIS
+                    if {[regexp $re_whitespace [string index $result end]] &&
+                        [regexp $re_whitespace [string index $text [expr $index + 1]]]} {
+                        # Solitary * surrounded by whitespace.
+                        # TODO - escape it?
+                        append result $chr
+                        incr index
+                    } elseif {[regexp -start $index $re_emph $text m delim inner]}  {
+                        append result [my ProcessEmphasis $inner $delim $scope]
+                        incr index [string length $m]
+                    }
+                    continue
+                }
+                {`} {
+                    # CODE
+                    regexp -start $index $re_backticks $text backticks
+                    set start [expr $index + [string length $backticks]]
+
+                    # Look for the matching backticks. If not found,
+                    # we will not treat this as code. Otherwise pass through
+                    # the entire match unchanged.
+                    if {[regexp -start $start -indices $backticks $text terminating_indices]} {
+                        set stop [expr {[lindex $terminating_indices 0] - 1}]
+
+                        set sub [string trim [string range $text $start $stop]]
+
+                        append result [my ProcessLiteral $sub]
+                        set index [expr [lindex $terminating_indices 1] + 1]
+                    } else {
+                        # Solitary * surrounded by whitespace.
+                        # TODO - escape it?
+                        append result $chr
+                        incr index
+                    }
+                    continue
+                }
+                {!} -
+                "[" {
+                    # Note: "[", not {[} because latter messes Emacs indentation
+                    # LINKS AND IMAGES
+                    if {$chr eq {!}} {
+                        set ref_type img
+                    } else {
+                        set ref_type link
+                    }
+
+                    set match_found 0
+                    set css ""
+
+                    if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
+                        # INLINE
+                        incr index [string length $m]
+
+                        set url [my Escape [string trim $url {<> }]]
+                        set txt [my ToHtml $txt $scope]
+                        set title [my ToHtml $title $scope]
+
+                        set match_found 1
+                    } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
+                        if {$lbl eq {}} {
+                            # Be loose in whitespace
+                            set lbl [regsub -all {\s+} $txt { }]
+                            set display_text_specified 0
+                        } else {
+                            set display_text_specified 1
+                        }
+
+                        if {[my ResolvableReference? $lbl $scope code_link]} {
+                            # RUFF CODE REFERENCE
+                            # Bug #42 - do not escape else links for names like '<' do not work
+                            if {0} {
+                                set url [my Escape [dict get $code_link ref]]
+                            } else {
+                                set url [dict get $code_link ref]
+                            }
+                            if {! $display_text_specified} {
+                                set txt [my Escape [dict get $code_link label]]
+                            }
+                            set title $txt
+                            switch [dict get $code_link type] {
+                                symbol {set css "class='ruff_cmd'"}
+                                figure {
+                                    # TBD - figure numbering ?
+                                }
+                                heading {}
+                            }
+                            incr index [string length $m]
+                            set match_found 1
+                        } elseif {[is_builtin $lbl]} {
+                            lassign [builtin_url $lbl] url txt
+                            set title $lbl
+                            incr index [string length $m]
+                            set match_found 1
+                        } else {
+                            app::log_error "Warning: no target found for link \"$lbl\". Assuming markdown reference."
+                            set lbl [string tolower $lbl]
+
+                            if {[info exists ::Markdown::_references($lbl)]} {
+                                lassign $::Markdown::_references($lbl) url title
+
+                                set url [my Escape [string trim $url {<> }]]
+                                set txt [my ToHtml $txt $scope]
+                                set title [my ToHtml $title $scope]
+
+                                # REFERENCED
+                                incr index [string length $m]
+                                set match_found 1
+                            }
+                        }
+                    }
+                    # PRINT IMG, A TAG
+                    if {$match_found} {
+                        if {$ref_type eq {link}} {
+                            if {$title ne {}} {
+                                append result "<a href=\"$url\" title=\"$title\" $css>$txt</a>"
+                            } else {
+                                append result "<a href=\"$url\" $css>$txt</a>"
+                            }
+                        } else {
+                            if {$title ne {}} {
+                                append result "<img src=\"$url\" alt=\"$txt\" title=\"$title\" $css/>"
+                            } else {
+                                append result "<img src=\"$url\" alt=\"$txt\" $css/>"
+                            }
+                        }
+
+                        continue
+                    }
+                }
+                {<} {
+                    # HTML TAGS, COMMENTS AND AUTOLINKS
+                    if {[regexp -start $index $re_comment $text m]} {
+                        append result $m
+                        incr index [string length $m]
+                        continue
+                    } elseif {[regexp -start $index $re_autolink $text m email link]} {
+                        if {$link ne {}} {
+                            set link [my Escape $link]
+                            append result "<a href=\"$link\">$link</a>"
+                        } else {
+                            set mailto_prefix "mailto:"
+                            if {![regexp "^${mailto_prefix}(.*)" $email mailto email]} {
+                                # $email does not contain the prefix "mailto:".
+                                set mailto "mailto:$email"
+                            }
+                            append result "<a href=\"$mailto\">$email</a>"
+                        }
+                        incr index [string length $m]
+                        continue
+                    } elseif {[regexp -start $index $re_htmltag $text m]} {
+                        append result $m
+                        incr index [string length $m]
+                        continue
+                    }
+
+                    set chr [my Escape $chr]
+                }
+                {&} {
+                    # ENTITIES
+                    if {[regexp -start $index $re_entity $text m]} {
+                        append result $m
+                        incr index [string length $m]
+                        continue
+                    }
+
+                    set chr [my Escape $chr]
+                }
+                {$} {
+                    # Ruff extension - treat $var as variables name
+                    # Note: no need to escape characters but do so
+                    # if you change the regexp
+                    if {[regexp -start $index {\$\w+} $text m]} {
+                        append result "<code>$m</code>"
+                        incr index [string length $m]
+                        continue
+                    }
+                }
+                {_} -
+                {>} -
+                {'} -
+                "\"" {
+                    # OTHER SPECIAL CHARACTERS.
+                    # Note _ has no special meaning for Ruff! unlike Markdown.
+                    set chr [my Escape $chr]
+                }
                 default {}
             }
             append result $chr
@@ -1460,4 +1753,5 @@ oo::class create ruff::formatter::Formatter {
         }
         return $result
     }
+
 }
