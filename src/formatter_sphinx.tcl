@@ -112,6 +112,10 @@ oo::class create ruff::formatter::Sphinx {
         return $doc
     }
 
+    method Literal {text} {
+        return [string cat `` $text ``]
+    }
+
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
         # Adds heading for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
@@ -142,13 +146,10 @@ oo::class create ruff::formatter::Sphinx {
                 append Document ".. index::\n   single: $fqn (class)\n\n"
                 append Document ".. _$anchor:\n\n"
 
-                # Create a styled heading for class
-                set text [namespace tail $name]
-                set text [string cat [my Escape [string index $text 0]] \
-                              [string range $text 1 end]]
+                set text [my Literal [namespace tail $name]]
                 if {[string length $ns]} {
                     set ns_link [my ToSphinx [markup_reference $ns]]
-                    set heading "[namespace tail $text] \[${ns_link}\]"
+                    set heading "$text \[${ns_link}\]"
                 } else {
                     set heading $text
                 }
@@ -162,12 +163,10 @@ oo::class create ruff::formatter::Sphinx {
                 append Document ".. index::\n   single: $fqn (procedure)\n\n"
                 append Document ".. _$anchor:\n\n"
 
-                set text [namespace tail $name]
-                set text [string cat [my Escape [string index $text 0]] \
-                              [string range $text 1 end]]
+                set text [my Literal [namespace tail $name]]
                 if {[string length $ns]} {
                     set ns_link [my ToSphinx [markup_reference $ns]]
-                    set heading "[namespace tail $text] \[${ns_link}\]"
+                    set heading "$text \[${ns_link}\]"
                 } else {
                     set heading $text
                 }
@@ -181,12 +180,10 @@ oo::class create ruff::formatter::Sphinx {
                 append Document ".. index::\n   single: $fqn (method)\n\n"
                 append Document ".. _$anchor:\n\n"
 
-                set text [namespace tail $name]
-                set text [string cat [my Escape [string index $text 0]] \
-                              [string range $text 1 end]]
+                set text [my Literal [namespace tail $name]]
                 if {[string length $ns]} {
                     set ns_link [my ToSphinx [markup_reference $ns]]
-                    set heading "[namespace tail $text] \[${ns_link}\]"
+                    set heading "$text \[${ns_link}\]"
                 } else {
                     set heading $text
                 }
@@ -530,13 +527,51 @@ oo::class create ruff::formatter::Sphinx {
         return
     }
 
-    method Escape {s} {
-        # Escapes special characters in ReStructuredText/Sphinx.
-        #  s - string to be escaped
-        # Returns the escaped string
+    method Escape {text} {
+        # Escapes special characters in ReStructuredText inline markup
+        #  text - string to be escaped
+        # Returns the escaped string with proper context-aware escaping
+        #
 
-        return [string map {\\ \\\\ * \\* + \\+} $s]
+        # RST inline markup rules:
+        # - Markup start characters need whitespace/punctuation before them
+        #   and non-whitespace after
+        # - We only need to check for markup START since we're escaping BEFORE
+        #   parsing
+        # - Backslashes always need escaping
+        #
+        # The actual rules at https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#inline-markup
+        # are indecipherable to me so the following likely has bugs.
+
+        set result {}
+        set len [string length $text]
+
+        for {set i 0} {$i < $len} {incr i} {
+            set chr [string index $text $i]
+
+            # Check if character could start markup
+            # Markup can start if preceded by whitespace/punctuation (or at start)
+            # and followed by non-whitespace/punctuation
+            set prev_chr [string index $text $i-1]
+            set next_chr [string index $text $i+1]
+
+            # Escape based on character type. Check common case first.
+            if {[string match {[a-zA-Z0-9]} $chr]} {
+                append result $chr
+            } elseif {$chr eq "\\"} {
+                # Backslashes always need escaping
+                append result "\\" $chr
+            } elseif {$chr in {* _ ` |} &&
+                      ($prev_chr == "" || [regexp {[\s\(\[\{<'"]} $prev_chr]) &&
+                      ($next_chr ne "" && ![regexp {[\s\)\]\}>'"]} $next_chr])} {
+                # Escape markup start characters at boundaries
+                append result "\\" $chr
+            }
+        }
+
+        return $result
     }
+
 
     method ToSphinx {text {scope {}}} {
         # Returns $text marked up in Sphinx/RST syntax
@@ -581,7 +616,7 @@ oo::class create ruff::formatter::Sphinx {
                         incr index [string length $m]
                         continue
                     } else {
-                        append result \\*
+                        append result *
                     }
                     incr index
                     continue
@@ -594,7 +629,7 @@ oo::class create ruff::formatter::Sphinx {
                     if {[regexp -start $start -indices $backticks $text terminating_indices]} {
                         set stop [expr {[lindex $terminating_indices 0] - 1}]
                         set sub [string trim [string range $text $start $stop]]
-                        append result "``" [my Escape $sub] "``"
+                        append result "``" $sub "``"
                         set index [expr [lindex $terminating_indices 1] + 1]
                         continue
                     }

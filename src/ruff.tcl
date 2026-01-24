@@ -362,6 +362,7 @@ namespace eval ruff {
 
         * no nested blocks
         * no blockquotes
+        * underscores are not used for emphasis
 
         Ruff! adds
         * definition lists
