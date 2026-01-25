@@ -127,7 +127,7 @@ oo::class create ruff::formatter::Markdown {
         set anchor   [my Anchor $fqn]
         set linkinfo [dict create tag h$level href "#$anchor"]
         if {[llength $tooltip]} {
-            set tip "[my ToMarkdown [string trim [join $tooltip { }]] $ns]\n"
+            set tip "[my ToOutputFormat [string trim [join $tooltip { }]] $ns]\n"
             dict set linkinfo tip $tip
         }
         set name [namespace tail $fqn]
@@ -135,7 +135,7 @@ oo::class create ruff::formatter::Markdown {
         dict set NavigationLinks $anchor $linkinfo
         append Document "\n$atx <a name='$anchor'></a>"
         if {[string length $ns]} {
-            set ns_link [my ToMarkdown [markup_reference $ns]]
+            set ns_link [my ToOutputFormat [markup_reference $ns]]
             append Document \
                 [my Escape [namespace tail $name]] \
                 " \[${ns_link}\]\n"
@@ -162,15 +162,15 @@ oo::class create ruff::formatter::Markdown {
             set anchor [my Anchor $scope $text]
             set linkinfo [dict create tag h$level href "#$anchor"]
             if {$tooltip ne ""} {
-                set tip "[my ToMarkdown [join $tooltip { }] $scope]\n"
+                set tip "[my ToOutputFormat [join $tooltip { }] $scope]\n"
                 dict set linkinfo tip $tip
             }
             dict set linkinfo label $text
             dict set NavigationLinks $anchor $linkinfo
             # NOTE: <a></a> empty because the text itself may contain anchors.
-            set heading "<a name='$anchor'></a>[my ToMarkdown $text $scope]"
+            set heading "<a name='$anchor'></a>[my ToOutputFormat $text $scope]"
         } else {
-            set heading [my ToMarkdown $text $scope]
+            set heading [my ToOutputFormat $text $scope]
         }
         append Document "\n" $atx " " $heading "\n"
         return
@@ -180,7 +180,7 @@ oo::class create ruff::formatter::Markdown {
         # See [Formatter.AddParagraph].
         #  lines  - The paragraph lines.
         #  scope - The documentation scope of the content.
-        append Document "\n" [my ToMarkdown [join $lines \n] $scope] "\n"
+        append Document "\n" [my ToOutputFormat [join $lines \n] $scope] "\n"
         return
     }
 
@@ -193,7 +193,7 @@ oo::class create ruff::formatter::Markdown {
         # a single block quote
 
         append Document \n [join [lmap line $lines {
-            string cat "> " [my ToMarkdown $line]
+            string cat "> " [my ToOutputFormat $line]
         }] \n]
 
     }
@@ -214,13 +214,13 @@ oo::class create ruff::formatter::Markdown {
             foreach item $definitions {
                 set def [join [dict get $item definition] " "]
                 # Note: since we are generating raw HTML here, we have to
-                # use ToHtml and not ToMarkdown here. Huh? TBD
+                # use ToHtml and not ToOutputFormat here. Huh? TBD
                 if {$preformatted in {none term}} {
-                    set def [my ToMarkdown $def $scope]
+                    set def [my ToOutputFormat $def $scope]
                 }
                 set term [dict get $item term]
                 if {$preformatted in {none definition}} {
-                    set term [my ToMarkdown $term $scope]
+                    set term [my ToOutputFormat $term $scope]
                 }
                 append Document "<tr><td>" \
                     $term \
@@ -242,11 +242,11 @@ oo::class create ruff::formatter::Markdown {
                     }
                 }
                 if {$preformatted in {none term}} {
-                    set def [my ToMarkdown $def $scope]
+                    set def [my ToOutputFormat $def $scope]
                 }
                 set term [dict get $item term]
                 if {$preformatted in {none definition}} {
-                    set term [my ToMarkdown $term $scope]
+                    set term [my ToOutputFormat $term $scope]
                 }
                 append Document "|$term|$def|\n"
             }
@@ -275,7 +275,7 @@ oo::class create ruff::formatter::Markdown {
         append Document "\n"
         foreach lines [dict get $content items] {
             append Document [dict get $content marker] " " \
-                [my ToMarkdown [join $lines { }] $scope] \
+                [my ToOutputFormat [join $lines { }] $scope] \
                 \n
         }
         append Document "\n"
@@ -350,7 +350,7 @@ oo::class create ruff::formatter::Markdown {
     }
 
     # Credits: tcllib/Caius markdown module
-    method XXXToMarkdown {text {scope {}}} {
+    method XXXToOutputFormat {text {scope {}}} {
         # Returns $text marked up in markdown syntax
         #  text - Ruff! text with inline markup
         #  scope - namespace scope to use for symbol lookup
@@ -465,7 +465,7 @@ oo::class create ruff::formatter::Markdown {
                             set match_found 1
                         } else {
                             # Note: Do quotes inside $title need to be escaped?
-                            append result $pre [my ToMarkdown $txt $scope] "\](" $url " " "\"[my ToMarkdown $title $scope]\"" ")"
+                            append result $pre [my ToOutputFormat $txt $scope] "\](" $url " " "\"[my ToOutputFormat $title $scope]\"" ")"
                             set url [escape [string trim $url {<> }]]
                             set match_found 1
                         }
@@ -488,7 +488,7 @@ oo::class create ruff::formatter::Markdown {
                             set match_found 1
                         } else {
                             # Not a Ruff! code link. Pass through as is.
-                            # We do not pass text through ToMarkdown as it is
+                            # We do not pass text through ToOutputFormat as it is
                             # treated as a markdown reference and will need
                             # to match the reference entry.
                             app::log_error "Warning: no target found for link \"$lbl\". Assuming markdown reference."
@@ -622,5 +622,4 @@ oo::class create ruff::formatter::Markdown {
         }
 
         forward FormatInline my ToOutputFormat
-        forward ToMarkdown my ToOutputFormat
     }
