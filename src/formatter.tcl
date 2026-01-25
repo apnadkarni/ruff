@@ -1466,27 +1466,6 @@ oo::class create ruff::formatter::Formatter {
 
     ###############################
 
-    method ProcessBackslash {input index output} {
-        # Called to handle a backslash in the input stream
-        #  input - input string
-        #  index - index of backslash in the input string
-        #  output - the output collected so far
-        #
-        # The default implementation assumes HTML output format. Derived classes
-        # can derive it for formatters that handle backslashes differently.
-        #
-        # Returns a pair consisting of the string to append to the output
-        # and the number of characters to skip in input string.
-        set next_chr [string index $input $index+1]
-
-        # TODO - do we not need [my Escape] here?
-        if {[string first $next_chr {\`*_\{\}[]()#+-.!>|}] != -1} {
-            return [list $next_chr 2]
-        }
-        # Not a backslash sequence, just process the backslash
-        return [list \\ 1]
-    }
-
     method ProcessEmphasis {text delim scope} {
         # Called to handle emphasis in the input stream
         #  text - string to be emphasized
@@ -1495,18 +1474,17 @@ oo::class create ruff::formatter::Formatter {
         # The default implementation assumes HTML output format. Derived classes
         # can override the method.
         #
-        # Returns a pair consisting of the string to append to the output
-        # and the next index to process in $input.
+        # Returns markup for emphasized text.
 
         switch [string length $delim] {
             1 {
-                return "<em>[my ToOutput $text $scope]</em>"
+                return "<em>[my ToOutputFormat $text $scope]</em>"
             }
             2 {
-                return "<strong>[my ToOutput $text $scope]</strong>"
+                return "<strong>[my ToOutputFormat $text $scope]</strong>"
             }
             3 {
-                return "<strong><em>[my ToOutput $text $scope]</em></strong>"
+                return "<strong><em>[my ToOutputFormat $text $scope]</em></strong>"
             }
             default {
                 error "Invalid emphasis delimiter length [string length $delim]."
@@ -1521,17 +1499,80 @@ oo::class create ruff::formatter::Formatter {
         # The default implementation assumes HTML output format. Derived classes
         # can derive it for formatters that handle backslashes differently.
         #
-        # Returns appropriate
-        # and the number of characters to skip in input string.
+        # Returns markup for literal text.
 
         return "<code>[my Escape $text]</code>"
     }
 
-    method ToHtml {args} {
-        return [my ToOutput {*}$args]
+    method ProcessInlineLink {url text title scope {link_type {}}} {
+        # Returns the markup for URL links
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - for HTML this shows up as the tooltip
+        #  scope - Documentation scope for resolving references.
+        #  link_type - one of `symbol`, `figure` or `heading` or empty
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+
+        # Don't escape URL's 
+        # Bug #42 - do not escape else links for names like '<' do not work
+        #set url [my Escape [string trim $url {<> }]]
+        set url [string trim $url {<> }]
+        set text [my ToHtml $text $scope]
+        set css [expr {$link_type eq "symbol" ? "class='ruff_cmd'" : ""}]
+
+        if {$title ne {}} {
+            set title [my ToHtml $title $scope]
+            return "<a href=\"$url\" title=\"$title\" $css>$text</a>"
+        } else {
+            return "<a href=\"$url\" $css>$text</a>"
+        }
     }
 
-    method ToOutput {text {scope {}}} {
+    method ProcessInlineImage {url text title scope {link_type {}}} {
+        # Returns the markup for URL image links
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - for HTML this shows up as the tooltip
+        #  scope - Documentation scope for resolving references.
+        #  link_type - one of `symbol`, `figure` or `heading` or empty
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+
+        # Bug #42 - do not escape else links for names like '<' do not work
+        #set url [my Escape [string trim $url {<> }]]
+        set url [string trim $url {<> }]
+        set text [my ToHtml $text $scope]
+        set css [expr {$link_type eq "symbol" ? "class='ruff_cmd'" : ""}]
+        if {$title ne {}} {
+            set title [my ToHtml $title $scope]
+            return "<img src=\"$url\" alt=\"$text\" title=\"$title\" $css/>"
+        } else {
+            return "<img src=\"$url\" alt=\"$text\" $css/>"
+        }
+    }
+
+    method ProcessInternalLink {code_link text scope} {
+        # Returns the markup for internal Ruff links.
+        #  code_link - dictionary holding resolvable internal link information
+        #  text - the link text. If empty the label from `code_link` is used.
+        #  scope - Documentation scope for resolving references.
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+        set url [dict get $code_link ref]
+        if {$text eq ""} {
+            set text [my Escape [dict get $code_link label]]
+        }
+        set title $text
+        set link_class [dict get $code_link type]
+        return [my ProcessInlineLink $url $text $title $scope $link_class]
+    }
+
+    method ToHtml {args} {
+        return [my ToOutputFormat {*}$args]
+    }
+
+    method ToOutputFormat {text {scope {}}} {
         set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
         set index 0
         set result {}
@@ -1555,9 +1596,16 @@ oo::class create ruff::formatter::Formatter {
             switch $chr {
                 "\\" {
                     # ESCAPES
-                    lassign [my ProcessBackslash $text $index $result] chr n
-                    append result $chr
-                    incr index $n
+                    set next_chr [string index $text $index+1]
+                    # TODO - do we not need any [my Escape] here?
+                    if {[string first $next_chr {\`*_\{\}[]()#+-.!>|}] != -1} {
+                        append result $next_chr
+                        incr index 2
+                    } else {
+                        # Not a backslash sequence, just process the backslash
+                        append result $chr
+                        incr index
+                    }
                     continue
                 }
                 {*} {
@@ -1571,6 +1619,9 @@ oo::class create ruff::formatter::Formatter {
                     } elseif {[regexp -start $index $re_emph $text m delim inner]}  {
                         append result [my ProcessEmphasis $inner $delim $scope]
                         incr index [string length $m]
+                    } else {
+                        append result $chr
+                        incr index
                     }
                     continue
                 }
@@ -1601,23 +1652,13 @@ oo::class create ruff::formatter::Formatter {
                 "[" {
                     # Note: "[", not {[} because latter messes Emacs indentation
                     # LINKS AND IMAGES
-                    if {$chr eq {!}} {
-                        set ref_type img
-                    } else {
-                        set ref_type link
-                    }
-
                     set match_found 0
-                    set css ""
+                    set ref_type [expr {$chr eq "!" ? "img" : "link"}]
+                    set link_class ""; # symbol, heading, figure
 
                     if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
-                        # INLINE
+                        # INLINE LINK - [text](url "title")
                         incr index [string length $m]
-
-                        set url [my Escape [string trim $url {<> }]]
-                        set txt [my ToHtml $txt $scope]
-                        set title [my ToHtml $title $scope]
-
                         set match_found 1
                     } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
                         if {$lbl eq {}} {
@@ -1630,25 +1671,9 @@ oo::class create ruff::formatter::Formatter {
 
                         if {[my ResolvableReference? $lbl $scope code_link]} {
                             # RUFF CODE REFERENCE
-                            # Bug #42 - do not escape else links for names like '<' do not work
-                            if {0} {
-                                set url [my Escape [dict get $code_link ref]]
-                            } else {
-                                set url [dict get $code_link ref]
-                            }
-                            if {! $display_text_specified} {
-                                set txt [my Escape [dict get $code_link label]]
-                            }
-                            set title $txt
-                            switch [dict get $code_link type] {
-                                symbol {set css "class='ruff_cmd'"}
-                                figure {
-                                    # TBD - figure numbering ?
-                                }
-                                heading {}
-                            }
+                            append result [my ProcessInternalLink $code_link [expr {$display_text_specified ? $txt : ""}] $scope]
                             incr index [string length $m]
-                            set match_found 1
+                            continue
                         } elseif {[is_builtin $lbl]} {
                             lassign [builtin_url $lbl] url txt
                             set title $lbl
@@ -1657,38 +1682,23 @@ oo::class create ruff::formatter::Formatter {
                         } else {
                             app::log_error "Warning: no target found for link \"$lbl\". Assuming markdown reference."
                             set lbl [string tolower $lbl]
-
-                            if {[info exists ::Markdown::_references($lbl)]} {
-                                lassign $::Markdown::_references($lbl) url title
-
-                                set url [my Escape [string trim $url {<> }]]
-                                set txt [my ToHtml $txt $scope]
-                                set title [my ToHtml $title $scope]
-
-                                # REFERENCED
-                                incr index [string length $m]
-                                set match_found 1
-                            }
+                            append result [my Escape $m]
+                            incr index [string length $m]
+                            continue
                         }
                     }
                     # PRINT IMG, A TAG
                     if {$match_found} {
-                        if {$ref_type eq {link}} {
-                            if {$title ne {}} {
-                                append result "<a href=\"$url\" title=\"$title\" $css>$txt</a>"
-                            } else {
-                                append result "<a href=\"$url\" $css>$txt</a>"
-                            }
+                        if {$ref_type eq "img"} {
+                            append result [my ProcessInlineImage $url $txt $title $scope $link_class]
                         } else {
-                            if {$title ne {}} {
-                                append result "<img src=\"$url\" alt=\"$txt\" title=\"$title\" $css/>"
-                            } else {
-                                append result "<img src=\"$url\" alt=\"$txt\" $css/>"
-                            }
+                            append result [my ProcessInlineLink $url $txt $title $scope $link_class]
                         }
-
-                        continue
+                    } else {
+                        append result $chr
+                        incr index
                     }
+                    continue
                 }
                 {<} {
                     # HTML TAGS, COMMENTS AND AUTOLINKS
