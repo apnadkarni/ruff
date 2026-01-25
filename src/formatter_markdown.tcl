@@ -44,12 +44,7 @@ oo::class create ruff::formatter::Markdown {
         # The anchor is formed by joining the passed strings with separators.
         # Empty arguments are ignored.
         # Returns an HTML-escaped anchor without the `#` prefix.
-        set parts [lmap arg $args {
-            if {$arg eq ""} continue
-            set arg
-        }]
-
-        return [regsub -all {[^-:\w_.]} [join $parts -] _]
+        return [make_id {*}$args]
     }
 
     method HeadingReference {ns heading} {
@@ -126,7 +121,6 @@ oo::class create ruff::formatter::Markdown {
         #  tooltip - The tooltip lines, if any, to be displayed in the navigation pane.
         # In addition to adding the heading to the document, a link
         # is also added to the collection of navigation links.
-
         set level    [dict get $HeaderLevels $type]
         set atx      [string repeat # $level]
         set ns       [namespace qualifiers $fqn]
@@ -324,7 +318,15 @@ oo::class create ruff::formatter::Markdown {
 
         append Document \n
         foreach {cmds params} $synopsis {
-            append Document "\n> `[join $cmds { }]` *`[join $params { }]`*<br>"
+            # pandoc gets confused with the *``* sequence so distinguish the
+            # no params case.
+            # Also note the two spaces before the newline. Otherwise, markdown
+            # processors will combine the lines.
+            if {[llength $params]} {
+                append Document "> `[join $cmds { }]` *`[join $params { }]`*  \n"
+            } else {
+                append Document "> `[join $cmds { }]`  \n"
+            }
         }
         append Document \n
         return
@@ -344,11 +346,11 @@ oo::class create ruff::formatter::Markdown {
         # Returns the escaped string
 
         # TBD - fix this regexp
-        return [regsub -all {[\\`*_\{\}\[\]\(\)#\+\-\.!<>|]} $s {\\\0}]
+        set s [regsub -all {[\\`*_\{\}\[\]\(\)#\+\-\.!<>|]} $s {\\\0}]
     }
 
     # Credits: tcllib/Caius markdown module
-    method ToMarkdown {text {scope {}}} {
+    method XXXToMarkdown {text {scope {}}} {
         # Returns $text marked up in markdown syntax
         #  text - Ruff! text with inline markup
         #  scope - namespace scope to use for symbol lookup
@@ -575,7 +577,11 @@ oo::class create ruff::formatter::Markdown {
             #  link_type - one of `symbol`, `figure` or `heading` or empty
 
             if {$title eq ""} {
-                return [string cat \[ $text \] \( $url \) ]
+                if {$url eq $text} {
+                    return [string cat < $url >]
+                } else {
+                    return [string cat \[ $text \] \( $url \) ]
+                }
             } else {
                 return [string cat \[ $text \] \( $url \" $title "\")" ]
             }
@@ -592,7 +598,7 @@ oo::class create ruff::formatter::Markdown {
             if {$title eq ""} {
                 return [string cat !\[ $text \] \( $url \) ]
             } else {
-                return [string cat !\[ $text \] \( $url \" $title "\")" ]
+                return [string cat !\[ $text \] \( $url " \"" $title "\")" ]
             }
         }
 
@@ -602,6 +608,7 @@ oo::class create ruff::formatter::Markdown {
             #  text - the link text. If empty the label from `code_link` is used.
             #  scope - Documentation scope for resolving references.
             set url [my Escape [dict get $code_link ref]]
+            set url [dict get $code_link ref]
             if {$text eq ""} {
                 set text [my Escape [dict get $code_link label]]
             }
@@ -614,5 +621,6 @@ oo::class create ruff::formatter::Markdown {
             return md
         }
 
-        forward FormatInline my ToMarkdown
+        forward FormatInline my ToOutputFormat
+        forward ToMarkdown my ToOutputFormat
     }
