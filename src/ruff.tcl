@@ -375,7 +375,8 @@ namespace eval ruff {
 
         As a general rule, inline formatting should be kept basic and avoid
         complexities like nested constructs as formatters vary in their
-        capabilities.
+        capabilities. Embedded HTML is also strongly discouraged as most
+        formatters will not process it.
 
         ## Documenting classes
 

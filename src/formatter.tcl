@@ -1519,13 +1519,13 @@ oo::class create ruff::formatter::Formatter {
         #set url [my Escape [string trim $url {<> }]]
         set url [string trim $url {<> }]
         set text [my ToHtml $text $scope]
-        set css [expr {$link_type eq "symbol" ? "class='ruff_cmd'" : ""}]
+        set css [expr {$link_type eq "symbol" ? " class='ruff_cmd'" : ""}]
 
         if {$title ne {}} {
             set title [my ToHtml $title $scope]
-            return "<a href=\"$url\" title=\"$title\" $css>$text</a>"
+            return "<a href=\"$url\" title=\"$title\"$css>$text</a>"
         } else {
-            return "<a href=\"$url\" $css>$text</a>"
+            return "<a href=\"$url\"$css>$text</a>"
         }
     }
 
@@ -1568,6 +1568,20 @@ oo::class create ruff::formatter::Formatter {
         return [my ProcessInlineLink $url $text $title $scope $link_class]
     }
 
+    method ProcessComment {text} {
+        # Returns the markup for a comment
+        #
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+        return [string cat "<!--" $text "-->"]
+    }
+
+    method InlineHtmlSupported {} {
+        # Returns true if the formatter supports inline HTML.
+        #
+        # The default implementation assumes formatter supports inline HTML.
+        return true
+    }
     method ToHtml {args} {
         return [my ToOutputFormat {*}$args]
     }
@@ -1587,7 +1601,7 @@ oo::class create ruff::formatter::Formatter {
         set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\[((?:[^\]]|\[[^\]]*?\])*)\])?}
         set re_htmltag     {\A</?\w+\s*>|\A<\w+(?:\s+\w+=(?:\"[^\"]*\"|\'[^\']*\'))*\s*/?>}
         set re_autolink    {\A<(?:(\S+@\S+)|(\S+://\S+))>}
-        set re_comment     {\A<!--.*?-->}
+        set re_comment     {\A<!--(.*?)-->}
         set re_entity      {\A\&\S+;}
 
         set re_emph {\A(\*{1,3})((?:[^\*\\]|\\.)*)\1}
@@ -1702,25 +1716,27 @@ oo::class create ruff::formatter::Formatter {
                 }
                 {<} {
                     # HTML TAGS, COMMENTS AND AUTOLINKS
-                    if {[regexp -start $index $re_comment $text m]} {
-                        append result $m
+                    if {[regexp -start $index $re_comment $text m comment]} {
+                        append result [my ProcessComment $comment]
                         incr index [string length $m]
                         continue
                     } elseif {[regexp -start $index $re_autolink $text m email link]} {
                         if {$link ne {}} {
-                            set link [my Escape $link]
-                            append result "<a href=\"$link\">$link</a>"
+                            append result [my ProcessInlineLink $link $link "" $scope]
                         } else {
                             set mailto_prefix "mailto:"
                             if {![regexp "^${mailto_prefix}(.*)" $email mailto email]} {
                                 # $email does not contain the prefix "mailto:".
                                 set mailto "mailto:$email"
                             }
-                            append result "<a href=\"$mailto\">$email</a>"
+                            append result [my ProcessInlineLink $email $mailto "" $scope]
                         }
                         incr index [string length $m]
                         continue
                     } elseif {[regexp -start $index $re_htmltag $text m]} {
+                        if {![my InlineHtmlSupported]} {
+                            app::log_error "Warning: [self class] does not support inline HTML."
+                        }
                         append result $m
                         incr index [string length $m]
                         continue
@@ -1731,6 +1747,9 @@ oo::class create ruff::formatter::Formatter {
                 {&} {
                     # ENTITIES
                     if {[regexp -start $index $re_entity $text m]} {
+                        if {![my InlineHtmlSupported]} {
+                            app::log_error "Warning: [self class] does not support inline HTML."
+                        }
                         append result $m
                         incr index [string length $m]
                         continue
@@ -1743,7 +1762,7 @@ oo::class create ruff::formatter::Formatter {
                     # Note: no need to escape characters but do so
                     # if you change the regexp
                     if {[regexp -start $index {\$\w+} $text m]} {
-                        append result "<code>$m</code>"
+                        append result [my ProcessLiteral $m]
                         incr index [string length $m]
                         continue
                     }
