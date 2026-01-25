@@ -1582,9 +1582,6 @@ oo::class create ruff::formatter::Formatter {
         # The default implementation assumes formatter supports inline HTML.
         return true
     }
-    method ToHtml {args} {
-        return [my ToOutputFormat {*}$args]
-    }
 
     method ToOutputFormat {text {scope {}}} {
         set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
@@ -1655,7 +1652,7 @@ oo::class create ruff::formatter::Formatter {
                         append result [my ProcessLiteral $sub]
                         set index [expr [lindex $terminating_indices 1] + 1]
                     } else {
-                        # Solitary * surrounded by whitespace.
+                        # Solitary ` surrounded by whitespace.
                         # TODO - escape it?
                         append result $chr
                         incr index

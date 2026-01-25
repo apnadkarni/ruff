@@ -414,7 +414,7 @@ oo::class create ruff::formatter::Markdown {
                         elseif {[regexp -start $index $re_emph \
                                      $text m del sub]} \
                         {
-                            append result "$del[my ToMarkdown $sub $scope]$del"
+                            append result [my ProcessEmphasis $sub $del $scope]
                             incr index [string length $m]
                             continue
                         }
@@ -432,13 +432,11 @@ oo::class create ruff::formatter::Markdown {
                     # we will not treat this as code. Otherwise pass through
                     # the entire match unchanged.
                     if {[regexp -start $start -indices $backticks $text terminating_indices]} {
-                        set stop [lindex $terminating_indices 1]
-                        # Copy the entire substring including leading and trailing
-                        # backticks to output as is as we do not want those
-                        # characters to undergo the special processing above.
-                        set passthru [string range $text $index $stop]
-                        append result $passthru
-                        incr index [string length $passthru]
+                        set stop [expr {[lindex $terminating_indices 0] - 1}]
+
+                        set sub [string trim [string range $text $start $stop]]
+                        append result [my ProcessLiteral $sub]
+                        set index [expr [lindex $terminating_indices 1] + 1]
                         continue
                     }
                 }
@@ -457,7 +455,11 @@ oo::class create ruff::formatter::Markdown {
                     if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
                         # INLINE
                         if {1} {
-                            append result $m
+                            if {$ref_type eq "img"} {
+                                append result [my ProcessInlineImage $url $txt $title $scope]
+                            } else {
+                                append result [my ProcessInlineLink $url $txt $title $scope]
+                            }
                             set match_found 1
                         } else {
                             # Note: Do quotes inside $title need to be escaped?
@@ -467,6 +469,7 @@ oo::class create ruff::formatter::Markdown {
                         }
                     } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
                         if {$lbl eq {}} {
+                            # Be loose in whitespace
                             set lbl [regsub -all {\s+} $txt { }]
                             set display_text_specified 0
                         } else {
@@ -475,22 +478,10 @@ oo::class create ruff::formatter::Markdown {
 
                         if {[my ResolvableReference? $lbl $scope code_link]} {
                             # RUFF CODE REFERENCE
-                            set url [my Escape [dict get $code_link ref]]
-                            if {! $display_text_specified} {
-                                set txt [my Escape [dict get $code_link label]]
-                            }
-                            if {1} {
-                                append result $pre $txt "\](" $url ")"
-                            } else {
-                                # Note: Do quotes inside $txt (SECOND occurence) need to be escaped?
-                                append result $pre $txt "\](" $url " " "\"$txt\"" ")"
-                            }
+                            append result [my ProcessInternalLink $code_link [expr {$display_text_specified ? $txt : ""}] $scope]
                             set match_found 1
                         } elseif {[is_builtin $lbl]} {
-                            lassign [builtin_url $lbl] url lbl
-                            if {! $display_text_specified} {
-                                set txt $lbl
-                            }
+                            lassign [builtin_url $lbl] url txt
                             append result $pre $txt "\](" $url ")"
                             set match_found 1
                         } else {
@@ -555,6 +546,67 @@ oo::class create ruff::formatter::Markdown {
             }
 
             return $result
+        }
+
+        method ProcessEmphasis {text delim scope} {
+            # Called to handle emphasis in the input stream
+            #  text - string to be emphasized
+            #  delim - one of `*`, `**` or `***` indicating level of emphasis
+            #  scope - Documentation scope for resolving references.
+            #
+            # Returns markup for emphasized text.
+
+            return [string cat $delim [my ToOutputFormat $text] $delim]
+        }
+
+        method ProcessLiteral {text} {
+            # Returns markup for literal text.
+            #  text - string to be formatted as a literal
+
+            return [string cat ` $text `]
+        }
+
+        method ProcessInlineLink {url text title scope {link_type {}}} {
+            # Returns the markup for URL links
+            #  url - the URL to link to
+            #  text - the link text
+            #  title - for HTML this shows up as the tooltip
+            #  scope - Documentation scope for resolving references.
+            #  link_type - one of `symbol`, `figure` or `heading` or empty
+
+            if {$title eq ""} {
+                return [string cat \[ $text \] \( $url \) ]
+            } else {
+                return [string cat \[ $text \] \( $url \" $title "\")" ]
+            }
+        }
+
+        method ProcessInlineImage {url text title scope {link_type {}}} {
+            # Returns the markup for URL to images
+            #  url - the URL to link to
+            #  text - the link text
+            #  title - for HTML this shows up as the tooltip
+            #  scope - Documentation scope for resolving references.
+            #  link_type - one of `symbol`, `figure` or `heading` or empty
+
+            if {$title eq ""} {
+                return [string cat !\[ $text \] \( $url \) ]
+            } else {
+                return [string cat !\[ $text \] \( $url \" $title "\")" ]
+            }
+        }
+
+        method ProcessInternalLink {code_link text scope} {
+            # Returns the markup for internal Ruff links.
+            #  code_link - dictionary holding resolvable internal link information
+            #  text - the link text. If empty the label from `code_link` is used.
+            #  scope - Documentation scope for resolving references.
+            set url [my Escape [dict get $code_link ref]]
+            if {$text eq ""} {
+                set text [my Escape [dict get $code_link label]]
+            }
+            set title $text
+            return [my ProcessInlineLink $url $text "" $scope]
         }
 
         method extension {} {
