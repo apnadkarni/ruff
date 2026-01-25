@@ -1518,11 +1518,11 @@ oo::class create ruff::formatter::Formatter {
         # Bug #42 - do not escape else links for names like '<' do not work
         #set url [my Escape [string trim $url {<> }]]
         set url [string trim $url {<> }]
-        set text [my ToHtml $text $scope]
+        set text [my ToOutputFormat $text $scope]
         set css [expr {$link_type eq "symbol" ? " class='ruff_cmd'" : ""}]
 
         if {$title ne {}} {
-            set title [my ToHtml $title $scope]
+            set title [my ToOutputFormat $title $scope]
             return "<a href=\"$url\" title=\"$title\"$css>$text</a>"
         } else {
             return "<a href=\"$url\"$css>$text</a>"
@@ -1542,10 +1542,10 @@ oo::class create ruff::formatter::Formatter {
         # Bug #42 - do not escape else links for names like '<' do not work
         #set url [my Escape [string trim $url {<> }]]
         set url [string trim $url {<> }]
-        set text [my ToHtml $text $scope]
+        set text [my ToOutputFormat $text $scope]
         set css [expr {$link_type eq "symbol" ? "class='ruff_cmd'" : ""}]
         if {$title ne {}} {
-            set title [my ToHtml $title $scope]
+            set title [my ToOutputFormat $title $scope]
             return "<img src=\"$url\" alt=\"$text\" title=\"$title\" $css/>"
         } else {
             return "<img src=\"$url\" alt=\"$text\" $css/>"
