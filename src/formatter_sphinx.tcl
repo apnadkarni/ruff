@@ -108,10 +108,6 @@ oo::class create ruff::formatter::Sphinx {
         return $doc
     }
 
-    method Literal {text} {
-        return [string cat `` $text ``]
-    }
-
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
         # Adds heading for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
@@ -139,7 +135,7 @@ oo::class create ruff::formatter::Sphinx {
                 append Document ".. index::\n   single: $fqn (class)\n\n"
                 append Document ".. _$anchor:\n\n"
 
-                set heading [my Literal [namespace tail $name]]
+                set heading [my ProcessLiteral [namespace tail $name]]
                 if {[string length $ns]} {
                     set ns_link [my ToSphinx [markup_reference $ns]]
                     append heading " \[${ns_link}\]"
@@ -154,7 +150,7 @@ oo::class create ruff::formatter::Sphinx {
                 append Document ".. index::\n   single: $fqn (procedure)\n\n"
                 append Document ".. _$anchor:\n\n"
 
-                set heading [my Literal [namespace tail $name]]
+                set heading [my ProcessLiteral [namespace tail $name]]
                 if {[string length $ns]} {
                     set ns_link [my ToSphinx [markup_reference $ns]]
                     append heading " \[${ns_link}\]"
@@ -169,7 +165,7 @@ oo::class create ruff::formatter::Sphinx {
                 append Document ".. index::\n   single: $fqn (method)\n\n"
                 append Document ".. _$anchor:\n\n"
 
-                set heading [my Literal [namespace tail $name]]
+                set heading [my ProcessLiteral [namespace tail $name]]
                 if {[string length $ns]} {
                     set ns_link [my ToSphinx [markup_reference $ns]]
                     append heading " \[${ns_link}\]"
@@ -385,13 +381,6 @@ oo::class create ruff::formatter::Sphinx {
         return
     }
 
-    method AddImage {url alt} {
-        # Returns a RST link to the image url and registers it as a substitution
-        set rst_id [my MakeSphinxId $url]
-        dict set Images $rst_id [dict create url $url alt $alt]
-        return "|$rst_id|"
-    }
-
     method AddFenced {lines fence_options scope} {
         # Adds a list of fenced lines to document content.
         #  lines - Preformatted text as a list of lines.
@@ -582,7 +571,7 @@ oo::class create ruff::formatter::Sphinx {
                                    $text m del sub]} {
                         # *** not supported. Map to **
                         set del [string range $del 0 1]
-                        append result "$del[my ToSphinx $sub $scope]$del"
+                        append result [my ProcessEmphasis $sub $del $scope]
                         incr index [string length $m]
                         continue
                     } else {
@@ -599,7 +588,7 @@ oo::class create ruff::formatter::Sphinx {
                     if {[regexp -start $start -indices $backticks $text terminating_indices]} {
                         set stop [expr {[lindex $terminating_indices 0] - 1}]
                         set sub [string trim [string range $text $start $stop]]
-                        append result "``" $sub "``"
+                        append result [my ProcessLiteral $sub]
                         set index [expr [lindex $terminating_indices 1] + 1]
                         continue
                     }
@@ -650,10 +639,9 @@ oo::class create ruff::formatter::Sphinx {
 
                     if {$match_found} {
                         if {$ref_type eq "img"} {
-                            append result [my AddImage $url $link_text]
+                            append result [my ProcessInlineImage $url $link_text "" $scope]
                         } else {
-                            # Use standard external link format
-                            append result "`$link_text <$url>`_"
+                            append result [my ProcessInlineLink $url $link_text "" $scope]
                         }
                         incr index [string length $m]
                         continue
@@ -683,6 +671,58 @@ oo::class create ruff::formatter::Sphinx {
         }
 
         return $result
+    }
+
+    method ProcessEmphasis {text delim scope} {
+        # Returns markup for emphasized text.
+        #  text - string to be emphasized
+        #  delim - one of `*`, `**` or `***` indicating level of emphasis
+        #  scope - Documentation scope for resolving references.
+        #
+
+        # Note: reST does not support ***. Treat as **
+        if {$delim eq "***"} {
+            set delim "**"
+        }
+        switch -exact $delim {
+            * -
+            ** {
+                return [string cat $delim [my ToSphinx $text $scope] $delim]
+            }
+            default {
+                error "Invalid emphasis delimiter length [string length $delim]."
+            }
+        }
+    }
+    
+    method ProcessLiteral {text} {
+        # Returns markup for literal text.
+        #  text - string to be formatted as a literal
+
+        return [string cat `` $text ``]
+    }
+
+    method ProcessInlineLink {url text title scope {link_type {}}} {
+        # Returns the markup for URL links
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - not used
+        #  scope - not used
+        #  link_type - not used
+
+        return [string cat ` $text " <" $url ">`_"]
+    }
+
+    method ProcessInlineImage {url text title scope {link_type {}}} {
+        # Returns a RST link to the image url and registers it as a substitution
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - not used
+        #  scope - not used
+        #  link_type - not used
+        set rst_id [my MakeSphinxId $url]
+        dict set Images $rst_id [dict create url $url alt $text]
+        return "|$rst_id|"
     }
 
     method extension {} {

@@ -1491,15 +1491,13 @@ oo::class create ruff::formatter::Formatter {
             }
         }
     }
-    
+
     method ProcessLiteral {text} {
-        # Called to handle a backtick in the input stream
+        # Returns markup for literal text.
         #  text - string to be formatted as a literal
         #
         # The default implementation assumes HTML output format. Derived classes
         # can derive it for formatters that handle backslashes differently.
-        #
-        # Returns markup for literal text.
 
         return "<code>[my Escape $text]</code>"
     }
@@ -1514,7 +1512,7 @@ oo::class create ruff::formatter::Formatter {
         # The default implementation assumes HTML output format. Derived classes
         # can override the method.
 
-        # Don't escape URL's 
+        # Don't escape URL's
         # Bug #42 - do not escape else links for names like '<' do not work
         #set url [my Escape [string trim $url {<> }]]
         set url [string trim $url {<> }]
