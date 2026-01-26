@@ -735,5 +735,4 @@ oo::class create ruff::formatter::Rst {
         return rst
     }
 
-    forward FormatInline my ToRST
 }

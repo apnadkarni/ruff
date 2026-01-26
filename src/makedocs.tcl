@@ -25,7 +25,7 @@ proc ruff::private::document_self {args} {
                        ]
     array set opts $args
     if {![info exists opts(-outdir)]} {
-        set opts(-outdir) [file join [file dirname [ruff_dir]] doc $opts(-format)]
+        set opts(-outdir) [file join [file dirname [ruff_dir]] doc out $opts(-format)]
     } else {
         set opts(-outdir) [file join $opts(-outdir) $opts(-format)]
     }
@@ -58,7 +58,7 @@ proc ruff::private::document_self {args} {
         lappend common_args -onlyexports 1
     }
     switch -exact -- $opts(-format) {
-        sphinx - rst - markdown {
+        sphinx - markdown {
             document $namespaces {*}$common_args \
                 -outdir $opts(-outdir) \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
@@ -95,10 +95,9 @@ proc ruff::private::document_self {args} {
 
 if {[catch {
     ruff::private::document_self -format html {*}$argv
-    ruff::private::document_self -format nroff {*}$argv
     ruff::private::document_self -format markdown {*}$argv
+    ruff::private::document_self -format nroff {*}$argv
     ruff::private::document_self -format sphinx {*}$argv
-    #ruff::private::document_self -format rst {*}$argv
 } result edict]} {
     puts stderr "Error: $result"
     puts [dict get $edict -errorinfo]

@@ -44,12 +44,7 @@ oo::class create ruff::formatter::Markdown {
         # The anchor is formed by joining the passed strings with separators.
         # Empty arguments are ignored.
         # Returns an HTML-escaped anchor without the `#` prefix.
-        set parts [lmap arg $args {
-            if {$arg eq ""} continue
-            set arg
-        }]
-
-        return [regsub -all {[^-:\w_.]} [join $parts -] _]
+        return [make_id {*}$args]
     }
 
     method HeadingReference {ns heading} {
@@ -126,14 +121,13 @@ oo::class create ruff::formatter::Markdown {
         #  tooltip - The tooltip lines, if any, to be displayed in the navigation pane.
         # In addition to adding the heading to the document, a link
         # is also added to the collection of navigation links.
-
         set level    [dict get $HeaderLevels $type]
         set atx      [string repeat # $level]
         set ns       [namespace qualifiers $fqn]
         set anchor   [my Anchor $fqn]
         set linkinfo [dict create tag h$level href "#$anchor"]
         if {[llength $tooltip]} {
-            set tip "[my ToMarkdown [string trim [join $tooltip { }]] $ns]\n"
+            set tip "[my FormatInline [string trim [join $tooltip { }]] $ns]\n"
             dict set linkinfo tip $tip
         }
         set name [namespace tail $fqn]
@@ -141,7 +135,7 @@ oo::class create ruff::formatter::Markdown {
         dict set NavigationLinks $anchor $linkinfo
         append Document "\n$atx <a name='$anchor'></a>"
         if {[string length $ns]} {
-            set ns_link [my ToMarkdown [markup_reference $ns]]
+            set ns_link [my FormatInline [markup_reference $ns]]
             append Document \
                 [my Escape [namespace tail $name]] \
                 " \[${ns_link}\]\n"
@@ -168,15 +162,15 @@ oo::class create ruff::formatter::Markdown {
             set anchor [my Anchor $scope $text]
             set linkinfo [dict create tag h$level href "#$anchor"]
             if {$tooltip ne ""} {
-                set tip "[my ToMarkdown [join $tooltip { }] $scope]\n"
+                set tip "[my FormatInline [join $tooltip { }] $scope]\n"
                 dict set linkinfo tip $tip
             }
             dict set linkinfo label $text
             dict set NavigationLinks $anchor $linkinfo
             # NOTE: <a></a> empty because the text itself may contain anchors.
-            set heading "<a name='$anchor'></a>[my ToMarkdown $text $scope]"
+            set heading "<a name='$anchor'></a>[my FormatInline $text $scope]"
         } else {
-            set heading [my ToMarkdown $text $scope]
+            set heading [my FormatInline $text $scope]
         }
         append Document "\n" $atx " " $heading "\n"
         return
@@ -186,7 +180,7 @@ oo::class create ruff::formatter::Markdown {
         # See [Formatter.AddParagraph].
         #  lines  - The paragraph lines.
         #  scope - The documentation scope of the content.
-        append Document "\n" [my ToMarkdown [join $lines \n] $scope] "\n"
+        append Document "\n" [my FormatInline [join $lines \n] $scope] "\n"
         return
     }
 
@@ -199,7 +193,7 @@ oo::class create ruff::formatter::Markdown {
         # a single block quote
 
         append Document \n [join [lmap line $lines {
-            string cat "> " [my ToMarkdown $line]
+            string cat "> " [my FormatInline $line]
         }] \n]
 
     }
@@ -220,13 +214,13 @@ oo::class create ruff::formatter::Markdown {
             foreach item $definitions {
                 set def [join [dict get $item definition] " "]
                 # Note: since we are generating raw HTML here, we have to
-                # use ToHtml and not ToMarkdown here. Huh? TBD
+                # use ToHtml and not FormatInline here. Huh? TBD
                 if {$preformatted in {none term}} {
-                    set def [my ToMarkdown $def $scope]
+                    set def [my FormatInline $def $scope]
                 }
                 set term [dict get $item term]
                 if {$preformatted in {none definition}} {
-                    set term [my ToMarkdown $term $scope]
+                    set term [my FormatInline $term $scope]
                 }
                 append Document "<tr><td>" \
                     $term \
@@ -248,11 +242,11 @@ oo::class create ruff::formatter::Markdown {
                     }
                 }
                 if {$preformatted in {none term}} {
-                    set def [my ToMarkdown $def $scope]
+                    set def [my FormatInline $def $scope]
                 }
                 set term [dict get $item term]
                 if {$preformatted in {none definition}} {
-                    set term [my ToMarkdown $term $scope]
+                    set term [my FormatInline $term $scope]
                 }
                 append Document "|$term|$def|\n"
             }
@@ -281,7 +275,7 @@ oo::class create ruff::formatter::Markdown {
         append Document "\n"
         foreach lines [dict get $content items] {
             append Document [dict get $content marker] " " \
-                [my ToMarkdown [join $lines { }] $scope] \
+                [my FormatInline [join $lines { }] $scope] \
                 \n
         }
         append Document "\n"
@@ -324,7 +318,15 @@ oo::class create ruff::formatter::Markdown {
 
         append Document \n
         foreach {cmds params} $synopsis {
-            append Document "\n> `[join $cmds { }]` *`[join $params { }]`*<br>"
+            # pandoc gets confused with the *``* sequence so distinguish the
+            # no params case.
+            # Also note the two spaces before the newline. Otherwise, markdown
+            # processors will combine the lines.
+            if {[llength $params]} {
+                append Document "> `[join $cmds { }]` *`[join $params { }]`*  \n"
+            } else {
+                append Document "> `[join $cmds { }]`  \n"
+            }
         }
         append Document \n
         return
@@ -344,223 +346,77 @@ oo::class create ruff::formatter::Markdown {
         # Returns the escaped string
 
         # TBD - fix this regexp
-        return [regsub -all {[\\`*_\{\}\[\]\(\)#\+\-\.!<>|]} $s {\\\0}]
+        set s [regsub -all {[\\`*_\{\}\[\]\(\)#\+\-\.!<>|]} $s {\\\0}]
     }
 
-    # Credits: tcllib/Caius markdown module
-    method ToMarkdown {text {scope {}}} {
-        # Returns $text marked up in markdown syntax
-        #  text - Ruff! text with inline markup
-        #  scope - namespace scope to use for symbol lookup
+    method ProcessEmphasis {text delim scope} {
+        # Called to handle emphasis in the input stream
+        #  text - string to be emphasized
+        #  delim - one of `*`, `**` or `***` indicating level of emphasis
+        #  scope - Documentation scope for resolving references.
+        #
+        # Returns markup for emphasized text.
 
-        # We cannot just pass through our marked-up text as is because
-        # it is not really markdown but rather with some extensions:
-        # - [xxx] treats xxx as potentially a link to documentation for
-        # some programming element.
-        # - _ is not treated as a special char
-        # - $var is marked as a variable name
-        # Moreover, we cannot use a simple regexp or subst because
-        # whether this special processing will depend on where inside
-        # the input these characters occur, whether a \ preceded etc.
+        return [string cat $delim [my FormatInline $text] $delim]
+    }
 
-        set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
+    method ProcessLiteral {text} {
+        # Returns markup for literal text.
+        #  text - string to be formatted as a literal
 
-        set index 0
-        set result {}
+        return [string cat ` $text `]
+    }
 
-        set re_backticks   {\A`+}
-        set re_whitespace  {\s}
-        set re_inlinelink  {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\]\s*\(\s*((?:[^\s\)]+|\([^\s\)]+\))+)?(\s+([\"'])(.*)?\4)?\s*\)}
-        # Changed from markdown to require second optional [] to follow first []
-        # without any intervening space. This is to allow consecutive symbol references
-        # not to be interpreted as [ref] [text] instead of [ref] [ref]
-        # set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\s*\[((?:[^\]]|\[[^\]]*?\])*)\])?}
-        set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\[((?:[^\]]|\[[^\]]*?\])*)\])?}
-        set re_htmltag     {\A</?\w+\s*>|\A<\w+(?:\s+\w+=(?:\"[^\"]*\"|\'[^\']*\'))*\s*/?>}
-        set re_autolink    {\A<(?:(\S+@\S+)|(\S+://\S+))>}
-        set re_comment     {\A<!--.*?-->}
-        set re_entity      {\A\&\S+;}
-        set re_emph {\A(\*{1,3})((?:[^\*\\]|\\.)*)\1}
+    method ProcessInlineLink {url text title scope {link_type {}}} {
+        # Returns the markup for URL links
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - for HTML this shows up as the tooltip
+        #  scope - Documentation scope for resolving references.
+        #  link_type - one of `symbol`, `figure` or `heading` or empty
 
-        while {[set chr [string index $text $index]] ne {}} {
-            switch $chr {
-                "\\" {
-                    # If the next character is a special markdown character
-                    # that we do not treat as special, it should be treated
-                    # as a backslash-prefixed ordinary character.
-                    # So double the backslash and prefix the character.
-                    set next_chr [string index $text [expr $index + 1]]
-                    if {$next_chr eq "_"} {
-                        append result "\\\\\\_"
-                        incr index; # Move past \_
-                        continue
-                    }
-                    # Other characters, special or not, are treated just
-                    # like markdown would so pass through as is at bottom
-                    # of loop.
-                }
-                {_} {
-                    # Unlike Markdown, do not treat underscores as special char
-                    append result \\; # Add an escape prefix
-                    # $chr == _ will be added at bottom of loop
-                }
-                {*} {
-                    # EMPHASIS
-                    if {[regexp $re_whitespace [string index $result end]] &&
-                        [regexp $re_whitespace [string index $text [expr $index + 1]]]} \
-                        {
-                            #do nothing (add character at bottom of loop)
-                        } \
-                        elseif {[regexp -start $index $re_emph \
-                                     $text m del sub]} \
-                        {
-                            append result "$del[my ToMarkdown $sub $scope]$del"
-                            incr index [string length $m]
-                            continue
-                        }
-                }
-                {`} {
-                    # CODE
-                    # Any marked code should not be escaped as above so
-                    # look for it and pass it through as is.
-
-                    # Collect the leading backtick sequence
-                    regexp -start $index $re_backticks $text backticks
-                    set start [expr $index + [string length $backticks]]
-
-                    # Look for the matching backticks. If not found,
-                    # we will not treat this as code. Otherwise pass through
-                    # the entire match unchanged.
-                    if {[regexp -start $start -indices $backticks $text terminating_indices]} {
-                        set stop [lindex $terminating_indices 1]
-                        # Copy the entire substring including leading and trailing
-                        # backticks to output as is as we do not want those
-                        # characters to undergo the special processing above.
-                        set passthru [string range $text $index $stop]
-                        append result $passthru
-                        incr index [string length $passthru]
-                        continue
-                    }
-                }
-                {!} -
-                {[} {
-                    # LINKS AND IMAGES
-                    if {$chr eq {!}} {
-                        set ref_type img
-                        set pre "!\["
-                    } else {
-                        set ref_type link
-                        set pre "\["
-                    }
-
-                    set match_found 0
-                    if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
-                        # INLINE
-                        if {1} {
-                            append result $m
-                            set match_found 1
-                        } else {
-                            # Note: Do quotes inside $title need to be escaped?
-                            append result $pre [my ToMarkdown $txt $scope] "\](" $url " " "\"[my ToMarkdown $title $scope]\"" ")"
-                            set url [escape [string trim $url {<> }]]
-                            set match_found 1
-                        }
-                    } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
-                        if {$lbl eq {}} {
-                            set lbl [regsub -all {\s+} $txt { }]
-                            set display_text_specified 0
-                        } else {
-                            set display_text_specified 1
-                        }
-
-                        if {[my ResolvableReference? $lbl $scope code_link]} {
-                            # RUFF CODE REFERENCE
-                            set url [my Escape [dict get $code_link ref]]
-                            if {! $display_text_specified} {
-                                set txt [my Escape [dict get $code_link label]]
-                            }
-                            if {1} {
-                                append result $pre $txt "\](" $url ")"
-                            } else {
-                                # Note: Do quotes inside $txt (SECOND occurence) need to be escaped?
-                                append result $pre $txt "\](" $url " " "\"$txt\"" ")"
-                            }
-                            set match_found 1
-                        } elseif {[is_builtin $lbl]} {
-                            lassign [builtin_url $lbl] url lbl
-                            if {! $display_text_specified} {
-                                set txt $lbl
-                            }
-                            append result $pre $txt "\](" $url ")"
-                            set match_found 1
-                        } else {
-                            # Not a Ruff! code link. Pass through as is.
-                            # We do not pass text through ToMarkdown as it is
-                            # treated as a markdown reference and will need
-                            # to match the reference entry.
-                            app::log_error "Warning: no target found for link \"$lbl\". Assuming markdown reference."
-                            append result $m
-                            set match_found 1
-                        }
-                    }
-                    # PRINT IMG, A TAG
-                    if {$match_found} {
-                        incr index [string length $m]
-                        continue
-                    }
-                }
-                    {<} {
-                        # HTML TAGS, COMMENTS AND AUTOLINKS
-                        # HTML tags, pass through as is without processing
-                        if {[regexp -start $index $re_comment $text m] ||
-                            [regexp -start $index $re_autolink $text m email link] ||
-                            [regexp -start $index $re_htmltag $text m]} {
-                            append result $m
-                            incr index [string length $m]
-                            continue
-                        }
-                        # Else fall through to pass only the < character
-                    }
-                    {&} {
-                        # ENTITIES
-                        # Pass through entire entity without processing
-                        if {[regexp -start $index $re_entity $text m]} {
-                            append result $m
-                            incr index [string length $m]
-                            continue
-                        }
-                        # Else fall through to processing this single &
-                    }
-                    {$} {
-                        # Ruff extension - treat $var as variables name
-                        # Note: no need to escape characters but do so
-                        # if you change the regexp below
-                        if {[regexp -start $index {\$\w+} $text m]} {
-                            append result "`$m`"
-                            incr index [string length $m]
-                            continue
-                        }
-                    }
-                    {>} -
-                    {'} -
-                    "\"" {
-                        # OTHER SPECIAL CHARACTERS
-                        # Pass through
-                    }
-                    default {}
-                }
-
-                append result $chr
-                incr index
+        if {$title eq ""} {
+            if {$url eq $text} {
+                return [string cat < $url >]
+            } else {
+                return [string cat \[ $text \] \( $url \) ]
             }
-
-            return $result
+        } else {
+            return [string cat \[ $text \] \( $url \" $title "\")" ]
         }
-
-        method extension {} {
-            # Returns the default file extension to be used for output files.
-            return md
-        }
-
-        forward FormatInline my ToMarkdown
     }
+
+    method ProcessInlineImage {url text title scope {link_type {}}} {
+        # Returns the markup for URL to images
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - for HTML this shows up as the tooltip
+        #  scope - Documentation scope for resolving references.
+        #  link_type - one of `symbol`, `figure` or `heading` or empty
+
+        if {$title eq ""} {
+            return [string cat !\[ $text \] \( $url \) ]
+        } else {
+            return [string cat !\[ $text \] \( $url " \"" $title "\")" ]
+        }
+    }
+
+    method ProcessInternalLink {code_link text scope} {
+        # Returns the markup for internal Ruff links.
+        #  code_link - dictionary holding resolvable internal link information
+        #  text - the link text. If empty the label from `code_link` is used.
+        #  scope - Documentation scope for resolving references.
+        set url [my Escape [dict get $code_link ref]]
+        set url [dict get $code_link ref]
+        if {$text eq ""} {
+            set text [my Escape [dict get $code_link label]]
+        }
+        set title $text
+        return [my ProcessInlineLink $url $text "" $scope]
+    }
+
+    method extension {} {
+        # Returns the default file extension to be used for output files.
+        return md
+    }
+}

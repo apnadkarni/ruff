@@ -383,6 +383,14 @@ oo::class create ruff::formatter::Formatter {
 
     }
 
+    method SupportsReferences {} {
+        # Returns boolean indicating whether the formatter supports references.
+        #
+        # Formatters that do not support references should override this to
+        # return false.
+        return true
+    }
+
     method CollectHeadingReference {ns heading} {
         # Adds a reference to a heading to the cross-reference table.
         #  ns - Namespace containing the heading
@@ -442,6 +450,7 @@ oo::class create ruff::formatter::Formatter {
         #
         # The value stored in $refvar is a dictionary with keys `type`
         # (`heading`, `symbol` or `figure`) and `ref` (the reference).
+
         if {[dict exists $References $lookup]} {
             upvar 1 $refvar ref
             set ref [dict get $References $lookup]
@@ -469,6 +478,7 @@ oo::class create ruff::formatter::Formatter {
 
         # If reference is not directly present, we will look up search path
         # but only if lookup value is not fully qualified.
+
         if {![my Reference? $lookup ref] && ! [string match ::* $lookup]} {
             while {$scope ne "" && ![info exists ref]} {
                 # Check class (.) and namespace scope (::)
@@ -1216,21 +1226,142 @@ oo::class create ruff::formatter::Formatter {
         return ""
     }
 
-    method FormatInline {text {scope {}}} {
-        # Converts Ruff! inline formatting to the output format.
-        #  text - Inline text to convert.
+    method ProcessEmphasis {text delim scope} {
+        # Called to handle emphasis in the input stream
+        #  text - string to be emphasized
+        #  delim - one of `*`, `**` or `***` indicating level of emphasis
         #  scope - Documentation scope for resolving references.
-        # This method should be overridden by the concrete subclass.
-        error "Method FormatInline not overridden."
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+        #
+        # Returns markup for emphasized text.
+
+        switch [string length $delim] {
+            1 {
+                return "<em>[my FormatInline $text $scope]</em>"
+            }
+            2 {
+                return "<strong>[my FormatInline $text $scope]</strong>"
+            }
+            3 {
+                return "<strong><em>[my FormatInline $text $scope]</em></strong>"
+            }
+            default {
+                error "Invalid emphasis delimiter length [string length $delim]."
+            }
+        }
+    }
+
+    method ProcessLiteral {text} {
+        # Returns markup for literal text.
+        #  text - string to be formatted as a literal
+        #
+        # The default implementation assumes HTML output format. Derived classes
+        # can derive it for formatters that handle backslashes differently.
+
+        return "<code>[my Escape $text]</code>"
+    }
+
+    method ProcessInlineLink {url text title scope {link_type {}}} {
+        # Returns the markup for URL links
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - for HTML this shows up as the tooltip
+        #  scope - Documentation scope for resolving references.
+        #  link_type - one of `symbol`, `figure` or `heading` or empty
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+
+        # Don't escape URL's
+        # Bug #42 - do not escape else links for names like '<' do not work
+        #set url [my Escape [string trim $url {<> }]]
+        set url [string trim $url {<> }]
+        set text [my FormatInline $text $scope]
+        set css [expr {$link_type eq "symbol" ? " class='ruff_cmd'" : ""}]
+
+        if {$title ne {}} {
+            set title [my FormatInline $title $scope]
+            return "<a href=\"$url\" title=\"$title\"$css>$text</a>"
+        } else {
+            return "<a href=\"$url\"$css>$text</a>"
+        }
+    }
+
+    method ProcessInlineImage {url text title scope {link_type {}}} {
+        # Returns the markup for URL image links
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - for HTML this shows up as the tooltip
+        #  scope - Documentation scope for resolving references.
+        #  link_type - one of `symbol`, `figure` or `heading` or empty
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+
+        # Bug #42 - do not escape else links for names like '<' do not work
+        #set url [my Escape [string trim $url {<> }]]
+        set url [string trim $url {<> }]
+        set text [my FormatInline $text $scope]
+        set css [expr {$link_type eq "symbol" ? "class='ruff_cmd'" : ""}]
+        if {$title ne {}} {
+            set title [my FormatInline $title $scope]
+            return "<img src=\"$url\" alt=\"$text\" title=\"$title\" $css/>"
+        } else {
+            return "<img src=\"$url\" alt=\"$text\" $css/>"
+        }
+    }
+
+    method ProcessInternalLink {code_link text scope} {
+        # Returns the markup for internal Ruff links.
+        #  code_link - dictionary holding resolvable internal link information
+        #  text - the link text. If empty the label from `code_link` is used.
+        #  scope - Documentation scope for resolving references.
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+        set url [dict get $code_link ref]
+        if {$text eq ""} {
+            set text [my Escape [dict get $code_link label]]
+        }
+        set title $text
+        set link_class [dict get $code_link type]
+        return [my ProcessInlineLink $url $text $title $scope $link_class]
+    }
+
+    method ProcessComment {text} {
+        # Returns the markup for a comment
+        #
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+        return [string cat "<!--" $text "-->"]
+    }
+
+    method ProcessVariable {text} {
+        # Returns the markup for a variable name
+        #
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+        return [my ProcessLiteral $text]
+    }
+
+    method InlineHtmlSupported {} {
+        # Returns boolean indicating whether the formatter supports inline HTML.
+        #
+        # The default implementation assumes formatter supports inline HTML.
+        return true
     }
 
     # Credits: tcllib/Caius markdown module
-    # This method is here and not in the Html class because other subclasses
-    # (notably markdown) also need to use ruff->html inline conversion.
-    method ToHtml {text {scope {}}} {
+    method FormatInline {text {scope {}}} {
+        # Parses inline Markdown text and returns it formatted as per the output
+        # formatter
+        #   text - input text in Ruff-flavored Markdown
+        #   scope - Documentation scope for resolving references.
+
         set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
         set index 0
         set result {}
+
+        # TODO - add full support for more entities (see htmlparse)
+        set entity_map [list "&quot;" \" "&apos;" ' "&amp;" & "&lt;" <  "&gt;" >]
 
         set re_backticks   {\A`+}
         set re_whitespace  {\s}
@@ -1242,51 +1373,42 @@ oo::class create ruff::formatter::Formatter {
         set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\[((?:[^\]]|\[[^\]]*?\])*)\])?}
         set re_htmltag     {\A</?\w+\s*>|\A<\w+(?:\s+\w+=(?:\"[^\"]*\"|\'[^\']*\'))*\s*/?>}
         set re_autolink    {\A<(?:(\S+@\S+)|(\S+://\S+))>}
-        set re_comment     {\A<!--.*?-->}
+        set re_comment     {\A<!--(.*?)-->}
         set re_entity      {\A\&\S+;}
 
         set re_emph {\A(\*{1,3})((?:[^\*\\]|\\.)*)\1}
 
         while {[set chr [string index $text $index]] ne {}} {
+            # TODO - check common alphanumeric case first
             switch $chr {
                 "\\" {
                     # ESCAPES
-                    set next_chr [string index $text [expr $index + 1]]
-
-                    if {[string first $next_chr {\`*_\{\}[]()#+-.!>|}] != -1} {
-                        set chr $next_chr
+                    set next_chr [string index $text $index+1]
+                    # TODO - do we not need any [my Escape] here?
+                    if {[string first $next_chr {\\\`*_\{\}[]()#+-.!>|}] != -1} {
+                        append result [my Escape $next_chr]
+                        incr index 2
+                    } else {
+                        # Not a backslash sequence, just process the backslash
+                        append result $chr
                         incr index
                     }
-                }
-                {_} {
-                    # Unlike Markdown, do not treat underscores as special char
                 }
                 {*} {
                     # EMPHASIS
                     if {[regexp $re_whitespace [string index $result end]] &&
-                        [regexp $re_whitespace [string index $text [expr $index + 1]]]} \
-                        {
-                            #do nothing
-                        } \
-                        elseif {[regexp -start $index \
-                                     $re_emph \
-                                     $text m del sub]} \
-                        {
-                            switch [string length $del] {
-                                1 {
-                                    append result "<em>[my ToHtml $sub $scope]</em>"
-                                }
-                                2 {
-                                    append result "<strong>[my ToHtml $sub $scope]</strong>"
-                                }
-                                3 {
-                                    append result "<strong><em>[my ToHtml $sub $scope]</em></strong>"
-                                }
-                            }
-
-                            incr index [string length $m]
-                            continue
-                        }
+                        [regexp $re_whitespace [string index $text [expr $index + 1]]]} {
+                        # Solitary * surrounded by whitespace.
+                        # TODO - escape it?
+                        append result $chr
+                        incr index
+                    } elseif {[regexp -start $index $re_emph $text m delim inner]}  {
+                        append result [my ProcessEmphasis $inner $delim $scope]
+                        incr index [string length $m]
+                    } else {
+                        append result $chr
+                        incr index
+                    }
                 }
                 {`} {
                     # CODE
@@ -1301,35 +1423,30 @@ oo::class create ruff::formatter::Formatter {
 
                         set sub [string trim [string range $text $start $stop]]
 
-                        append result "<code>[my Escape $sub]</code>"
+                        append result [my ProcessLiteral $sub]
                         set index [expr [lindex $terminating_indices 1] + 1]
-                        continue
+                    } else {
+                        # Solitary ` surrounded by whitespace.
+                        # TODO - escape it?
+                        append result $chr
+                        incr index
                     }
                 }
                 {!} -
                 "[" {
                     # Note: "[", not {[} because latter messes Emacs indentation
                     # LINKS AND IMAGES
-                    if {$chr eq {!}} {
-                        set ref_type img
-                    } else {
-                        set ref_type link
-                    }
-
                     set match_found 0
-                    set css ""
+                    set ref_type [expr {$chr eq "!" ? "img" : "link"}]
+                    set link_class ""; # symbol, heading, figure
 
                     if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
-                        # INLINE
-                        incr index [string length $m]
-
-                        set url [my Escape [string trim $url {<> }]]
-                        set txt [my ToHtml $txt $scope]
-                        set title [my ToHtml $title $scope]
-
+                        # INLINE LINK - [text](url "title")
                         set match_found 1
                     } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
+                        # Internal links - [text]?[link]?
                         if {$lbl eq {}} {
+                            # Only one component
                             # Be loose in whitespace
                             set lbl [regsub -all {\s+} $txt { }]
                             set display_text_specified 0
@@ -1339,125 +1456,119 @@ oo::class create ruff::formatter::Formatter {
 
                         if {[my ResolvableReference? $lbl $scope code_link]} {
                             # RUFF CODE REFERENCE
-                            # Bug #42 - do not escape else links for names like '<' do not work
-                            if {0} {
-                                set url [my Escape [dict get $code_link ref]]
-                            } else {
-                                set url [dict get $code_link ref]
-                            }
-                            if {! $display_text_specified} {
-                                set txt [my Escape [dict get $code_link label]]
-                            }
-                            set title $txt
-                            switch [dict get $code_link type] {
-                                symbol {set css "class='ruff_cmd'"}
-                                figure {
-                                    # TBD - figure numbering ?
-                                }
-                                heading {}
-                            }
+                            append result \
+                                [my ProcessInternalLink $code_link \
+                                     [expr {
+                                            $display_text_specified ? $txt : ""
+                                        }] $scope]
                             incr index [string length $m]
-                            set match_found 1
+                            continue
                         } elseif {[is_builtin $lbl]} {
                             lassign [builtin_url $lbl] url txt
                             set title $lbl
-                            incr index [string length $m]
+                            set match_found 1
+                        } elseif {![my SupportsReferences]} {
+                            # If references are not maintained by the formatter
+                            # don't log an error. Format similar to URL
+                            # (looking at you, nroff)
+                            set url ""
+                            set title $txt 
                             set match_found 1
                         } else {
                             app::log_error "Warning: no target found for link \"$lbl\". Assuming markdown reference."
                             set lbl [string tolower $lbl]
-
-                            if {[info exists ::Markdown::_references($lbl)]} {
-                                lassign $::Markdown::_references($lbl) url title
-
-                                set url [my Escape [string trim $url {<> }]]
-                                set txt [my ToHtml $txt $scope]
-                                set title [my ToHtml $title $scope]
-
-                                # REFERENCED
-                                incr index [string length $m]
-                                set match_found 1
-                            }
+                            append result [my Escape $m]
+                            incr index [string length $m]
+                            continue
                         }
                     }
                     # PRINT IMG, A TAG
                     if {$match_found} {
-                        if {$ref_type eq {link}} {
-                            if {$title ne {}} {
-                                append result "<a href=\"$url\" title=\"$title\" $css>$txt</a>"
-                            } else {
-                                append result "<a href=\"$url\" $css>$txt</a>"
-                            }
+                        incr index [string length $m]
+                        if {$ref_type eq "img"} {
+                            append result [my ProcessInlineImage $url $txt $title $scope $link_class]
                         } else {
-                            if {$title ne {}} {
-                                append result "<img src=\"$url\" alt=\"$txt\" title=\"$title\" $css/>"
-                            } else {
-                                append result "<img src=\"$url\" alt=\"$txt\" $css/>"
-                            }
+                            append result [my ProcessInlineLink $url $txt $title $scope $link_class]
                         }
-
-                        continue
+                    } else {
+                        append result $chr
+                        incr index
                     }
                 }
                 {<} {
                     # HTML TAGS, COMMENTS AND AUTOLINKS
-                    if {[regexp -start $index $re_comment $text m]} {
-                        append result $m
+                    if {[regexp -start $index $re_comment $text m comment]} {
+                        append result [my ProcessComment $comment]
                         incr index [string length $m]
-                        continue
                     } elseif {[regexp -start $index $re_autolink $text m email link]} {
                         if {$link ne {}} {
-                            set link [my Escape $link]
-                            append result "<a href=\"$link\">$link</a>"
+                            append result [my ProcessInlineLink $link $link "" $scope]
                         } else {
                             set mailto_prefix "mailto:"
                             if {![regexp "^${mailto_prefix}(.*)" $email mailto email]} {
                                 # $email does not contain the prefix "mailto:".
                                 set mailto "mailto:$email"
                             }
-                            append result "<a href=\"$mailto\">$email</a>"
+                            append result [my ProcessInlineLink $email $mailto "" $scope]
                         }
                         incr index [string length $m]
-                        continue
                     } elseif {[regexp -start $index $re_htmltag $text m]} {
+                        if {![my InlineHtmlSupported]} {
+                            app::log_error "Warning: [info object class [self object]] does not support inline HTML."
+                        }
                         append result $m
                         incr index [string length $m]
-                        continue
+                    } else {
+                        append result [my Escape $chr]
+                        incr index
                     }
-
-                    set chr [my Escape $chr]
                 }
                 {&} {
                     # ENTITIES
                     if {[regexp -start $index $re_entity $text m]} {
-                        append result $m
+                        if {![my InlineHtmlSupported]} {
+                            app::log_error "Warning: [self class] does not support inline HTML."
+                        }
+                        # Disabled because the <tag> method in method tables
+                        # gets interpreted as an HTML tag. Somewhere there is
+                        # this proc gets called recursively with < being
+                        # mapped to &lt; on the first pass and then back
+                        # to < on the second pass
+                        append result [my Escape [string map $entity_map $m]]
                         incr index [string length $m]
-                        continue
+                    } else {
+                        append result [my Escape $chr]
+                        incr index
                     }
-
-                    set chr [my Escape $chr]
                 }
                 {$} {
                     # Ruff extension - treat $var as variables name
                     # Note: no need to escape characters but do so
                     # if you change the regexp
                     if {[regexp -start $index {\$\w+} $text m]} {
-                        append result "<code>$m</code>"
+                        append result [my ProcessVariable $m]
                         incr index [string length $m]
-                        continue
+                    } else {
+                        append result $chr
+                        incr index
                     }
                 }
+                {_} -
                 {>} -
                 {'} -
                 "\"" {
-                    # OTHER SPECIAL CHARACTERS
-                    set chr [my Escape $chr]
+                    # OTHER SPECIAL CHARACTERS.
+                    # Note _ has no special meaning for Ruff! unlike Markdown.
+                    append result [my Escape $chr]
+                    incr index
                 }
-                default {}
+                default {
+                    append result $chr
+                    incr index
+                }
             }
-            append result $chr
-            incr index
         }
         return $result
     }
+
 }

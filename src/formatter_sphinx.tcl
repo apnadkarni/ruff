@@ -44,6 +44,7 @@ oo::class create ruff::formatter::Sphinx {
 
     method SymbolReference {ns symbol} {
         # Implements the [Formatter.SymbolReference] method for Sphinx.
+
         set ref [ns_file_base $ns .html]
         # Reference to the global namespace is to the file itself.
         if {$ns eq "::" && $symbol eq ""} {
@@ -108,10 +109,6 @@ oo::class create ruff::formatter::Sphinx {
         return $doc
     }
 
-    method Literal {text} {
-        return [string cat `` $text ``]
-    }
-
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
         # Adds heading for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
@@ -132,56 +129,19 @@ oo::class create ruff::formatter::Sphinx {
         # Use Sphinx function/class/method directive based on type
         append Document "\n"
 
-        # TODO - combine all these switch cases
-        switch -exact -- $type {
-            "class" {
-                # Use generic function directive with special index role
-                append Document ".. index::\n   single: $fqn (class)\n\n"
-                append Document ".. _$anchor:\n\n"
+        # Use generic function directive with special index role
+        append Document ".. index::\n   single: $fqn ($type)\n\n"
+        append Document ".. _$anchor:\n\n"
 
-                set heading [my Literal [namespace tail $name]]
-                if {[string length $ns]} {
-                    set ns_link [my ToSphinx [markup_reference $ns]]
-                    append heading " \[${ns_link}\]"
-                }
-
-                set char [lindex $HeaderMarkers $level]
-                set underline [string repeat $char [string length $heading]]
-                append Document "$heading\n$underline\n"
-            }
-            "proc" {
-                # Use generic function directive
-                append Document ".. index::\n   single: $fqn (procedure)\n\n"
-                append Document ".. _$anchor:\n\n"
-
-                set heading [my Literal [namespace tail $name]]
-                if {[string length $ns]} {
-                    set ns_link [my ToSphinx [markup_reference $ns]]
-                    append heading " \[${ns_link}\]"
-                }
-
-                set char [lindex $HeaderMarkers $level]
-                set underline [string repeat $char [string length $heading]]
-                append Document "$heading\n$underline\n"
-            }
-            "method" {
-                # Use generic function directive with method annotation
-                append Document ".. index::\n   single: $fqn (method)\n\n"
-                append Document ".. _$anchor:\n\n"
-
-                set heading [my Literal [namespace tail $name]]
-                if {[string length $ns]} {
-                    set ns_link [my ToSphinx [markup_reference $ns]]
-                    append heading " \[${ns_link}\]"
-                }
-
-                set char [lindex $HeaderMarkers $level]
-                set underline [string repeat $char [string length $heading]]
-                append Document "$heading\n$underline\n"
-            }
+        set heading [my ProcessLiteral [namespace tail $name]]
+        if {[string length $ns]} {
+            set ns_link [my FormatInline [markup_reference $ns]]
+            append heading " \[${ns_link}\]"
         }
 
-        return
+        set char [lindex $HeaderMarkers $level]
+        set underline [string repeat $char [string length $heading]]
+        append Document "$heading\n$underline\n"
     }
 
     method AddHeading {level text scope {tooltip {}}} {
@@ -203,7 +163,7 @@ oo::class create ruff::formatter::Sphinx {
             append Document "\n.. _$anchor:\n\n"
         }
 
-        set heading_text [my ToSphinx $text $scope]
+        set heading_text [my FormatInline $text $scope]
 
         # RST heading with underline
         if {$do_link} {
@@ -222,7 +182,7 @@ oo::class create ruff::formatter::Sphinx {
         #  lines  - The paragraph lines.
         #  scope - The documentation scope of the content.
 
-        append Document \n [my ToSphinx [join $lines \n] $scope] \n
+        append Document \n [my FormatInline [join $lines \n] $scope] \n
         return
     }
 
@@ -235,7 +195,7 @@ oo::class create ruff::formatter::Sphinx {
         append Document "\n"
         foreach line $lines {
             # RST blockquotes are created by indenting paragraphs
-            append Document "    " [my ToSphinx $line $scope] \n
+            append Document "    " [my FormatInline $line $scope] \n
         }
         append Document "\n"
         return
@@ -258,11 +218,11 @@ oo::class create ruff::formatter::Sphinx {
                 }
             }
             if {$preformatted in {none term}} {
-                set def [my ToSphinx $def $scope]
+                set def [my FormatInline $def $scope]
             }
             set term [dict get $item term]
             if {$preformatted in {none definition}} {
-                set term [my ToSphinx $term $scope]
+                set term [my FormatInline $term $scope]
             }
 
             # Use field list format for parameters
@@ -322,7 +282,7 @@ oo::class create ruff::formatter::Sphinx {
                     append Document "\n     -"
                 }
                 set first 0
-                set cell_text [my ToSphinx $cell $scope]
+                set cell_text [my FormatInline $cell $scope]
                 append Document " $cell_text"
             }
             append Document "\n"
@@ -337,7 +297,7 @@ oo::class create ruff::formatter::Sphinx {
                     append Document "\n     -"
                 }
                 set first 0
-                set cell_text [my ToSphinx $cell $scope]
+                set cell_text [my FormatInline $cell $scope]
                 append Document " $cell_text"
             }
             append Document "\n"
@@ -355,7 +315,7 @@ oo::class create ruff::formatter::Sphinx {
         set marker [dict get $content marker]
         set marker [expr {$marker eq "1." ? "#." : "-"}]
         foreach lines [dict get $content items] {
-            set bullet_text [my ToSphinx [join $lines { }] $scope]
+            set bullet_text [my FormatInline [join $lines { }] $scope]
             # Handle multi-line bullets with proper indentation
             set bullet_lines [split $bullet_text \n]
             set first_line [lindex $bullet_lines 0]
@@ -383,13 +343,6 @@ oo::class create ruff::formatter::Sphinx {
         }
         append Document "\n"
         return
-    }
-
-    method AddImage {url alt} {
-        # Returns a RST link to the image url and registers it as a substitution
-        set rst_id [my MakeSphinxId $url]
-        dict set Images $rst_id [dict create url $url alt $alt]
-        return "|$rst_id|"
     }
 
     method AddFenced {lines fence_options scope} {
@@ -430,7 +383,7 @@ oo::class create ruff::formatter::Sphinx {
                                {*}$diagrammer]
 
             # Use Sphinx figure directive for diagrams
-            # TODO - How to right align an image with a caption?
+            # Cannot align an image in Sphinx.
             # Using ..figure allows for a caption but then floats the image
             # Using ..image does not float the image but cannot have a caption
             append Document "\n"
@@ -524,7 +477,7 @@ oo::class create ruff::formatter::Sphinx {
             set next_chr [string index $text $i+1]
 
             # Escape based on character type. Check common case first.
-            if {[string match {[a-zA-Z0-9]} $chr]} {
+            if {[string match {[ a-zA-Z0-9]} $chr]} {
                 append result $chr
             } elseif {$chr eq "\\"} {
                 # Backslashes always need escaping
@@ -534,155 +487,80 @@ oo::class create ruff::formatter::Sphinx {
                       ($next_chr ne "" && ![regexp {[\s\)\]\}>'"]} $next_chr])} {
                 # Escape markup start characters at boundaries
                 append result "\\" $chr
+            } else {
+                append result $chr
             }
         }
 
         return $result
     }
 
+    method ProcessEmphasis {text delim scope} {
+        # Returns markup for emphasized text.
+        #  text - string to be emphasized
+        #  delim - one of `*`, `**` or `***` indicating level of emphasis
+        #  scope - Documentation scope for resolving references.
+        #
 
-    method ToSphinx {text {scope {}}} {
-        # Returns $text marked up in Sphinx/RST syntax
-        #  text - Ruff! text with inline markup
-        #  scope - namespace scope to use for symbol lookup
-
-        set index 0
-        set result {}
-
-        set re_backticks   {\A`+}
-        set re_whitespace  {\s}
-        set re_inlinelink  {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\]\s*\(\s*((?:[^\s\)]+|\([^\s\)]+\))+)?(\s+([\"'])(.*)?\4)?\s*\)}
-        set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\[((?:[^\]]|\[[^\]]*?\])*)\])?}
-        set re_entity      {\A\&\S+;}
-        set re_emph {\A(\*{1,3})((?:[^\*\\]|\\.)*)\1}
-
-        while {[set chr [string index $text $index]] ne {}} {
-            switch $chr {
-                "\\" {
-                    # Handle backslash escaping
-                    set next_chr [string index $text [expr $index + 1]]
-                    if {$next_chr eq "_"} {
-                        append result "\\\\_"
-                        incr index
-                        continue
-                    }
-                }
-                {_} {
-                    # Escape underscores
-                    append result \\_
-                    incr index
-                    continue
-                }
-                {*} {
-                    # EMPHASIS or STRONG
-                    if {[regexp $re_whitespace [string index $result end]] &&
-                        [regexp $re_whitespace [string index $text [expr $index + 1]]]} {
-                        append result \\*
-                    } elseif {[regexp -start $index $re_emph \
-                                   $text m del sub]} {
-                        # *** not supported. Map to **
-                        set del [string range $del 0 1]
-                        append result "$del[my ToSphinx $sub $scope]$del"
-                        incr index [string length $m]
-                        continue
-                    } else {
-                        append result *
-                    }
-                    incr index
-                    continue
-                }
-                {`} {
-                    # CODE - inline literals
-                    regexp -start $index $re_backticks $text backticks
-                    set start [expr $index + [string length $backticks]]
-
-                    if {[regexp -start $start -indices $backticks $text terminating_indices]} {
-                        set stop [expr {[lindex $terminating_indices 0] - 1}]
-                        set sub [string trim [string range $text $start $stop]]
-                        append result "``" $sub "``"
-                        set index [expr [lindex $terminating_indices 1] + 1]
-                        continue
-                    }
-                }
-                {!} -
-                "[" {
-                    # Note: "[", not {[} because latter messes Emacs indentation
-                    # LINKS AND IMAGES
-                    # INLINE LINKS AND IMAGES
-                    set ref_type [expr {$chr eq "!" ? "img" : "link"}]
-                    set match_found 0
-
-                    if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
-                        set link_text [my ToSphinx $txt $scope]
-                        set match_found 1
-                    } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
-                        if {$lbl eq {}} {
-                            set lbl [regsub -all {\s+} $txt { }]
-                            set display_text_specified 0
-                        } else {
-                            set display_text_specified 1
-                        }
-
-                        if {[my ResolvableReference? $lbl $scope code_link]} {
-                            # RUFF CODE REFERENCE - use Sphinx :ref: role
-                            set url [dict get $code_link ref]
-                            if {$display_text_specified} {
-                                set link_text $txt
-                            } else {
-                                set link_text [dict get $code_link label]
-                            }
-                            set match_found 1
-                        } elseif {[is_builtin $lbl]} {
-                            lassign [builtin_url $lbl] url lbl
-                            if {$display_text_specified} {
-                                set link_text $txt
-                            } else {
-                                set link_text $lbl
-                            }
-                            set match_found 1
-                        } else {
-                            app::log_error "Warning: no target found for link \"$lbl\". Passing through verbatim."
-                            append result [my Escape $m]
-                            incr index [string length $m]
-                            continue
-                        }
-                    }
-
-                    if {$match_found} {
-                        if {$ref_type eq "img"} {
-                            append result [my AddImage $url $link_text]
-                        } else {
-                            # Use standard external link format
-                            append result "`$link_text <$url>`_"
-                        }
-                        incr index [string length $m]
-                        continue
-                    }
-                }
-                {$} {
-                    # Ruff extension - treat $var as variable
-                    if {[regexp -start $index {\$\w+} $text m]} {
-                        append result "``$m``"
-                        incr index [string length $m]
-                        continue
-                    }
-                }
-                {&} {
-                    # ENTITIES
-                    if {[regexp -start $index $re_entity $text m]} {
-                        append result $m
-                        incr index [string length $m]
-                        continue
-                    }
-                }
-                default {}
-            }
-
-            append result $chr
-            incr index
+        # Note: reST does not support ***. Treat as **
+        if {$delim eq "***"} {
+            set delim "**"
         }
+        switch -exact $delim {
+            * -
+            ** {
+                return [string cat $delim [my FormatInline $text $scope] $delim]
+            }
+            default {
+                error "Invalid emphasis delimiter length [string length $delim]."
+            }
+        }
+    }
 
-        return $result
+    method ProcessLiteral {text} {
+        # Returns markup for literal text.
+        #  text - string to be formatted as a literal
+
+        return [string cat `` $text ``]
+    }
+
+    method ProcessInlineLink {url text title scope {link_type {}}} {
+        # Returns the markup for URL links
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - not used
+        #  scope - not used
+        #  link_type - not used
+
+        return [string cat ` $text " <" $url ">`_"]
+    }
+
+    method ProcessInlineImage {url text title scope {link_type {}}} {
+        # Returns a RST link to the image url and registers it as a substitution
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - not used
+        #  scope - not used
+        #  link_type - not used
+        set rst_id [my MakeSphinxId $url]
+        dict set Images $rst_id [dict create url $url alt $text]
+        return "|$rst_id|"
+    }
+
+    method ProcessComment {text} {
+        # Returns the markup for a comment.
+        #
+        set comment \n
+        foreach line [split $text \n] {
+            append comment ".. " [my Escape $line] \n
+        }
+        return $comment
+    }
+
+    method InlineHtmlSupported {} {
+        # Returns boolean indicating whether the formatter supports inline HTML.
+        #
+        return false
     }
 
     method extension {} {
@@ -733,6 +611,4 @@ oo::class create ruff::formatter::Sphinx {
         return
     }
 
-
-    forward FormatInline my ToSphinx
 }

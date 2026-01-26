@@ -375,7 +375,8 @@ namespace eval ruff {
 
         As a general rule, inline formatting should be kept basic and avoid
         complexities like nested constructs as formatters vary in their
-        capabilities.
+        capabilities. Embedded HTML is also strongly discouraged as most
+        formatters will not process it.
 
         ## Documenting classes
 
@@ -1044,7 +1045,7 @@ proc ruff::private::make_id {args} {
         set arg
     }] qz]
 
-    foreach {- alnum notalnumchar} [regexp -inline -all {([a-z0-9]*)([^a-z0-9]?)} $s] {
+    foreach {- alnum notalnumchar} [regexp -inline -all {([a-zA-Z0-9]*)([^a-zA-Z0-9]?)} $s] {
         append result $alnum
         if {$notalnumchar ne ""} {
             append result [format %x [scan $notalnumchar %c]]
