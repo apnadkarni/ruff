@@ -159,9 +159,9 @@ oo::class create ruff::formatter::Nroff {
             set level [dict get $HeaderLevels $level]
         }
 
-        # TBD - should $text really be passed through ToOutputFormat? In particular do
+        # TBD - should $text really be passed through FormatInline? In particular do
         # commands like .SH accept embedded escapes ?
-        set text [my ToOutputFormat $text $scope]
+        set text [my FormatInline $text $scope]
         if {$level < 3} {
             append Body [nr_section $text]
         } elseif {$level == 3} {
@@ -176,7 +176,7 @@ oo::class create ruff::formatter::Nroff {
         # See [Formatter.AddParagraph].
         #  lines  - The paragraph lines.
         #  scope - The documentation scope of the content.
-        append Body [nr_p] [my ToOutputFormat [join $lines \n] $scope]
+        append Body [nr_p] [my FormatInline [join $lines \n] $scope]
         return
     }
 
@@ -228,11 +228,11 @@ oo::class create ruff::formatter::Nroff {
                 }
             }
             if {$preformatted in {none term}} {
-                set def [my ToOutputFormat $def $scope]
+                set def [my FormatInline $def $scope]
             }
             set term [dict get $item term]
             if {$preformatted in {none definition}} {
-                set term [my ToOutputFormat $term $scope]
+                set term [my FormatInline $term $scope]
             }
             append Body [nr_blt $term] "\n" $def
         }
@@ -288,13 +288,13 @@ oo::class create ruff::formatter::Nroff {
         append Body "[join $tbl_alignments][nr_period]" \n
         if {[info exists header]} {
             append Body [join [lmap cell $header {
-                my ToOutputFormat $cell $scope
+                my FormatInline $cell $scope
             }] $sep] \n
             append Body _ \n; # Horizontal rule
         }
         foreach row $rows {
             append Body [join [lmap cell $row {
-                my ToOutputFormat $cell $scope
+                my FormatInline $cell $scope
             }] $sep] \n
         }
         append Body [nr_te] \n
@@ -310,21 +310,21 @@ oo::class create ruff::formatter::Nroff {
             if {1} {
                 set n 0
                 foreach lines [dict get $content items] {
-                    append Body [nr_enum [incr n]] \n [my ToOutputFormat [join $lines { }] $scope] \n
+                    append Body [nr_enum [incr n]] \n [my FormatInline [join $lines { }] $scope] \n
                 }
 
             } else {
                 append Body ".nr Li 0\n.in +4\n.ta 2\n\n"
                 foreach lines [dict get $content items] {
                     append Body ".ti -4\n.nr Li +1\n" \
-                        "\\t\\n\[Li\]. [my ToOutputFormat [join $lines \n] $scope]\n" \
+                        "\\t\\n\[Li\]. [my FormatInline [join $lines \n] $scope]\n" \
                         ".br\n"
                 }
                 append Body ".in -4"
             }
         } else {
             foreach lines [dict get $content items] {
-                append Body [nr_blt "\n\1\\(bu"] "\n" [my ToOutputFormat [join $lines { }] $scope]
+                append Body [nr_blt "\n\1\\(bu"] "\n" [my FormatInline [join $lines { }] $scope]
             }
         }
         return
@@ -394,217 +394,6 @@ oo::class create ruff::formatter::Nroff {
         return $s
     }
 
-    # Credits: tcllib/Caius markdown module
-    method ToNroff {text {scope {}}} {
-        # Returns $text marked up in nroff syntax
-        #  text - Ruff! text with inline markup
-        #  scope - namespace scope to use for symbol lookup
-
-        # Passed in text is kinda markdown but with some extensions:
-        # - [xxx] treats xxx as potentially a link to documentation for
-        # some programming element.
-        # - _ is not treated as a special char
-        # - $var is marked as a variable name
-        # Moreover, we cannot use a simple regexp or subst because
-        # whether this special processing will depend on where inside
-        # the input these characters occur, whether a \ preceded etc.
-
-        set text [regsub -all -lineanchor {[ ]{2,}$} $text [nr_br]]
-
-        set index 0
-        set result {}
-
-        set re_backticks   {\A`+}
-        set re_whitespace  {\s}
-        set re_inlinelink  {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\]\s*\(\s*((?:[^\s\)]+|\([^\s\)]+\))+)?(\s+([\"'])(.*)?\4)?\s*\)}
-        # Changed from markdown to require second optional [] to follow first []
-        # without any intervening space. This is to allow consecutive symbol references
-        # not to be interpreted as [ref] [text] instead of [ref] [ref]
-        # set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\s*\[((?:[^\]]|\[[^\]]*?\])*)\])?}
-        set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\[((?:[^\]]|\[[^\]]*?\])*)\])?}
-        set re_htmltag     {\A</?\w+\s*>|\A<\w+(?:\s+\w+=(?:\"[^\"]*\"|\'[^\']*\'))*\s*/?>}
-        set re_autolink    {\A<(?:(\S+@\S+)|(\S+://\S+))>}
-        set re_comment     {\A<!--.*?-->}
-        set re_entity      {\A\&\S+;}
-        set re_emph {\A(\*{1,3})((?:[^\*\\]|\\.)*)\1}
-
-        while {[set chr [string index $text $index]] ne {}} {
-            switch $chr {
-                "\\" {
-                    # If next character is a special markdown char, set that as the
-                    # the character. Otherwise just pass this \ as the character.
-                    set next_chr [string index $text [expr $index + 1]]
-                    if {[string first $next_chr {\\\`*_\{\}[]()#+-.!>|}] != -1} {
-                        append result [my Escape $next_chr]
-                        incr index 2
-                    } else {
-                        # Not a backslash sequence, just process the backslash
-                        append result $chr
-                        incr index
-                    }
-                    continue
-                }
-                {_} {
-                    # Unlike Markdown, underscores are not treated as special char
-                }
-                {*} {
-                    # EMPHASIS
-                    if {[regexp $re_whitespace [string index $result end]] &&
-                        [regexp $re_whitespace [string index $text [expr $index + 1]]]} {
-                            #do nothing (add character at bottom of loop)
-                        } elseif {[regexp -start $index $re_emph \
-                                     $text m del sub]} {
-                            append result [my ProcessEmphasis $sub $del $scope]
-                            incr index [string length $m]
-                            continue
-                        } else {
-                            append result $chr
-                            incr index
-                            continue
-                        }
-                }
-                {`} {
-                    # CODE
-                    # Any marked code should not be escaped as above so
-                    # look for it and pass it through as is.
-                    # TBD - anything needed to pass text verbatim?
-
-                    # Collect the leading backtick sequence
-                    regexp -start $index $re_backticks $text backticks
-                    set start [expr $index + [string length $backticks]]
-
-                    # Look for the matching backticks. If not found,
-                    # we will not treat this as code. Otherwise pass through
-                    # the entire match unchanged.
-                    if {[regexp -start $start -indices $backticks $text terminating_indices]} {
-                        set stop [expr {[lindex $terminating_indices 0] - 1}]
-
-                        set sub [string trim [string range $text $start $stop]]
-
-                        append result [my ProcessLiteral $sub]
-                        set index [expr [lindex $terminating_indices 1] + 1]
-                        continue
-                    }
-                }
-                {!} -
-                "\[" {
-                    # LINKS AND IMAGES
-                    if {$chr eq {!}} {
-                        set ref_type img
-                        set pre "!\["
-                    } else {
-                        set ref_type link
-                        set pre "\["
-                    }
-
-                    set match_found 0
-                    if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
-                        # INLINE
-                        incr index [string length $m]
-                        set match_found 1
-                    } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
-                        if {$lbl eq {}} {
-                            # Be loose in whitespace
-                            set lbl [regsub -all {\s+} $txt { }]
-                            set display_text_specified 0
-                        } else {
-                            set display_text_specified 1
-                        }
-
-                        set code_link ""
-                        if {[my ResolvableReference? $lbl $scope code_link]} {
-                            # RUFF CODE REFERENCE
-                            set url [my Escape [dict get $code_link ref]]
-                        } else {
-                            set url ""
-                        }
-                        if {! $display_text_specified && $code_link ne ""} {
-                            set txt [my Escape [dict get $code_link label]]
-                        }
-                        set title $txt
-                        incr index [string length $m]
-                        set match_found 1
-                    }
-                    # PRINT IMG, A TAG
-                    if {$match_found} {
-                        if {$ref_type eq {link}} {
-                            # TBD - some nroff version support urls using .UR
-                            append result [my ProcessInlineLink $url $txt "" $scope]
-                        } else {
-                            app::log_error "Warning: Image URL $url found. Images are not supported for Nroff output."
-                            append result $txt " \[Image: $url\]"
-                        }
-
-                        continue
-                    }
-                }
-                {<} {
-                    # HTML TAGS, COMMENTS AND AUTOLINKS
-                    # HTML tags, pass through as is without processing
-
-                    if {[regexp -start $index $re_comment $text m]} {
-                        append result [my ProcessComment $text]
-                        incr index [string length $m]
-                        continue
-                    } elseif {[regexp -start $index $re_autolink $text m email link]} {
-                        if {$link ne {}} {
-                            set link [my Escape $link]
-                            append result " \[URL: $link\]"
-                        } else {
-                            set mailto_prefix "mailto:"
-                            if {![regexp "^${mailto_prefix}(.*)" $email mailto email]} {
-                                # $email does not contain the prefix "mailto:".
-                                set mailto "mailto:$email"
-                            }
-                            append result "<a href=\"$mailto\">$email</a>"
-                            append result " \[$mailto\]"
-                        }
-                        incr index [string length $m]
-                        continue
-                    } elseif {[regexp -start $index $re_htmltag $text m]} {
-                        app::log_error "Warning: HTML tag $m skipped. HTML tags not supported by Nroff formatter."
-                        incr index [string length $m]
-                        continue
-                    }
-                    # Else fall through to pass only the < character
-                }
-                {&} {
-                    # ENTITIES
-                    # Pass through entire entity without processing
-                    # TBD - add support for more entities
-                    if {[regexp -start $index $re_entity $text m]} {
-                        set html_mapping [list "&quot;" \" "&apos;" ' "&amp;" & "&lt;" <  "&gt;" >]
-                        append result [string map $html_mapping $m]
-                        incr index [string length $m]
-                        continue
-                    }
-                    # Else fall through to processing this single &
-                }
-                {$} {
-                    # Ruff extension - treat $var as variables name
-                    # Note: no need to escape characters but do so
-                    # if you change the regexp below
-                    if {[regexp -start $index {\$\w+} $text m]} {
-                        append result [my ProcessVariable $m]
-                        incr index [string length $m]
-                        continue
-                    }
-                }
-                {>} -
-                {'} -
-                "\"" {
-                    # OTHER SPECIAL CHARACTERS
-                    # Pass through
-                }
-                default {}
-            }
-
-            append result $chr
-            incr index
-        }
-
-        return $result
-    }
 
     method ProcessEmphasis {text delim scope} {
         # Returns markup for emphasized text.
@@ -619,10 +408,10 @@ oo::class create ruff::formatter::Nroff {
         }
         switch -exact $delim {
             *  {
-                return [string cat [nr_ul] [my ToOutputFormat $text $scope] [nr_fpop]]
+                return [string cat [nr_ul] [my FormatInline $text $scope] [nr_fpop]]
             }
             ** {
-                return [string cat [nr_bld] [my ToOutputFormat $text $scope] [nr_fpop]]
+                return [string cat [nr_bld] [my FormatInline $text $scope] [nr_fpop]]
             }
             default {
                 error "Invalid emphasis delimiter length [string length $delim]."
@@ -646,7 +435,7 @@ oo::class create ruff::formatter::Nroff {
         #  link_type - not used
 
         set url [string trim $url {<> }]
-        set text [my ToOutputFormat $text $scope]
+        set text [my FormatInline $text $scope]
 
         # TBD - some nroff version support urls using .UR
         if {$url ne "" && $text ne $url} {
@@ -693,7 +482,6 @@ oo::class create ruff::formatter::Nroff {
         return 3tcl
     }
 
-    forward FormatInline my ToOutputFormat
 }
 
 # MODFIED/ADAPTED From tcllib - BSD license.]

@@ -268,7 +268,7 @@ oo::class create ruff::formatter::Html {
             set tip "<pre>[join [my SynopsisToHtml $synopsis] \n]</pre>"
         }
         if {[llength $tooltip]} {
-            append tip "[my ToOutputFormat [string trim [join $tooltip { }]] $ns]\n"
+            append tip "[my FormatInline [string trim [join $tooltip { }]] $ns]\n"
         }
         if {[info exists tip]} {
             dict set linkinfo tip $tip
@@ -279,7 +279,7 @@ oo::class create ruff::formatter::Html {
         dict set NavigationLinks $anchor [dict create LinkInfo $linkinfo Type $type]
         dict set GlobalIndex $anchor $linkinfo
         if {[string length $ns]} {
-            set ns_link [my ToOutputFormat [markup_reference $ns]]
+            set ns_link [my FormatInline [markup_reference $ns]]
             set heading "<a name='$anchor'>[my Escape $name]</a><span class='ns_scope'> \[${ns_link}\]</span>"
         } else {
             set heading "<a name='$anchor'>[my Escape $fqn]</a>"
@@ -305,13 +305,13 @@ oo::class create ruff::formatter::Html {
             set anchor [my Anchor $scope $text]
             set linkinfo [dict create level $level href "#$anchor"]
             if {$tooltip ne ""} {
-                set tip "[my ToOutputFormat [string trim [join $tooltip { }]] $scope]\n"
+                set tip "[my FormatInline [string trim [join $tooltip { }]] $scope]\n"
                 dict set linkinfo tip $tip
             }
             dict set linkinfo label $text
 
             # NOTE: <a></a> empty because the text itself may contain anchors.
-            set heading "<a name='$anchor'></a>[my ToOutputFormat $text $scope]"
+            set heading "<a name='$anchor'></a>[my FormatInline $text $scope]"
 
             # Namespace headers do not get a navigation link if page splitting
             # because they are already highlighted in the namespaces section in
@@ -322,7 +322,7 @@ oo::class create ruff::formatter::Html {
                 dict set NavigationLinks $anchor [dict create LinkInfo $linkinfo Type heading]
             }
         } else {
-            set heading [my ToOutputFormat $text $scope]
+            set heading [my FormatInline $text $scope]
         }
         append Document [my HeadingWithUplink $level $heading $scope]
         return
@@ -332,7 +332,7 @@ oo::class create ruff::formatter::Html {
         # See [Formatter.AddParagraph].
         #  lines  - The paragraph lines.
         #  scope - The documentation scope of the content.
-        append Document "<p class='ruff'>[my ToOutputFormat [string trim [join $lines { }]] $scope]</p>\n"
+        append Document "<p class='ruff'>[my FormatInline [string trim [join $lines { }]] $scope]</p>\n"
         return
     }
 
@@ -347,7 +347,7 @@ oo::class create ruff::formatter::Html {
         foreach line $lines {
             if {[string trim $line] eq ""} {
                 if {[info exists para]} {
-                    append Document "<p class='ruff'>[my ToOutputFormat [string trim [join $para { }]] $scope]</p>\n"
+                    append Document "<p class='ruff'>[my FormatInline [string trim [join $para { }]] $scope]</p>\n"
                     unset para
                 }
             } else {
@@ -355,7 +355,7 @@ oo::class create ruff::formatter::Html {
             }
         }
         if {[info exists para]} {
-            append Document "<p class='ruff'>[my ToOutputFormat [string trim [join $para { }]] $scope]</p>\n"
+            append Document "<p class='ruff'>[my FormatInline [string trim [join $para { }]] $scope]</p>\n"
             unset para
         }
         append Document "</blockquote>\n"
@@ -365,7 +365,7 @@ oo::class create ruff::formatter::Html {
         # See [Formatter.AddParagraph].
         #  lines  - The paragraph lines.
         #  scope - The documentation scope of the content.
-        append Document "<p class='ruff'>[my ToOutputFormat [string trim [join $lines { }]] $scope]</p>\n"
+        append Document "<p class='ruff'>[my FormatInline [string trim [join $lines { }]] $scope]</p>\n"
         return
     }
 
@@ -387,11 +387,11 @@ oo::class create ruff::formatter::Html {
                 }
             }
             if {$preformatted in {none term}} {
-                set def [my ToOutputFormat $def $scope]
+                set def [my FormatInline $def $scope]
             }
             set term [dict get $item term]
             if {$preformatted in {none definition}} {
-                set term [my ToOutputFormat $term $scope]
+                set term [my FormatInline $term $scope]
             }
             append Document "<tr><td>" \
                 "<nobr>$term</nobr>" \
@@ -428,7 +428,7 @@ oo::class create ruff::formatter::Html {
             append Document "<thead>\n"
             append Document "<tr>"
             foreach cell [dict get $table header] align $alignments {
-                append Document "<th$styles($align)>[my ToOutputFormat $cell]</th>"
+                append Document "<th$styles($align)>[my FormatInline $cell]</th>"
             }
             append Document "</tr>\n"
             append Document "</thead>\n"
@@ -437,7 +437,7 @@ oo::class create ruff::formatter::Html {
         foreach row [dict get $table rows] {
             append Document "<tr>"
             foreach cell $row align $alignments {
-                append Document "<td$styles($align)>[my ToOutputFormat $cell]</td>"
+                append Document "<td$styles($align)>[my FormatInline $cell]</td>"
             }
             append Document "</tr>\n"
         }
@@ -454,7 +454,7 @@ oo::class create ruff::formatter::Html {
         set tag [expr {[dict get $content marker] eq "1." ? "ol" : "ul"}]
         append Document "<$tag class='ruff'>\n"
         foreach lines [dict get $content items] {
-            append Document "<li>[my ToOutputFormat [join $lines { }] $scope]</li>\n"
+            append Document "<li>[my FormatInline [join $lines { }] $scope]</li>\n"
         }
         append Document "</$tag>" \n
         return
@@ -768,5 +768,4 @@ oo::class create ruff::formatter::Html {
         return html
     }
 
-    forward FormatInline my ToOutputFormat
 }

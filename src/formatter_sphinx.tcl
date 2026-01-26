@@ -139,7 +139,7 @@ oo::class create ruff::formatter::Sphinx {
 
                 set heading [my ProcessLiteral [namespace tail $name]]
                 if {[string length $ns]} {
-                    set ns_link [my ToOutputFormat [markup_reference $ns]]
+                    set ns_link [my FormatInline [markup_reference $ns]]
                     append heading " \[${ns_link}\]"
                 }
 
@@ -154,7 +154,7 @@ oo::class create ruff::formatter::Sphinx {
 
                 set heading [my ProcessLiteral [namespace tail $name]]
                 if {[string length $ns]} {
-                    set ns_link [my ToOutputFormat [markup_reference $ns]]
+                    set ns_link [my FormatInline [markup_reference $ns]]
                     append heading " \[${ns_link}\]"
                 }
 
@@ -169,7 +169,7 @@ oo::class create ruff::formatter::Sphinx {
 
                 set heading [my ProcessLiteral [namespace tail $name]]
                 if {[string length $ns]} {
-                    set ns_link [my ToOutputFormat [markup_reference $ns]]
+                    set ns_link [my FormatInline [markup_reference $ns]]
                     append heading " \[${ns_link}\]"
                 }
 
@@ -201,7 +201,7 @@ oo::class create ruff::formatter::Sphinx {
             append Document "\n.. _$anchor:\n\n"
         }
 
-        set heading_text [my ToOutputFormat $text $scope]
+        set heading_text [my FormatInline $text $scope]
 
         # RST heading with underline
         if {$do_link} {
@@ -220,7 +220,7 @@ oo::class create ruff::formatter::Sphinx {
         #  lines  - The paragraph lines.
         #  scope - The documentation scope of the content.
 
-        append Document \n [my ToOutputFormat [join $lines \n] $scope] \n
+        append Document \n [my FormatInline [join $lines \n] $scope] \n
         return
     }
 
@@ -233,7 +233,7 @@ oo::class create ruff::formatter::Sphinx {
         append Document "\n"
         foreach line $lines {
             # RST blockquotes are created by indenting paragraphs
-            append Document "    " [my ToOutputFormat $line $scope] \n
+            append Document "    " [my FormatInline $line $scope] \n
         }
         append Document "\n"
         return
@@ -256,11 +256,11 @@ oo::class create ruff::formatter::Sphinx {
                 }
             }
             if {$preformatted in {none term}} {
-                set def [my ToOutputFormat $def $scope]
+                set def [my FormatInline $def $scope]
             }
             set term [dict get $item term]
             if {$preformatted in {none definition}} {
-                set term [my ToOutputFormat $term $scope]
+                set term [my FormatInline $term $scope]
             }
 
             # Use field list format for parameters
@@ -320,7 +320,7 @@ oo::class create ruff::formatter::Sphinx {
                     append Document "\n     -"
                 }
                 set first 0
-                set cell_text [my ToOutputFormat $cell $scope]
+                set cell_text [my FormatInline $cell $scope]
                 append Document " $cell_text"
             }
             append Document "\n"
@@ -335,7 +335,7 @@ oo::class create ruff::formatter::Sphinx {
                     append Document "\n     -"
                 }
                 set first 0
-                set cell_text [my ToOutputFormat $cell $scope]
+                set cell_text [my FormatInline $cell $scope]
                 append Document " $cell_text"
             }
             append Document "\n"
@@ -353,7 +353,7 @@ oo::class create ruff::formatter::Sphinx {
         set marker [dict get $content marker]
         set marker [expr {$marker eq "1." ? "#." : "-"}]
         foreach lines [dict get $content items] {
-            set bullet_text [my ToOutputFormat [join $lines { }] $scope]
+            set bullet_text [my FormatInline [join $lines { }] $scope]
             # Handle multi-line bullets with proper indentation
             set bullet_lines [split $bullet_text \n]
             set first_line [lindex $bullet_lines 0]
@@ -533,160 +533,6 @@ oo::class create ruff::formatter::Sphinx {
         return $result
     }
 
-
-    method XXXToSphinx {text {scope {}}} {
-        # Returns $text marked up in Sphinx/RST syntax
-        #  text - Ruff! text with inline markup
-        #  scope - namespace scope to use for symbol lookup
-
-        set index 0
-        set result {}
-
-        set re_backticks   {\A`+}
-        set re_whitespace  {\s}
-        set re_inlinelink  {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\]\s*\(\s*((?:[^\s\)]+|\([^\s\)]+\))+)?(\s+([\"'])(.*)?\4)?\s*\)}
-        set re_reflink     {\A\!?\[((?:[^\]]|\[[^\]]*?\])+)\](?:\[((?:[^\]]|\[[^\]]*?\])*)\])?}
-        set re_entity      {\A\&\S+;}
-        set re_emph {\A(\*{1,3})((?:[^\*\\]|\\.)*)\1}
-
-        while {[set chr [string index $text $index]] ne {}} {
-            switch $chr {
-                "\\" {
-                    # Handle backslash escaping
-                    set next_chr [string index $text [expr $index + 1]]
-                    if {$next_chr eq "_"} {
-                        append result "\\\\_"
-                        incr index
-                        continue
-                    }
-                }
-                {_} {
-                    # Escape underscores
-                    append result \\_
-                    incr index
-                    continue
-                }
-                {*} {
-                    # EMPHASIS or STRONG
-                    if {[regexp $re_whitespace [string index $result end]] &&
-                        [regexp $re_whitespace [string index $text [expr $index + 1]]]} {
-                        append result \\*
-                    } elseif {[regexp -start $index $re_emph \
-                                   $text m del sub]} {
-                        # *** not supported. Map to **
-                        set del [string range $del 0 1]
-                        append result [my ProcessEmphasis $sub $del $scope]
-                        incr index [string length $m]
-                        continue
-                    } else {
-                        append result *
-                    }
-                    incr index
-                    continue
-                }
-                {`} {
-                    # CODE - inline literals
-                    regexp -start $index $re_backticks $text backticks
-                    set start [expr $index + [string length $backticks]]
-
-                    if {[regexp -start $start -indices $backticks $text terminating_indices]} {
-                        set stop [expr {[lindex $terminating_indices 0] - 1}]
-                        set sub [string trim [string range $text $start $stop]]
-                        append result [my ProcessLiteral $sub]
-                        set index [expr [lindex $terminating_indices 1] + 1]
-                        continue
-                    }
-                }
-                {!} -
-                "[" {
-                    # Note: "[", not {[} because latter messes Emacs indentation
-                    # LINKS AND IMAGES
-                    # INLINE LINKS AND IMAGES
-                    set ref_type [expr {$chr eq "!" ? "img" : "link"}]
-                    set match_found 0
-
-                    if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
-                        set link_text [my ToOutputFormat $txt $scope]
-                        set match_found 1
-                    } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
-                        if {$lbl eq {}} {
-                            set lbl [regsub -all {\s+} $txt { }]
-                            set display_text_specified 0
-                        } else {
-                            set display_text_specified 1
-                        }
-
-                        if {[my ResolvableReference? $lbl $scope code_link]} {
-                            # RUFF CODE REFERENCE - use Sphinx :ref: role
-                            if {1} {
-                                append result \
-                                    [my ProcessInternalLink $code_link \
-                                         [expr {
-                                                $display_text_specified ? $txt : ""
-                                            }] $scope]
-                                incr index [string length $m]
-                                continue
-                            } else {
-                                set url [dict get $code_link ref]
-                                if {$display_text_specified} {
-                                    set link_text $txt
-                                } else {
-                                    set link_text [dict get $code_link label]
-                                }
-                                set match_found 1
-                            }
-                        } elseif {[is_builtin $lbl]} {
-                            lassign [builtin_url $lbl] url lbl
-                            if {$display_text_specified} {
-                                set link_text $txt
-                            } else {
-                                set link_text $lbl
-                            }
-                            set match_found 1
-                        } else {
-                            app::log_error "Warning: no target found for link \"$lbl\". Passing through verbatim."
-                            append result [my Escape $m]
-                            incr index [string length $m]
-                            continue
-                        }
-                    }
-
-                    if {$match_found} {
-                        if {$ref_type eq "img"} {
-                            append result [my ProcessInlineImage $url $link_text "" $scope]
-                        } else {
-                            append result [my ProcessInlineLink $url $link_text "" $scope]
-                        }
-                        incr index [string length $m]
-                        continue
-                    }
-                }
-                {$} {
-                    # Ruff extension - treat $var as variable
-                    if {[regexp -start $index {\$\w+} $text m]} {
-                        append result "``$m``"
-                        incr index [string length $m]
-                        continue
-                    }
-                }
-                {&} {
-                    # ENTITIES
-                    if {[regexp -start $index $re_entity $text m]} {
-                        append result $m
-                        incr index [string length $m]
-                        continue
-                    }
-                }
-                default {}
-            }
-
-            append result $chr
-            incr index
-        }
-
-        return $result
-    }
-
     method ProcessEmphasis {text delim scope} {
         # Returns markup for emphasized text.
         #  text - string to be emphasized
@@ -701,7 +547,7 @@ oo::class create ruff::formatter::Sphinx {
         switch -exact $delim {
             * -
             ** {
-                return [string cat $delim [my ToOutputFormat $text $scope] $delim]
+                return [string cat $delim [my FormatInline $text $scope] $delim]
             }
             default {
                 error "Invalid emphasis delimiter length [string length $delim]."
@@ -803,5 +649,4 @@ oo::class create ruff::formatter::Sphinx {
         return
     }
 
-    forward FormatInline my ToOutputFormat
 }
