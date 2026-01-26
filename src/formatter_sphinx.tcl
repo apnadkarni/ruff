@@ -137,7 +137,7 @@ oo::class create ruff::formatter::Sphinx {
 
                 set heading [my ProcessLiteral [namespace tail $name]]
                 if {[string length $ns]} {
-                    set ns_link [my ToSphinx [markup_reference $ns]]
+                    set ns_link [my ToOutputFormat [markup_reference $ns]]
                     append heading " \[${ns_link}\]"
                 }
 
@@ -152,7 +152,7 @@ oo::class create ruff::formatter::Sphinx {
 
                 set heading [my ProcessLiteral [namespace tail $name]]
                 if {[string length $ns]} {
-                    set ns_link [my ToSphinx [markup_reference $ns]]
+                    set ns_link [my ToOutputFormat [markup_reference $ns]]
                     append heading " \[${ns_link}\]"
                 }
 
@@ -167,7 +167,7 @@ oo::class create ruff::formatter::Sphinx {
 
                 set heading [my ProcessLiteral [namespace tail $name]]
                 if {[string length $ns]} {
-                    set ns_link [my ToSphinx [markup_reference $ns]]
+                    set ns_link [my ToOutputFormat [markup_reference $ns]]
                     append heading " \[${ns_link}\]"
                 }
 
@@ -199,7 +199,7 @@ oo::class create ruff::formatter::Sphinx {
             append Document "\n.. _$anchor:\n\n"
         }
 
-        set heading_text [my ToSphinx $text $scope]
+        set heading_text [my ToOutputFormat $text $scope]
 
         # RST heading with underline
         if {$do_link} {
@@ -218,7 +218,7 @@ oo::class create ruff::formatter::Sphinx {
         #  lines  - The paragraph lines.
         #  scope - The documentation scope of the content.
 
-        append Document \n [my ToSphinx [join $lines \n] $scope] \n
+        append Document \n [my ToOutputFormat [join $lines \n] $scope] \n
         return
     }
 
@@ -231,7 +231,7 @@ oo::class create ruff::formatter::Sphinx {
         append Document "\n"
         foreach line $lines {
             # RST blockquotes are created by indenting paragraphs
-            append Document "    " [my ToSphinx $line $scope] \n
+            append Document "    " [my ToOutputFormat $line $scope] \n
         }
         append Document "\n"
         return
@@ -254,11 +254,11 @@ oo::class create ruff::formatter::Sphinx {
                 }
             }
             if {$preformatted in {none term}} {
-                set def [my ToSphinx $def $scope]
+                set def [my ToOutputFormat $def $scope]
             }
             set term [dict get $item term]
             if {$preformatted in {none definition}} {
-                set term [my ToSphinx $term $scope]
+                set term [my ToOutputFormat $term $scope]
             }
 
             # Use field list format for parameters
@@ -318,7 +318,7 @@ oo::class create ruff::formatter::Sphinx {
                     append Document "\n     -"
                 }
                 set first 0
-                set cell_text [my ToSphinx $cell $scope]
+                set cell_text [my ToOutputFormat $cell $scope]
                 append Document " $cell_text"
             }
             append Document "\n"
@@ -333,7 +333,7 @@ oo::class create ruff::formatter::Sphinx {
                     append Document "\n     -"
                 }
                 set first 0
-                set cell_text [my ToSphinx $cell $scope]
+                set cell_text [my ToOutputFormat $cell $scope]
                 append Document " $cell_text"
             }
             append Document "\n"
@@ -351,7 +351,7 @@ oo::class create ruff::formatter::Sphinx {
         set marker [dict get $content marker]
         set marker [expr {$marker eq "1." ? "#." : "-"}]
         foreach lines [dict get $content items] {
-            set bullet_text [my ToSphinx [join $lines { }] $scope]
+            set bullet_text [my ToOutputFormat [join $lines { }] $scope]
             # Handle multi-line bullets with proper indentation
             set bullet_lines [split $bullet_text \n]
             set first_line [lindex $bullet_lines 0]
@@ -532,7 +532,7 @@ oo::class create ruff::formatter::Sphinx {
     }
 
 
-    method ToSphinx {text {scope {}}} {
+    method XXXToSphinx {text {scope {}}} {
         # Returns $text marked up in Sphinx/RST syntax
         #  text - Ruff! text with inline markup
         #  scope - namespace scope to use for symbol lookup
@@ -604,7 +604,7 @@ oo::class create ruff::formatter::Sphinx {
                     set match_found 0
 
                     if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
-                        set link_text [my ToSphinx $txt $scope]
+                        set link_text [my ToOutputFormat $txt $scope]
                         set match_found 1
                     } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
                         if {$lbl eq {}} {
@@ -699,7 +699,7 @@ oo::class create ruff::formatter::Sphinx {
         switch -exact $delim {
             * -
             ** {
-                return [string cat $delim [my ToSphinx $text $scope] $delim]
+                return [string cat $delim [my ToOutputFormat $text $scope] $delim]
             }
             default {
                 error "Invalid emphasis delimiter length [string length $delim]."
@@ -762,7 +762,7 @@ oo::class create ruff::formatter::Sphinx {
     }
 
     method InlineHtmlSupported {} {
-        # Returns true if the formatter supports inline HTML.
+        # Returns boolean indicating whether the formatter supports inline HTML.
         #
         return false
     }
@@ -815,6 +815,5 @@ oo::class create ruff::formatter::Sphinx {
         return
     }
 
-
-    forward FormatInline my ToSphinx
+    forward FormatInline my ToOutputFormat
 }

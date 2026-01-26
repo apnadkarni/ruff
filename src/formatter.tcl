@@ -1608,7 +1608,7 @@ oo::class create ruff::formatter::Formatter {
                     set next_chr [string index $text $index+1]
                     # TODO - do we not need any [my Escape] here?
                     if {[string first $next_chr {\`*_\{\}[]()#+-.!>|}] != -1} {
-                        append result $next_chr
+                        append result [my Escape $next_chr]
                         incr index 2
                     } else {
                         # Not a backslash sequence, just process the backslash
