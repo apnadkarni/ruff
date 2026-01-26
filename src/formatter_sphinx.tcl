@@ -45,7 +45,6 @@ oo::class create ruff::formatter::Sphinx {
     method SymbolReference {ns symbol} {
         # Implements the [Formatter.SymbolReference] method for Sphinx.
 
-        # TODO - this hardcodes html. Should return a reST reference
         set ref [ns_file_base $ns .html]
         # Reference to the global namespace is to the file itself.
         if {$ns eq "::" && $symbol eq ""} {
@@ -130,56 +129,19 @@ oo::class create ruff::formatter::Sphinx {
         # Use Sphinx function/class/method directive based on type
         append Document "\n"
 
-        # TODO - combine all these switch cases
-        switch -exact -- $type {
-            "class" {
-                # Use generic function directive with special index role
-                append Document ".. index::\n   single: $fqn (class)\n\n"
-                append Document ".. _$anchor:\n\n"
+        # Use generic function directive with special index role
+        append Document ".. index::\n   single: $fqn ($type)\n\n"
+        append Document ".. _$anchor:\n\n"
 
-                set heading [my ProcessLiteral [namespace tail $name]]
-                if {[string length $ns]} {
-                    set ns_link [my FormatInline [markup_reference $ns]]
-                    append heading " \[${ns_link}\]"
-                }
-
-                set char [lindex $HeaderMarkers $level]
-                set underline [string repeat $char [string length $heading]]
-                append Document "$heading\n$underline\n"
-            }
-            "proc" {
-                # Use generic function directive
-                append Document ".. index::\n   single: $fqn (procedure)\n\n"
-                append Document ".. _$anchor:\n\n"
-
-                set heading [my ProcessLiteral [namespace tail $name]]
-                if {[string length $ns]} {
-                    set ns_link [my FormatInline [markup_reference $ns]]
-                    append heading " \[${ns_link}\]"
-                }
-
-                set char [lindex $HeaderMarkers $level]
-                set underline [string repeat $char [string length $heading]]
-                append Document "$heading\n$underline\n"
-            }
-            "method" {
-                # Use generic function directive with method annotation
-                append Document ".. index::\n   single: $fqn (method)\n\n"
-                append Document ".. _$anchor:\n\n"
-
-                set heading [my ProcessLiteral [namespace tail $name]]
-                if {[string length $ns]} {
-                    set ns_link [my FormatInline [markup_reference $ns]]
-                    append heading " \[${ns_link}\]"
-                }
-
-                set char [lindex $HeaderMarkers $level]
-                set underline [string repeat $char [string length $heading]]
-                append Document "$heading\n$underline\n"
-            }
+        set heading [my ProcessLiteral [namespace tail $name]]
+        if {[string length $ns]} {
+            set ns_link [my FormatInline [markup_reference $ns]]
+            append heading " \[${ns_link}\]"
         }
 
-        return
+        set char [lindex $HeaderMarkers $level]
+        set underline [string repeat $char [string length $heading]]
+        append Document "$heading\n$underline\n"
     }
 
     method AddHeading {level text scope {tooltip {}}} {
@@ -421,7 +383,7 @@ oo::class create ruff::formatter::Sphinx {
                                {*}$diagrammer]
 
             # Use Sphinx figure directive for diagrams
-            # TODO - How to right align an image with a caption?
+            # Cannot align an image in Sphinx.
             # Using ..figure allows for a caption but then floats the image
             # Using ..image does not float the image but cannot have a caption
             append Document "\n"

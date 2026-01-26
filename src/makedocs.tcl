@@ -58,7 +58,7 @@ proc ruff::private::document_self {args} {
         lappend common_args -onlyexports 1
     }
     switch -exact -- $opts(-format) {
-        sphinx - rst - markdown {
+        sphinx - markdown {
             document $namespaces {*}$common_args \
                 -outdir $opts(-outdir) \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
