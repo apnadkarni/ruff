@@ -1575,7 +1575,7 @@ oo::class create ruff::formatter::Formatter {
     }
 
     method InlineHtmlSupported {} {
-        # Returns true if the formatter supports inline HTML.
+        # Returns boolean indicating whether the formatter supports inline HTML.
         #
         # The default implementation assumes formatter supports inline HTML.
         return true
@@ -1680,7 +1680,11 @@ oo::class create ruff::formatter::Formatter {
 
                         if {[my ResolvableReference? $lbl $scope code_link]} {
                             # RUFF CODE REFERENCE
-                            append result [my ProcessInternalLink $code_link [expr {$display_text_specified ? $txt : ""}] $scope]
+                            append result \
+                                [my ProcessInternalLink $code_link \
+                                     [expr {
+                                            $display_text_specified ? $txt : ""
+                                        }] $scope]
                             incr index [string length $m]
                             continue
                         } elseif {[is_builtin $lbl]} {

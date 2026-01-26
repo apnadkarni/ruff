@@ -513,7 +513,7 @@ oo::class create ruff::formatter::Sphinx {
             set next_chr [string index $text $i+1]
 
             # Escape based on character type. Check common case first.
-            if {[string match {[a-zA-Z0-9]} $chr]} {
+            if {[string match {[ a-zA-Z0-9]} $chr]} {
                 append result $chr
             } elseif {$chr eq "\\"} {
                 # Backslashes always need escaping
@@ -523,6 +523,8 @@ oo::class create ruff::formatter::Sphinx {
                       ($next_chr ne "" && ![regexp {[\s\)\]\}>'"]} $next_chr])} {
                 # Escape markup start characters at boundaries
                 append result "\\" $chr
+            } else {
+                append result $chr
             }
         }
 
@@ -614,13 +616,23 @@ oo::class create ruff::formatter::Sphinx {
 
                         if {[my ResolvableReference? $lbl $scope code_link]} {
                             # RUFF CODE REFERENCE - use Sphinx :ref: role
-                            set url [dict get $code_link ref]
-                            if {$display_text_specified} {
-                                set link_text $txt
+                            if {1} {
+                                append result \
+                                    [my ProcessInternalLink $code_link \
+                                         [expr {
+                                                $display_text_specified ? $txt : ""
+                                            }] $scope]
+                                incr index [string length $m]
+                                continue
                             } else {
-                                set link_text [dict get $code_link label]
+                                set url [dict get $code_link ref]
+                                if {$display_text_specified} {
+                                    set link_text $txt
+                                } else {
+                                    set link_text [dict get $code_link label]
+                                }
+                                set match_found 1
                             }
-                            set match_found 1
                         } elseif {[is_builtin $lbl]} {
                             lassign [builtin_url $lbl] url lbl
                             if {$display_text_specified} {
@@ -694,7 +706,7 @@ oo::class create ruff::formatter::Sphinx {
             }
         }
     }
-    
+
     method ProcessLiteral {text} {
         # Returns markup for literal text.
         #  text - string to be formatted as a literal
@@ -723,6 +735,36 @@ oo::class create ruff::formatter::Sphinx {
         set rst_id [my MakeSphinxId $url]
         dict set Images $rst_id [dict create url $url alt $text]
         return "|$rst_id|"
+    }
+
+    method ProcessInternalLink {code_link text scope} {
+        # Returns the markup for internal Ruff links.
+        #  code_link - dictionary holding resolvable internal link information
+        #  text - the link text. If empty the label from `code_link` is used.
+        #  scope - Documentation scope for resolving references.
+        set url [dict get $code_link ref]
+        if {$text eq ""} {
+            set text [my Escape [dict get $code_link label]]
+        }
+        set title $text
+        set link_class [dict get $code_link type]
+        return [my ProcessInlineLink $url $text $title $scope $link_class]
+    }
+
+    method ProcessComment {text} {
+        # Returns the markup for a comment.
+        #
+        set comment \n
+        foreach line [split $text \n] {
+            append comment ".. " [my Escape $line] \n
+        }
+        return $comment
+    }
+
+    method InlineHtmlSupported {} {
+        # Returns true if the formatter supports inline HTML.
+        #
+        return false
     }
 
     method extension {} {
