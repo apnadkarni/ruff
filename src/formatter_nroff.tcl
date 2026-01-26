@@ -34,6 +34,7 @@ oo::class create ruff::formatter::Nroff {
         next {*}$args
     }
 
+    method SupportsReferences {} {return false}
     method CollectReferences args {}
     method CollectHeadingReference args {}
     method CollectFigureReference args {}
@@ -158,9 +159,9 @@ oo::class create ruff::formatter::Nroff {
             set level [dict get $HeaderLevels $level]
         }
 
-        # TBD - should $text really be passed through ToNroff? In particular do
+        # TBD - should $text really be passed through ToOutputFormat? In particular do
         # commands like .SH accept embedded escapes ?
-        set text [my ToNroff $text $scope]
+        set text [my ToOutputFormat $text $scope]
         if {$level < 3} {
             append Body [nr_section $text]
         } elseif {$level == 3} {
@@ -175,7 +176,7 @@ oo::class create ruff::formatter::Nroff {
         # See [Formatter.AddParagraph].
         #  lines  - The paragraph lines.
         #  scope - The documentation scope of the content.
-        append Body [nr_p] [my ToNroff [join $lines \n] $scope]
+        append Body [nr_p] [my ToOutputFormat [join $lines \n] $scope]
         return
     }
 
@@ -227,11 +228,11 @@ oo::class create ruff::formatter::Nroff {
                 }
             }
             if {$preformatted in {none term}} {
-                set def [my ToNroff $def $scope]
+                set def [my ToOutputFormat $def $scope]
             }
             set term [dict get $item term]
             if {$preformatted in {none definition}} {
-                set term [my ToNroff $term $scope]
+                set term [my ToOutputFormat $term $scope]
             }
             append Body [nr_blt $term] "\n" $def
         }
@@ -287,13 +288,13 @@ oo::class create ruff::formatter::Nroff {
         append Body "[join $tbl_alignments][nr_period]" \n
         if {[info exists header]} {
             append Body [join [lmap cell $header {
-                my ToNroff $cell $scope
+                my ToOutputFormat $cell $scope
             }] $sep] \n
             append Body _ \n; # Horizontal rule
         }
         foreach row $rows {
             append Body [join [lmap cell $row {
-                my ToNroff $cell $scope
+                my ToOutputFormat $cell $scope
             }] $sep] \n
         }
         append Body [nr_te] \n
@@ -309,21 +310,21 @@ oo::class create ruff::formatter::Nroff {
             if {1} {
                 set n 0
                 foreach lines [dict get $content items] {
-                    append Body [nr_enum [incr n]] \n [my ToNroff [join $lines { }] $scope] \n
+                    append Body [nr_enum [incr n]] \n [my ToOutputFormat [join $lines { }] $scope] \n
                 }
 
             } else {
                 append Body ".nr Li 0\n.in +4\n.ta 2\n\n"
                 foreach lines [dict get $content items] {
                     append Body ".ti -4\n.nr Li +1\n" \
-                        "\\t\\n\[Li\]. [my ToNroff [join $lines \n] $scope]\n" \
+                        "\\t\\n\[Li\]. [my ToOutputFormat [join $lines \n] $scope]\n" \
                         ".br\n"
                 }
                 append Body ".in -4"
             }
         } else {
             foreach lines [dict get $content items] {
-                append Body [nr_blt "\n\1\\(bu"] "\n" [my ToNroff [join $lines { }] $scope]
+                append Body [nr_blt "\n\1\\(bu"] "\n" [my ToOutputFormat [join $lines { }] $scope]
             }
         }
         return
@@ -388,8 +389,9 @@ oo::class create ruff::formatter::Nroff {
         #
         # Returns the escaped string
 
-        # TBD - fix this?
-        return [string map [list \\ \\\\] $s]
+        # This formatter (cloned from tcllib) works differently in that
+        # escaping is done separately as pre- and post-processing steps
+        return $s
     }
 
     # Credits: tcllib/Caius markdown module
@@ -432,10 +434,15 @@ oo::class create ruff::formatter::Nroff {
                     # If next character is a special markdown char, set that as the
                     # the character. Otherwise just pass this \ as the character.
                     set next_chr [string index $text [expr $index + 1]]
-                    if {[string first $next_chr {\`*_\{\}[]()#+-.!>|}] != -1} {
-                        set chr $next_chr
+                    if {[string first $next_chr {\\\`*_\{\}[]()#+-.!>|}] != -1} {
+                        append result [my Escape $next_chr]
+                        incr index 2
+                    } else {
+                        # Not a backslash sequence, just process the backslash
+                        append result $chr
                         incr index
                     }
+                    continue
                 }
                 {_} {
                     # Unlike Markdown, underscores are not treated as special char
@@ -443,29 +450,18 @@ oo::class create ruff::formatter::Nroff {
                 {*} {
                     # EMPHASIS
                     if {[regexp $re_whitespace [string index $result end]] &&
-                        [regexp $re_whitespace [string index $text [expr $index + 1]]]} \
-                        {
+                        [regexp $re_whitespace [string index $text [expr $index + 1]]]} {
                             #do nothing (add character at bottom of loop)
                         } elseif {[regexp -start $index $re_emph \
                                      $text m del sub]} {
-                            switch [string length $del] {
-                                1 {
-                                    # * - Emphasis
-                                    append result "[nr_ul][my ToNroff $sub $scope][nr_fpop]"
-                                }
-                                2 {
-                                    # ** - Strong
-                                    append result "[nr_bld][my ToNroff $sub $scope][nr_fpop]"
-                                }
-                                3 {
-                                    # *** - Strong+emphasis - no way I think. Make bold
-                                    append result "[nr_bld][my ToNroff $sub $scope][nr_fpop]"
-                                }
-                            }
-
+                            append result [my ProcessEmphasis $sub $del $scope]
                             incr index [string length $m]
                             continue
-                    }
+                        } else {
+                            append result $chr
+                            incr index
+                            continue
+                        }
                 }
                 {`} {
                     # CODE
@@ -485,7 +481,7 @@ oo::class create ruff::formatter::Nroff {
 
                         set sub [string trim [string range $text $start $stop]]
 
-                        append result "[my Escape $sub]"
+                        append result [my ProcessLiteral $sub]
                         set index [expr [lindex $terminating_indices 1] + 1]
                         continue
                     }
@@ -505,11 +501,6 @@ oo::class create ruff::formatter::Nroff {
                     if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
                         # INLINE
                         incr index [string length $m]
-
-                        set url [my Escape [string trim $url {<> }]]
-                        set txt [my ToNroff $txt $scope]
-                        set title [my ToNroff $title $scope]
-
                         set match_found 1
                     } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
                         if {$lbl eq {}} {
@@ -538,10 +529,7 @@ oo::class create ruff::formatter::Nroff {
                     if {$match_found} {
                         if {$ref_type eq {link}} {
                             # TBD - some nroff version support urls using .UR
-                            append result [nr_ulr $txt]
-                            if {$url ne ""} {
-                                append result " \[URL: $url\]"
-                            }
+                            append result [my ProcessInlineLink $url $txt "" $scope]
                         } else {
                             app::log_error "Warning: Image URL $url found. Images are not supported for Nroff output."
                             append result $txt " \[Image: $url\]"
@@ -555,7 +543,7 @@ oo::class create ruff::formatter::Nroff {
                     # HTML tags, pass through as is without processing
 
                     if {[regexp -start $index $re_comment $text m]} {
-                        append result [nr_comment [string range $m 4 end-3]]
+                        append result [my ProcessComment $text]
                         incr index [string length $m]
                         continue
                     } elseif {[regexp -start $index $re_autolink $text m email link]} {
@@ -597,7 +585,7 @@ oo::class create ruff::formatter::Nroff {
                     # Note: no need to escape characters but do so
                     # if you change the regexp below
                     if {[regexp -start $index {\$\w+} $text m]} {
-                        append result [nr_ulr $m]
+                        append result [my ProcessVariable $m]
                         incr index [string length $m]
                         continue
                     }
@@ -618,12 +606,94 @@ oo::class create ruff::formatter::Nroff {
         return $result
     }
 
+    method ProcessEmphasis {text delim scope} {
+        # Returns markup for emphasized text.
+        #  text - string to be emphasized
+        #  delim - one of `*`, `**` or `***` indicating level of emphasis
+        #  scope - Documentation scope for resolving references.
+        #
+
+        # Note: reST does not support ***. Treat as **
+        if {$delim eq "***"} {
+            set delim "**"
+        }
+        switch -exact $delim {
+            *  {
+                return [string cat [nr_ul] [my ToOutputFormat $text $scope] [nr_fpop]]
+            }
+            ** {
+                return [string cat [nr_bld] [my ToOutputFormat $text $scope] [nr_fpop]]
+            }
+            default {
+                error "Invalid emphasis delimiter length [string length $delim]."
+            }
+        }
+    }
+
+    method ProcessLiteral {text} {
+        # Returns markup for literal text.
+        #  text - string to be formatted as a literal
+
+        return $text
+    }
+
+    method ProcessInlineLink {url text title scope {link_type {}}} {
+        # Returns the markup for URL links
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - not used
+        #  scope - not used
+        #  link_type - not used
+
+        set url [string trim $url {<> }]
+        set text [my ToOutputFormat $text $scope]
+
+        # TBD - some nroff version support urls using .UR
+        if {$url ne "" && $text ne $url} {
+            return [string cat [nr_ulr $text] " \[URL: $url\]"]
+        } else {
+            return [nr_ulr $text]
+        }
+    }
+
+    method ProcessInlineImage {url text title scope {link_type {}}} {
+        # Returns a RST link to the image url and registers it as a substitution
+        #  url - the URL to link to
+        #  text - the link text
+        #  title - not used
+        #  scope - not used
+        #  link_type - not used
+        app::log_error "Warning: Image URL $url found. Images are not supported for Nroff output."
+        return [string cat $txt " \[Image: $url\]"]
+    }
+
+    method ProcessComment {text} {
+        # Returns the markup for a comment.
+        #
+        return [nr_comment $text]
+    }
+
+    method ProcessVariable {text} {
+        # Returns the markup for a variable name
+        #
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+        return [nr_ulr $text]
+    }
+
+    method InlineHtmlSupported {} {
+        # Returns boolean indicating whether the formatter supports inline HTML.
+        #
+        return false
+    }
+
+
     method extension {} {
         # Returns the default file extension to be used for output files.
         return 3tcl
     }
 
-    forward FormatInline my ToNroff
+    forward FormatInline my ToOutputFormat
 }
 
 # MODFIED/ADAPTED From tcllib - BSD license.]

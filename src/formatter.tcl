@@ -383,6 +383,14 @@ oo::class create ruff::formatter::Formatter {
 
     }
 
+    method SupportsReferences {} {
+        # Returns boolean indicating whether the formatter supports references.
+        #
+        # Formatters that do not support references should override this to
+        # return false.
+        return true
+    }
+
     method CollectHeadingReference {ns heading} {
         # Adds a reference to a heading to the cross-reference table.
         #  ns - Namespace containing the heading
@@ -442,6 +450,7 @@ oo::class create ruff::formatter::Formatter {
         #
         # The value stored in $refvar is a dictionary with keys `type`
         # (`heading`, `symbol` or `figure`) and `ref` (the reference).
+
         if {[dict exists $References $lookup]} {
             upvar 1 $refvar ref
             set ref [dict get $References $lookup]
@@ -469,6 +478,7 @@ oo::class create ruff::formatter::Formatter {
 
         # If reference is not directly present, we will look up search path
         # but only if lookup value is not fully qualified.
+
         if {![my Reference? $lookup ref] && ! [string match ::* $lookup]} {
             while {$scope ne "" && ![info exists ref]} {
                 # Check class (.) and namespace scope (::)
@@ -1574,6 +1584,14 @@ oo::class create ruff::formatter::Formatter {
         return [string cat "<!--" $text "-->"]
     }
 
+    method ProcessVariable {text} {
+        # Returns the markup for a variable name
+        #
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+        return [my ProcessLiteral $text]
+    }
+
     method InlineHtmlSupported {} {
         # Returns boolean indicating whether the formatter supports inline HTML.
         #
@@ -1585,6 +1603,9 @@ oo::class create ruff::formatter::Formatter {
         set text [regsub -all -lineanchor {[ ]{2,}$} $text <br/>]
         set index 0
         set result {}
+
+        # TODO - add full support for more entities (see htmlparse)
+        set entity_map [list "&quot;" \" "&apos;" ' "&amp;" & "&lt;" <  "&gt;" >]
 
         set re_backticks   {\A`+}
         set re_whitespace  {\s}
@@ -1607,7 +1628,7 @@ oo::class create ruff::formatter::Formatter {
                     # ESCAPES
                     set next_chr [string index $text $index+1]
                     # TODO - do we not need any [my Escape] here?
-                    if {[string first $next_chr {\`*_\{\}[]()#+-.!>|}] != -1} {
+                    if {[string first $next_chr {\\\`*_\{\}[]()#+-.!>|}] != -1} {
                         append result [my Escape $next_chr]
                         incr index 2
                     } else {
@@ -1670,7 +1691,9 @@ oo::class create ruff::formatter::Formatter {
                         incr index [string length $m]
                         set match_found 1
                     } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
+                        # Internal links - [text]?[link]?
                         if {$lbl eq {}} {
+                            # Only one component
                             # Be loose in whitespace
                             set lbl [regsub -all {\s+} $txt { }]
                             set display_text_specified 0
@@ -1690,6 +1713,14 @@ oo::class create ruff::formatter::Formatter {
                         } elseif {[is_builtin $lbl]} {
                             lassign [builtin_url $lbl] url txt
                             set title $lbl
+                            incr index [string length $m]
+                            set match_found 1
+                        } elseif {![my SupportsReferences]} {
+                            # If references are not maintained by the formatter
+                            # don't log an error. Format similar to URL
+                            # (looking at you, nroff)
+                            set url ""
+                            set title $txt 
                             incr index [string length $m]
                             set match_found 1
                         } else {
@@ -1734,7 +1765,7 @@ oo::class create ruff::formatter::Formatter {
                         continue
                     } elseif {[regexp -start $index $re_htmltag $text m]} {
                         if {![my InlineHtmlSupported]} {
-                            app::log_error "Warning: [self class] does not support inline HTML."
+                            app::log_error "Warning: [info object class [self object]] does not support inline HTML."
                         }
                         append result $m
                         incr index [string length $m]
@@ -1749,7 +1780,12 @@ oo::class create ruff::formatter::Formatter {
                         if {![my InlineHtmlSupported]} {
                             app::log_error "Warning: [self class] does not support inline HTML."
                         }
-                        append result $m
+                        # Disabled because the <tag> method in method tables
+                        # gets interpreted as an HTML tag. Somewhere there is
+                        # this proc gets called recursively with < being
+                        # mapped to &lt; on the first pass and then back
+                        # to < on the second passa 
+                        append result [my Escape [string map $entity_map $m]]
                         incr index [string length $m]
                         continue
                     }
@@ -1761,7 +1797,7 @@ oo::class create ruff::formatter::Formatter {
                     # Note: no need to escape characters but do so
                     # if you change the regexp
                     if {[regexp -start $index {\$\w+} $text m]} {
-                        append result [my ProcessLiteral $m]
+                        append result [my ProcessVariable $m]
                         incr index [string length $m]
                         continue
                     }

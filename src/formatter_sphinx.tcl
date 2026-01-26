@@ -44,6 +44,8 @@ oo::class create ruff::formatter::Sphinx {
 
     method SymbolReference {ns symbol} {
         # Implements the [Formatter.SymbolReference] method for Sphinx.
+
+        # TODO - this hardcodes html. Should return a reST reference
         set ref [ns_file_base $ns .html]
         # Reference to the global namespace is to the file itself.
         if {$ns eq "::" && $symbol eq ""} {
@@ -735,20 +737,6 @@ oo::class create ruff::formatter::Sphinx {
         set rst_id [my MakeSphinxId $url]
         dict set Images $rst_id [dict create url $url alt $text]
         return "|$rst_id|"
-    }
-
-    method ProcessInternalLink {code_link text scope} {
-        # Returns the markup for internal Ruff links.
-        #  code_link - dictionary holding resolvable internal link information
-        #  text - the link text. If empty the label from `code_link` is used.
-        #  scope - Documentation scope for resolving references.
-        set url [dict get $code_link ref]
-        if {$text eq ""} {
-            set text [my Escape [dict get $code_link label]]
-        }
-        set title $text
-        set link_class [dict get $code_link type]
-        return [my ProcessInlineLink $url $text $title $scope $link_class]
     }
 
     method ProcessComment {text} {
