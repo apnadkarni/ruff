@@ -1379,6 +1379,7 @@ oo::class create ruff::formatter::Formatter {
         set re_emph {\A(\*{1,3})((?:[^\*\\]|\\.)*)\1}
 
         while {[set chr [string index $text $index]] ne {}} {
+            # TODO - check common alphanumeric case first
             switch $chr {
                 "\\" {
                     # ESCAPES
@@ -1392,7 +1393,6 @@ oo::class create ruff::formatter::Formatter {
                         append result $chr
                         incr index
                     }
-                    continue
                 }
                 {*} {
                     # EMPHASIS
@@ -1409,7 +1409,6 @@ oo::class create ruff::formatter::Formatter {
                         append result $chr
                         incr index
                     }
-                    continue
                 }
                 {`} {
                     # CODE
@@ -1432,7 +1431,6 @@ oo::class create ruff::formatter::Formatter {
                         append result $chr
                         incr index
                     }
-                    continue
                 }
                 {!} -
                 "[" {
@@ -1444,7 +1442,6 @@ oo::class create ruff::formatter::Formatter {
 
                     if {[regexp -start $index $re_inlinelink $text m txt url ign del title]} {
                         # INLINE LINK - [text](url "title")
-                        incr index [string length $m]
                         set match_found 1
                     } elseif {[regexp -start $index $re_reflink $text m txt lbl]} {
                         # Internal links - [text]?[link]?
@@ -1469,7 +1466,6 @@ oo::class create ruff::formatter::Formatter {
                         } elseif {[is_builtin $lbl]} {
                             lassign [builtin_url $lbl] url txt
                             set title $lbl
-                            incr index [string length $m]
                             set match_found 1
                         } elseif {![my SupportsReferences]} {
                             # If references are not maintained by the formatter
@@ -1477,7 +1473,6 @@ oo::class create ruff::formatter::Formatter {
                             # (looking at you, nroff)
                             set url ""
                             set title $txt 
-                            incr index [string length $m]
                             set match_found 1
                         } else {
                             app::log_error "Warning: no target found for link \"$lbl\". Assuming markdown reference."
@@ -1489,6 +1484,7 @@ oo::class create ruff::formatter::Formatter {
                     }
                     # PRINT IMG, A TAG
                     if {$match_found} {
+                        incr index [string length $m]
                         if {$ref_type eq "img"} {
                             append result [my ProcessInlineImage $url $txt $title $scope $link_class]
                         } else {
@@ -1498,14 +1494,12 @@ oo::class create ruff::formatter::Formatter {
                         append result $chr
                         incr index
                     }
-                    continue
                 }
                 {<} {
                     # HTML TAGS, COMMENTS AND AUTOLINKS
                     if {[regexp -start $index $re_comment $text m comment]} {
                         append result [my ProcessComment $comment]
                         incr index [string length $m]
-                        continue
                     } elseif {[regexp -start $index $re_autolink $text m email link]} {
                         if {$link ne {}} {
                             append result [my ProcessInlineLink $link $link "" $scope]
@@ -1518,17 +1512,16 @@ oo::class create ruff::formatter::Formatter {
                             append result [my ProcessInlineLink $email $mailto "" $scope]
                         }
                         incr index [string length $m]
-                        continue
                     } elseif {[regexp -start $index $re_htmltag $text m]} {
                         if {![my InlineHtmlSupported]} {
                             app::log_error "Warning: [info object class [self object]] does not support inline HTML."
                         }
                         append result $m
                         incr index [string length $m]
-                        continue
+                    } else {
+                        append result [my Escape $chr]
+                        incr index
                     }
-
-                    set chr [my Escape $chr]
                 }
                 {&} {
                     # ENTITIES
@@ -1540,13 +1533,13 @@ oo::class create ruff::formatter::Formatter {
                         # gets interpreted as an HTML tag. Somewhere there is
                         # this proc gets called recursively with < being
                         # mapped to &lt; on the first pass and then back
-                        # to < on the second passa 
+                        # to < on the second pass
                         append result [my Escape [string map $entity_map $m]]
                         incr index [string length $m]
-                        continue
+                    } else {
+                        append result [my Escape $chr]
+                        incr index
                     }
-
-                    set chr [my Escape $chr]
                 }
                 {$} {
                     # Ruff extension - treat $var as variables name
@@ -1555,7 +1548,9 @@ oo::class create ruff::formatter::Formatter {
                     if {[regexp -start $index {\$\w+} $text m]} {
                         append result [my ProcessVariable $m]
                         incr index [string length $m]
-                        continue
+                    } else {
+                        append result $chr
+                        incr index
                     }
                 }
                 {_} -
@@ -1564,12 +1559,14 @@ oo::class create ruff::formatter::Formatter {
                 "\"" {
                     # OTHER SPECIAL CHARACTERS.
                     # Note _ has no special meaning for Ruff! unlike Markdown.
-                    set chr [my Escape $chr]
+                    append result [my Escape $chr]
+                    incr index
                 }
-                default {}
+                default {
+                    append result $chr
+                    incr index
+                }
             }
-            append result $chr
-            incr index
         }
         return $result
     }
