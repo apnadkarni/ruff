@@ -203,7 +203,6 @@ oo::class create ruff::formatter::Sphinx {
         #  scope        - The documentation scope of the content.
         #  preformatted - One of `none`, `both`, `term` or `definition`
 
-        # Use Sphinx field list for better semantic markup
         append Document "\n"
         foreach item $definitions {
             set def [join [dict get $item definition] " "]
@@ -222,7 +221,7 @@ oo::class create ruff::formatter::Sphinx {
             }
 
             # Use field list format for parameters
-            append Document ":$term: $def\n"
+            append Document ":$term:\n   $def\n"
         }
         append Document "\n"
         return
