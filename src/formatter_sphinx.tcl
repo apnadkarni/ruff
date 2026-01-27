@@ -39,22 +39,18 @@ oo::class create ruff::formatter::Sphinx {
 
     method HeadingReference {ns heading} {
         # Implements the [Formatter.HeadingReference] method for Sphinx.
-        return "[ns_file_base $ns .html]#[my MakeSphinxId $ns $heading]"
+        return [my MakeSphinxId $ns $heading]
     }
 
     method SymbolReference {ns symbol} {
         # Implements the [Formatter.SymbolReference] method for Sphinx.
 
-        set ref [ns_file_base $ns .html]
-        # Reference to the global namespace is to the file itself.
-        if {$ns eq "::" && $symbol eq ""} {
-            return $ref
-        }
-        return [append ref "#[my MakeSphinxId $symbol]"]
+        return [my MakeSphinxId $symbol]
     }
 
     method FigureReference {ns caption} {
         # Implements the [Formatter.FigureReference] method for Sphinx.
+        return [my MakeSphinxId $ns $caption]
         return "[ns_file_base $ns .html]#[my MakeSphinxId $ns $caption]"
     }
 
@@ -545,6 +541,25 @@ oo::class create ruff::formatter::Sphinx {
         set rst_id [my MakeSphinxId $url]
         dict set Images $rst_id [dict create url $url alt $text]
         return "|$rst_id|"
+    }
+
+    method ProcessInternalLink {code_link text scope} {
+        # Returns the markup for internal Ruff links.
+        #  code_link - dictionary holding resolvable internal link information
+        #  text - the link text. If empty the label from `code_link` is used.
+        #  scope - Documentation scope for resolving references.
+        # The default implementation assumes HTML output format. Derived classes
+        # can override the method.
+
+        # Return Sphinx refs as the default will only work for HTML.
+        if {1} {
+            if {$text eq ""} {
+                set text [my Escape [dict get $code_link label]]
+            }
+            return [string cat ":ref:`" $text " <" [dict get $code_link ref] ">`"]
+        } else {
+            return [next $code_link $text $scope]
+        }
     }
 
     method ProcessComment {text} {
