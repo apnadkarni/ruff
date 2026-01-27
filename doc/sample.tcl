@@ -456,7 +456,13 @@ oo::class create ruff::sample::FunnyMethods {
     method _ {} {
         # Method to test underscores
     }
-    export + * > < & _
+    method \` {} {
+        # Method to test ` (backquote)
+    }
+    method trailing\` {} {
+        # Method to test trailing` (backquote)
+    }
+    export + * > < & _ \`
 
 }
 

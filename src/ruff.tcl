@@ -933,7 +933,7 @@ proc ruff::private::is_builtin {fqcmd} {
             foreach ns [namespace children ::] {
                 lappend cmds {*}[info commands ${ns}::*]
             }
-            set cmds
+            lappend cmds {*}[info class instances ::oo::class]
         }] {
             dict set built_ins $built_in $built_in
         }

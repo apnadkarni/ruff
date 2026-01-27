@@ -220,8 +220,13 @@ oo::class create ruff::formatter::Sphinx {
                 set term [my FormatInline $term $scope]
             }
 
-            # Use field list format for parameters
-            append Document ":$term:\n   $def\n"
+            # Use field list format for parameters. If the term itself is a
+            # reference link, do not double colons
+            if {[string match ":ref:`*`" $term]} {
+                append Document "$term\n   $def\n"
+            } else {
+                append Document ":$term:\n   $def\n"
+            }
         }
         append Document "\n"
         return
@@ -425,15 +430,16 @@ oo::class create ruff::formatter::Sphinx {
         #  scope  - The documentation scope of the content.
 
         append Document "\n"
+        append Document ".. parsed-literal::\n\n"
+        # Use parsed-literal for better formatting
         foreach {cmds params} $synopsis {
-            # Use parsed-literal for better formatting
-            append Document ".. parsed-literal::\n\n"
             append Document "   **[join $cmds { }]**"
             if {[llength $params]} {
                 append Document " *[join $params { }]*"
             }
-            append Document "\n\n"
+            append Document "\n"
         }
+        append Document "\n"
         return
     }
 
@@ -458,6 +464,11 @@ oo::class create ruff::formatter::Sphinx {
         #
         # The actual rules at https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#inline-markup
         # are indecipherable to me so the following likely has bugs.
+        #
+        # It also seems to be the case that escapes are dependent on the context
+        # (for example, part of definition term vs definition description vs text)
+        # Further, the Sphinx builders like sphinx-build for HTML have their own
+        # rules so strings that resemble HTML tags needs escaping.
 
         set result {}
         set len [string length $text]
@@ -554,6 +565,8 @@ oo::class create ruff::formatter::Sphinx {
         if {1} {
             if {$text eq ""} {
                 set text [my Escape [dict get $code_link label]]
+                # Need to escape <> so sphinx-build will not interpret as HTML tag
+                set text [string map {< \\< > \\>} $text]
             }
             return [string cat ":ref:`" $text " <" [dict get $code_link ref] ">`"]
         } else {

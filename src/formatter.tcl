@@ -877,10 +877,12 @@ oo::class create ruff::formatter::Formatter {
                 } else {
                     set referenced_class $imp_class
                 }
+                # NOTE: method summaries are carefully constructed to pass Sphinx
+                # idiosyncracies such as not markup in definition lists.
                 if {$referenced_class eq "::oo::configuresupport::configurable"} {
-                    lappend method_summaries [list term $method_name definition [list "Configure properties."]]
+                    lappend method_summaries [list term [markup_reference $method_name] definition [list "Configure properties. See [markup_reference $referenced_class]."]]
                 } else {
-                    lappend method_summaries [list term $method_name definition [list "See [markup_reference $referenced_class.$method_name]"]]
+                    lappend method_summaries [list term $referenced_class.$method_name definition [list "Inherited from [markup_reference $referenced_class]."]]
                 }
             }
         }
