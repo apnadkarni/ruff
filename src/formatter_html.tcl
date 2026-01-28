@@ -232,6 +232,13 @@ oo::class create ruff::formatter::Html {
         return [my DocumentEnd]
     }
 
+    method AddAnchor {anchor} {
+        # Adds an anchor (link target) to the document 
+        #  anchor - The anchor id to add
+        append Document "<a id='" $anchor "'></a>"
+        return
+    }
+
     method AddProcedureDetail {procinfo} {
         # Adds the detailed information about a procedure or method
         #  procinfo - dictionary describing the procedure. See [AddProcedure]
@@ -311,7 +318,7 @@ oo::class create ruff::formatter::Html {
             dict set linkinfo label $text
 
             # NOTE: <a></a> empty because the text itself may contain anchors.
-            set heading "<a name='$anchor'></a>[my FormatInline $text $scope]"
+            set heading [string cat "<a id='$anchor'></a>" [my FormatInline $text $scope]]
 
             # Namespace headers do not get a navigation link if page splitting
             # because they are already highlighted in the namespaces section in
@@ -613,10 +620,11 @@ oo::class create ruff::formatter::Html {
             }
             foreach ns $ordered_namespaces {
                 set ref  [ns_file_base $ns]
-                if {$ns eq "::"} {
+                set text [get_namespace_heading $ns]
+                if {$text eq "::"} {
                     set text "(Global)"
                 } else {
-                    set text [string trimleft $ns :]
+                    set text [string trimleft $text :]
                 }
                 if {$ns eq $highlight_ns} {
                     append Document "<li class='ruff-toc1'><a class='ruff-highlight' href='$ref'>$text</a></li>\n"

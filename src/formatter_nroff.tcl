@@ -112,6 +112,13 @@ oo::class create ruff::formatter::Nroff {
         return $doc
     }
 
+    method AddAnchor {anchor} {
+        # Adds an anchor (link target) to the document 
+        #  anchor - The anchor id to add
+        #
+        return ""; # No navigation in nroff
+    }
+
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
         # Adds heading for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`

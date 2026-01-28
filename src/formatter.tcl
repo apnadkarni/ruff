@@ -69,6 +69,20 @@ oo::class create ruff::formatter::Formatter {
         # This method should be overridden by the concrete formatter.
     }
 
+    method Anchor args {
+        # Return an anchor from the passed arguments.
+        #  args - String from which the anchor is to be constructed.
+        # This method may be overridden by concrete formatter.
+        return [make_id {*}$args]
+    }
+
+    method AddAnchor {anchor} {
+        # Adds an anchor (link target) to the document 
+        #  anchor - The anchor id to add
+        # This method should be overridden by the concrete formatter.
+        error "Method AddAnchor not overridden."
+    }
+
     method AddHeading {level text scope {tooltip {}}} {
         # Adds a heading to document content.
         #  level   - The heading level. May be either a numeric level or
@@ -1159,27 +1173,23 @@ oo::class create ruff::formatter::Formatter {
                 my DocumentBegin $ns
             }
 
-            set nprocs [dict size [dict get $ns_info $ns procs]]
-            set nclasses [dict size [dict get $ns_info $ns classes]]
-            # Horrible hack. Some namespaces are not really namespaces but are there
-            # just as documentation sections and do not contain actual commands.
-            # Strip the leading :: from them for display purposes.
-            if {$nprocs == 0 && $nclasses == 0} {
-                my AddHeading 1 [string trimleft $ns :] ""
-            } else {
-                # Adding "Reference" breaks the link anchor
-                #my AddHeading 1 "$ns Reference" ""
-                my AddHeading 1 $ns ""
+            set ns_heading [get_namespace_heading $ns]
+            if {$ns_heading ne $ns} {
+                # Add an anchor for actual namespace as well
+                my AddAnchor [my Anchor $ns]
             }
+            my AddHeading 1 $ns_heading ""
 
             # Print the preamble for this namespace
             my AddParagraphs [dict get $ns_info $ns preamble] $ns
 
+            set nprocs [dict size [dict get $ns_info $ns procs]]
             if {$nprocs != 0} {
                 my AddHeading 2 [::msgcat::mc Commands] $ns
                 my AddProcedures [dict get $ns_info $ns procs]
             }
 
+            set nclasses [dict size [dict get $ns_info $ns classes]]
             if {$nclasses != 0} {
                 my AddHeading 2 [::msgcat::mc Classes] $ns
                 my AddClasses [dict get $ns_info $ns classes]

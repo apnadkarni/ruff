@@ -105,6 +105,14 @@ oo::class create ruff::formatter::Sphinx {
         return $doc
     }
 
+    method AddAnchor {anchor} {
+        # Adds an anchor (link target) to the document 
+        #  anchor - The anchor id to add
+
+        append Document "\n.. _$anchor:\n\n"
+        return
+    }
+
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
         # Adds heading for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
@@ -131,7 +139,7 @@ oo::class create ruff::formatter::Sphinx {
             set ns_label global
         }
         append ns_label " " [expr {$type eq "method" ? "class" : "namespace"}]
-        if {[number_of_symbol_occurences $name] > 1} {
+        if {[number_of_symbol_occurrences $name] > 1} {
             append Document ".. index::\n   pair: $ns_label;$name\n\n"
         } else {
             append Document ".. index::\n   single: $name\n"

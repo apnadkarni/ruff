@@ -442,6 +442,7 @@ namespace eval ruff {
             variable _ruff_ns_opts {
                 -onlyexports true
                 -excludeprocs private.*
+                -heading {Heading to be used for the namespace}
             }
         }
         ```
@@ -452,6 +453,10 @@ namespace eval ruff {
         The options that can be overridden by a namespace are `-excludeclasses`,
         `-excludeprocs`, `-includeimports`, `-includeprivate` and
         `-onlyexports`. See [document] for their semantics.
+
+        Additionally, the option `-heading` can be specified to override the
+        heading used for the namespace, which defaults to its name.
+
 
         ## Inline formatting
 
@@ -916,17 +921,21 @@ namespace eval ruff {
         # Extension of base output file
         variable output_file_ext ""
 
-        # Dictionary to count number of occurences of an unqualified name.
+        # Dictionary to count number of occurrences of an unqualified name.
         # Currently used to control index format
-        variable symbol_occurences {}
-        proc count_symbol_occcurence {name} {
-            variable symbol_occurences
-            dict incr symbol_occurences $name
+        variable symbol_occurrences [dict create]
+        proc reset_symbol_occurrence_counts {} {
+            variable symbol_occurrences
+            set symbol_occurrences [dict create]
         }
-        proc number_of_symbol_occurences {name} {
-            variable symbol_occurences
-            if {[dict exists $symbol_occurences $name]} {
-                return [dict get $symbol_occurences $name]
+        proc count_symbol_occurrence {name} {
+            variable symbol_occurrences
+            dict incr symbol_occurrences $name
+        }
+        proc number_of_symbol_occurrences {name} {
+            variable symbol_occurrences
+            if {[dict exists $symbol_occurrences $name]} {
+                return [dict get $symbol_occurrences $name]
             }
             return 0
         }
@@ -1036,6 +1045,23 @@ proc ruff::private::sanitize_filename {s} {
     return [regsub -all {[^-\w_]} $s -]
 }
 
+proc ruff::private::get_namespace_heading {fqns} {
+    # Returns the heading to be used for the given namespace.
+    #  fqns - fully qualified namespace
+    if {[info exists ${fqns}::_ruff_ns_opts] &&
+        [dict exists [set ${fqns}::_ruff_ns_opts] heading]} {
+        set heading [dict get [set ${fqns}::_ruff_ns_opts] heading]
+        if {$heading eq ""} {
+            error "The \"heading\" entry in ${ns}::_ruff_ns_opts is empty."
+        }
+        return $heading
+    } else {
+        # Adding "Reference" breaks the link anchor
+        #return "$ns Reference"
+        return $fqns
+    }
+}
+
 proc ruff::private::make_id {args} {
     # Return an id usable as a unique anchor
     #  args - list of arbitrary strings
@@ -1046,7 +1072,7 @@ proc ruff::private::make_id {args} {
     # This means that the generated id should not contain any characters other
     # than alphanumerics and "-" because of the restrictions imposed by
     # reStructuredText processing by rst2html. Further it trims leading and
-    # trailing "-" and compresses multiple consecutive occurences into a single
+    # trailing "-" and compresses multiple consecutive occurrences into a single
     # "-" so we avoid the - character as well.
     #
     # The current implementation replaces non-alphanumerics with their codepoint
@@ -2473,7 +2499,7 @@ proc ruff::private::extract_docstring {text scope} {
     #             not be formatted.
     #
     # Each element may occur multiple times and are expected to be displayed
-    # in the order of their occurence.
+    # in the order of their occurrence.
 
     set doc [parse_lines [distill_docstring $text] $scope docstring]
     set result [dict get $doc body]
@@ -2701,7 +2727,7 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names
 
     variable ProgramOptions
 
-    count_symbol_occcurence [namespace tail $procname]
+    count_symbol_occurrence [namespace tail $procname]
 
     array set param_default $param_defaults
     array set params {}
@@ -2822,7 +2848,7 @@ proc ruff::private::extract_ooclass {classname args} {
     # extract_ooclass_method command with an additional keys:
     # visibility - indicates whether the method is 'public' or 'private'
 
-    count_symbol_occcurence [namespace tail $classname]
+    count_symbol_occurrence [namespace tail $classname]
 
     array set opts {-includeprivate false}
     array set opts $args
@@ -3169,7 +3195,7 @@ proc ruff::private::get_ooclass_method_path {class_name method_name} {
     # which class actually implements a method exposed by the class.
     #
     # If a class occurs multiple times due to inheritance or
-    # mixins, the LAST occurence of the class is what determines
+    # mixins, the LAST occurrence of the class is what determines
     # the priority of that class in method selection. Therefore
     # the returned search path may contain repeated elements.
     #
@@ -3256,7 +3282,7 @@ proc ruff::private::locate_ooclass_method {class_name method_name} {
     }
 
     # Now we cannot just pick the first element in the path. We have
-    # to find the *last* occurence of each class - that will decide
+    # to find the *last* occurrence of each class - that will decide
     # the priority order
     set order [dict create]
     set pos 0
@@ -3504,6 +3530,7 @@ proc ruff::document {namespaces args} {
         # is different so override what was passed in.
         lappend args -preamble [extract_docstring $opts(-preamble) ::]
     }
+    reset_symbol_occurrence_counts
     set classprocinfodict [extract_namespaces $namespaces \
                                -excludeprocs $opts(-excludeprocs) \
                                -excludeclasses $opts(-excludeclasses) \

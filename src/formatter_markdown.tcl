@@ -114,6 +114,13 @@ oo::class create ruff::formatter::Markdown {
         return $doc
     }
 
+    method AddAnchor {anchor} {
+        # Adds an anchor (link target) to the document 
+        #  anchor - The anchor id to add
+        append Document "<a id='" $anchor "'></a>"
+        return
+    }
+
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
         # Adds heading for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`

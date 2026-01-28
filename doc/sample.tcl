@@ -2,6 +2,15 @@
 # features. It also serves as test input.
 
 namespace eval ruff::sample {
+
+    variable _ruff_ns_opts {
+        heading "Sample for Ruff!"
+        -excludeclasses ExcludedClass
+        -excludeprocs excluded.* 
+        -onlyexports false
+    }
+
+
     variable _ruff_preamble {
         ## Introduction
 
@@ -239,10 +248,6 @@ namespace eval ruff::sample {
         namespace export *
         namespace ensemble create
     }
-
-    variable _ruff_ns_opts [dict create -excludeclasses ExcludedClass \
-                               -excludeprocs excluded.* \
-                               -onlyexports false]
 
     proc excluded_proc {} {}
     oo::class create ExcludedClass {
