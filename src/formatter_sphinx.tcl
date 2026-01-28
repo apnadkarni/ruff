@@ -130,7 +130,9 @@ oo::class create ruff::formatter::Sphinx {
         append Document ".. _$anchor:\n\n"
 
         set heading [my ProcessLiteral [namespace tail $name]]
-        if {[string length $ns]} {
+        if {0 && [string length $ns]} {
+            # Links to class/namespace - disabled as it clutters the Sphinx
+            # navigation bar
             set ns_link [my FormatInline [markup_reference $ns]]
             append heading " \[${ns_link}\]"
         }
