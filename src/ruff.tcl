@@ -915,6 +915,21 @@ namespace eval ruff {
         variable output_file_base ""
         # Extension of base output file
         variable output_file_ext ""
+
+        # Dictionary to count number of occurences of an unqualified name.
+        # Currently used to control index format
+        variable symbol_occurences {}
+        proc count_symbol_occcurence {name} {
+            variable symbol_occurences
+            dict incr symbol_occurences $name
+        }
+        proc number_of_symbol_occurences {name} {
+            variable symbol_occurences
+            if {[dict exists $symbol_occurences $name]} {
+                return [dict get $symbol_occurences $name]
+            }
+            return 0
+        }
     }
     namespace path private
 }
@@ -2686,6 +2701,8 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names
 
     variable ProgramOptions
 
+    count_symbol_occcurence [namespace tail $procname]
+
     array set param_default $param_defaults
     array set params {}
     array set options {}
@@ -2804,6 +2821,8 @@ proc ruff::private::extract_ooclass {classname args} {
     # Each method definition is in the format returned by the
     # extract_ooclass_method command with an additional keys:
     # visibility - indicates whether the method is 'public' or 'private'
+
+    count_symbol_occcurence [namespace tail $classname]
 
     array set opts {-includeprivate false}
     array set opts $args

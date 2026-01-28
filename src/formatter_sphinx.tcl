@@ -126,7 +126,18 @@ oo::class create ruff::formatter::Sphinx {
         append Document "\n"
 
         # Use generic function directive with special index role
-        append Document ".. index::\n   single: $fqn ($type)\n\n"
+        set ns_label [string trimleft $ns :]
+        if {$ns_label eq ""} {
+            set ns_label global
+        }
+        append ns_label " " [expr {$type eq "method" ? "class" : "namespace"}]
+        if {[number_of_symbol_occurences $name] > 1} {
+            append Document ".. index::\n   pair: $ns_label;$name\n\n"
+        } else {
+            append Document ".. index::\n   single: $name\n"
+            append Document ".. index::\n   single: $ns_label;$name\n\n"
+        }
+
         append Document ".. _$anchor:\n\n"
 
         set heading [my ProcessLiteral [namespace tail $name]]
@@ -612,6 +623,7 @@ oo::class create ruff::formatter::Sphinx {
         foreach path $output_paths {
             puts $fd "   [file tail $path]"
         }
+        puts $fd "   genindex"
         close $fd
 
         # Ensure directory for static assets used by Sphinx exists
