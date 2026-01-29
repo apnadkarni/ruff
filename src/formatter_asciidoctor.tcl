@@ -1,4 +1,4 @@
-# Copyright (c) 2026, Asciidoctor formatter for Ruff!
+# Copyright (c) 2026, Ashok P. Nadkarni
 # Ruff! formatter for Asciidoctor documentation
 
 namespace eval ruff::formatter {}
@@ -94,7 +94,9 @@ oo::class create ruff::formatter::Asciidoctor {
         # Adds an anchor (link target) to the document 
         #  anchor - The anchor id to add
 
-        append Document "\n\[\[$anchor\]\]\n"
+        # Must use explicit macro. Using the [[anchor]] form will be ignored
+        # if followed immediately by another anchor.
+        append Document "\nanchor:$anchor\[\]\n"
         return
     }
 

@@ -16,7 +16,6 @@ proc ruff::private::document_self {args} {
                         -format html \
                         -includesource true \
                         -pagesplit namespace \
-                        -makeindex true \
                         -includeprivate false \
                         -compact 1 \
                         -locale en \
@@ -24,6 +23,11 @@ proc ruff::private::document_self {args} {
                         -navigation {left sticky}
                        ]
     array set opts $args
+    if {$opts(-pagesplit) eq "namespace"} {
+        set opts(-makeindex) true
+    } else {
+        set opts(-makeindex) false
+    }
     if {![info exists opts(-outdir)]} {
         set opts(-outdir) [file join [file dirname [ruff_dir]] doc out $opts(-format)]
     } else {
@@ -58,7 +62,7 @@ proc ruff::private::document_self {args} {
         lappend common_args -onlyexports 1
     }
     switch -exact -- $opts(-format) {
-        sphinx - markdown {
+        asciidoctor - sphinx - markdown - nroff {
             document $namespaces {*}$common_args \
                 -outdir $opts(-outdir) \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
@@ -72,12 +76,6 @@ proc ruff::private::document_self {args} {
                 }
                 lappend common_args -navigation $opts(-navigation)
             }
-            document $namespaces {*}$common_args \
-                -outdir $opts(-outdir) \
-                -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
-                -includesource $opts(-includesource)
-        }
-        nroff {
             document $namespaces {*}$common_args \
                 -outdir $opts(-outdir) \
                 -copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
@@ -98,6 +96,7 @@ if {[catch {
     ruff::private::document_self -format markdown {*}$argv
     ruff::private::document_self -format nroff {*}$argv
     ruff::private::document_self -format sphinx {*}$argv
+    ruff::private::document_self -format asciidoctor -pagesplit none {*}$argv
 } result edict]} {
     puts stderr "Error: $result"
     puts [dict get $edict -errorinfo]

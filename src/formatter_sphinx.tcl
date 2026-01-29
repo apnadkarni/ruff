@@ -1,4 +1,4 @@
-# Copyright (c) 2024, Sphinx formatter for Ruff!
+# Copyright (c) 2024-2026, Ashok P. Nadkarni
 # Ruff! formatter for Sphinx documentation
 
 namespace eval ruff::formatter {}
