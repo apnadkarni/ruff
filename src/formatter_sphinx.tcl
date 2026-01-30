@@ -34,7 +34,7 @@ oo::class create ruff::formatter::Sphinx {
         # The anchor is constructed to work with Sphinx's reference system.
         # Returns an anchor suitable for Sphinx references.
 
-        return [string tolower [make_id {*}$args]]
+        return [make_id {*}$args]
     }
 
     method HeadingReference {ns heading} {
@@ -51,7 +51,6 @@ oo::class create ruff::formatter::Sphinx {
     method FigureReference {ns caption} {
         # Implements the [Formatter.FigureReference] method for Sphinx.
         return [my MakeSphinxId $ns $caption]
-        return "[ns_file_base $ns .html]#[my MakeSphinxId $ns $caption]"
     }
 
     method Begin {} {
@@ -124,6 +123,7 @@ oo::class create ruff::formatter::Sphinx {
         set level    [dict get $HeaderLevels $type]
         set ns       [namespace qualifiers $fqn]
         set anchor   [my MakeSphinxId $fqn]
+        set exported_anchor [make_exported_id $fqn]
 
         # Track anchors for navigation
         set linkinfo [dict create tag h$level href "#$anchor"]
@@ -146,7 +146,8 @@ oo::class create ruff::formatter::Sphinx {
             append Document ".. index::\n   single: $ns_label;$name\n\n"
         }
 
-        append Document ".. _$anchor:\n\n"
+        append Document ".. _$anchor:\n"
+        append Document ".. _$exported_anchor:\n\n"
 
         set heading [my ProcessLiteral [namespace tail $name]]
         if {0 && [string length $ns]} {
@@ -175,9 +176,11 @@ oo::class create ruff::formatter::Sphinx {
 
         if {$do_link} {
             set anchor [my MakeSphinxId $scope $text]
+            set exported_anchor [make_exported_id $scope $text]
             set linkinfo [dict create tag h$level href "#$anchor"]
             dict set linkinfo label $text
-            append Document "\n.. _$anchor:\n\n"
+            append Document "\n.. _$anchor:\n"
+            append Document ".. _$exported_anchor:\n\n"
         }
 
         set heading_text [my FormatInline $text $scope]
@@ -385,6 +388,7 @@ oo::class create ruff::formatter::Sphinx {
         if {[dict exists $fence_options -caption]} {
             set caption [dict get $fence_options -caption]
             set anchor [my MakeSphinxId $scope $caption]
+            set exported_anchor [make_exported_id $scope $caption]
             if {[my ResolvableReference? $caption $scope ref] && [dict exists $ref label]} {
                 # May have "Figure X" added
                 set display_caption [dict get $ref label]
@@ -395,6 +399,7 @@ oo::class create ruff::formatter::Sphinx {
             set caption ""
             set display_caption ""
             set anchor ""
+            set exported_anchor ""
         }
 
         # Check if this is a diagram
@@ -417,7 +422,8 @@ oo::class create ruff::formatter::Sphinx {
             # Using ..image does not float the image but cannot have a caption
             append Document "\n"
             if {$anchor ne ""} {
-                append Document ".. _$anchor:\n\n"
+                append Document ".. _$anchor:\n"
+                append Document ".. _$exported_anchor:\n\n"
             }
             append Document ".. figure:: $image_url\n"
 
@@ -434,7 +440,8 @@ oo::class create ruff::formatter::Sphinx {
 
             append Document "\n"
             if {$anchor ne ""} {
-                append Document ".. _$anchor:\n\n"
+                append Document ".. _$anchor:\n"
+                append Document ".. _$exported_anchor:\n\n"
             }
             append Document ".. code-block:: $lang\n"
 

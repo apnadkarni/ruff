@@ -220,7 +220,9 @@ namespace eval ruff::sample {
 
         ### Images
 
-        Images can be specified using either Markdown or HTML:
+        Images can be specified using either Markdown or inline HTML. The former
+        is preferred as even formatters that support images may not support
+        inline HTML.
 
         #ruffopt excludedformats nroff
         * ![alt img](assets/ruff-logo.png) `![alt img](assets/ruff-logo.png)`
@@ -236,14 +238,12 @@ namespace eval ruff::sample {
         * <img src="assets/ruff-logo.png" alt=""/> `<img src="assets/ruff-logo.png" alt=""/>`
         ```
 
-        #ruffopt includedformats {html markdown}
-
         #ruffopt excludedformats {}
-
 
         The remaining sections show how commands and classes are documented.
         Click on the *Show source* link to see the underlying source code
         for the procedure or method from which the documentation was generated.
+
     }
 
     # An ensemble example

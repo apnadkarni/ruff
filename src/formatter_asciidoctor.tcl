@@ -109,12 +109,14 @@ oo::class create ruff::formatter::Asciidoctor {
         set level    [dict get $HeaderLevels $type]
         set ns       [namespace qualifiers $fqn]
         set anchor   [my MakeAsciidocId $fqn]
+        set exported_anchor [make_exported_id $fqn]
 
         set linkinfo [dict create tag h$level href "#$anchor"]
         set name [namespace tail $fqn]
         dict set linkinfo label $name
 
         append Document "\n\[\[" $anchor "\]\]\n"
+        append Document "\[\[" $exported_anchor "\]\]\n"
 
         set heading [my ProcessLiteral [namespace tail $name]]
         if {0 && [string length $ns]} {
@@ -147,9 +149,11 @@ oo::class create ruff::formatter::Asciidoctor {
 
         if {$do_link} {
             set anchor [my MakeAsciidocId $scope $text]
+            set exported_anchor [make_exported_id $scope $text]
             set linkinfo [dict create tag h$level href "#$anchor"]
             dict set linkinfo label $text
             append Document "\n\[\[$anchor\]\]\n"
+            append Document "\[\[$exported_anchor\]\]\n"
         }
 
         set heading_text [my FormatInline $text $scope]
@@ -351,6 +355,7 @@ oo::class create ruff::formatter::Asciidoctor {
         if {[dict exists $fence_options -caption]} {
             set caption [dict get $fence_options -caption]
             set anchor [my MakeAsciidocId $scope $caption]
+            set exported_anchor [make_exported_id $scope $caption]
             if {[my ResolvableReference? $caption $scope ref] && [dict exists $ref label]} {
                 set display_caption [dict get $ref label]
             } else {
@@ -360,6 +365,7 @@ oo::class create ruff::formatter::Asciidoctor {
             set caption ""
             set display_caption ""
             set anchor ""
+            set exported_anchor ""
         }
 
         # Check if this is a diagram
@@ -379,19 +385,20 @@ oo::class create ruff::formatter::Asciidoctor {
             append Document "\n"
             if {$anchor ne ""} {
                 append Document "\[\[$anchor\]\]\n"
+                append Document "\[\[$exported_anchor\]\]\n"
             }
-            
+
             if {$display_caption ne ""} {
                 append Document ".$display_caption\n"
             }
-            
+
             # Process alignment
             set align_attr ""
             if {[dict exists $fence_options -align]} {
                 set align_value [dict get $fence_options -align]
                 set align_attr "align=$align_value"
             }
-            
+
             if {$align_attr ne ""} {
                 append Document "\[$align_attr\]\n"
             }
@@ -406,12 +413,13 @@ oo::class create ruff::formatter::Asciidoctor {
             append Document "\n"
             if {$anchor ne ""} {
                 append Document "\[\[$anchor\]\]\n"
+                append Document "\[\[$exported_anchor\]\]\n"
             }
-            
+
             if {$display_caption ne ""} {
                 append Document ".$display_caption\n"
             }
-            
+
             append Document "\[source,$lang\]\n"
             append Document "----\n"
             append Document [join $lines \n] \n

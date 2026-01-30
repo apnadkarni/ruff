@@ -1112,16 +1112,17 @@ proc ruff::private::make_id {args} {
     #   a formatter as that would make linking difficult.
     # This means that the generated id should not contain any characters other
     # than alphanumerics and "-" because of the restrictions imposed by
-    # reStructuredText processing by rst2html. Further it trims leading and
+    # reStructuredText processing by rst2html. Further Sphinx trims leading and
     # trailing "-" and compresses multiple consecutive occurrences into a single
-    # "-" so we avoid the - character as well.
+    # "-" so we avoid the - character as well. Asciidoctor has similar, but
+    # different requirements.
     #
     # The current implementation replaces non-alphanumerics with their codepoint
     # value. This is not perfect since (for example) the strings " " and "20"
-    # will not generate the same id but it is unlikely that will clash in
+    # will generate the same id but it is unlikely that will clash in
     # practice.
 
-    # Use qz to join with the hope it will not occur in practice
+    # Use qz to join with the hope it will not cause duplicates in practice
     set s [join [lmap arg $args {
         if {$arg eq ""} continue
         set arg
@@ -1133,8 +1134,52 @@ proc ruff::private::make_id {args} {
             append result [format %x [scan $notalnumchar %c]]
         }
     }
-    return [string cat x $result]
+    return [string cat r- $result]
 }
+
+proc ruff::private::make_exported_id {args} {
+    # Construct an anchor from the passed arguments that is human readable.
+    #   args - Strings from which the anchor is to be constructed.
+    # The anchor is constructed for better legibility when referenced from
+    # other documentation systems like Sphinx and Asciidoctor compared to
+    # [make_id]. However this necessarily means there are more likely to be
+    # duplicates in generated id's. [make_id] should therefore be preferred though
+    # more inconvenient to type.
+    #
+    # Returns an anchor suitable for use in an external reference.
+
+    # For Sphinx requirements, see
+    # https://docutils.sourceforge.io/docs/ref/rst/directives.html#identifier-normalization
+    # The result will do for asciidoctor as well.
+
+    set result [string tolower [string cat r- [join $args { }]]]
+
+    # Remove accents (basic ASCII conversion), Unicode normalization is complex
+    set result [string map {
+        à a á a â a ã a ä a å a
+        è e é e ê e ë e
+        ì i í i î i ï i
+        ò o ó o ô o õ o ö o
+        ù u ú u û u ü u
+        ñ n ç c
+    } $result]
+
+    # Convert non-alphanumeric to hyphens
+    regsub -all {[^a-z0-9]+} $result "-" result
+
+    # Strip leading hyphens and numbers
+    # Not needed - prepended -r above
+    # regsub {^[-0-9]+} $result "" result
+
+    # Strip trailing hyphens
+    set result [string trimright $result "-"]
+
+    # Collapse consecutive hyphens
+    regsub -all -- {-+} $result "-" result
+
+    return $result
+}
+
 
 proc ruff::private::ns_file_base {ns_or_class {ext {}}} {
     # Returns the file name to use for documenting namespace $ns.
@@ -3502,6 +3547,7 @@ proc ruff::document {namespaces args} {
         set opts(-product) [string trim [lindex $namespaces 0] :]
         lappend args -product $opts(-product)
     }
+
     if {![info exists opts(-title)]} {
         set opts(-title) [string totitle $opts(-product)]
         lappend args -title $opts(-title)
@@ -3517,6 +3563,7 @@ proc ruff::document {namespaces args} {
     set ProgramOptions(-pagesplit) $opts(-pagesplit)
     set ProgramOptions(-makeindex) $opts(-makeindex)
     set ProgramOptions(-diagrammer) $opts(-diagrammer)
+    set ProgramOptions(-product) $opts(-product)
 
     # Fully qualify namespaces
     set namespaces [lmap ns $namespaces {
