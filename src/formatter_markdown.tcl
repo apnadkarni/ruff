@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Ashok P. Nadkarni
+# Copyright (c) 2019-2026, Ashok P. Nadkarni
 # All rights reserved.
 # See the file LICENSE in the source root directory for license.
 
@@ -181,6 +181,12 @@ oo::class create ruff::formatter::Markdown {
         }
         append Document "\n" $atx " " $heading "\n"
         return
+    }
+
+    method MarkupInlineHtml {html} {
+        # Returns markup to pass inline HTML.
+        #  html - HTML text to inline
+        return $html
     }
 
     method AddParagraph {lines scope} {

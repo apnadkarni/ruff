@@ -146,6 +146,21 @@ namespace eval ruff::sample {
 
         Not all formatters make use of the language specifier.
 
+        ### HTML input
+
+        ```
+        <b>This is bolded inline HTML</b>. Not all formatters support inline HTML.
+        ```
+
+        <b>This is bolded inline HTML</b>. Not all formatters support inline HTML.
+
+        ```
+        `&amp;` is encoded as an HTML entity &amp;.
+        ```
+
+        `&amp;` is encoded as an HTML entity &amp;.
+
+
         ### Diagrams
 
         Diagrams can be embedded in several formats such as `ditaa`,

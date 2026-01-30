@@ -826,8 +826,7 @@ namespace eval ruff {
 
         Ruff! is designed to support multiple output formats through pluggable
         formatters. The command [formatters] returns a list of supported
-        formatters. Currently formatters for producing HTML and Markdown are
-        implemented.
+        formatters.
 
         In addition, the output may be produced in single or multipage format.
 
@@ -897,7 +896,10 @@ namespace eval ruff {
         The Nroff formatter generates documentation in the format required
         for Unix manpages. It generates documentation as a single manpage
         or as a page per namespace with the `-pagesplit namespace` option.
-        It does not support navigation links or table of contents.
+        It does not support inline HTML, navigation links or table of contents.
+
+        The Nroff formatter does not support images and links. Table support
+        requires presence of the `tbl` program.
 
         ### Sphinx formatter
 
@@ -905,6 +907,45 @@ namespace eval ruff {
         format in the form expected by the Sphinx documentation system. Note
         it is not directly usable by Python's doctools.
 
+        The Sphinx formatter does not support inline HTML.
+
+        The primary benefit of Sphinx is the ability to integrate Tcl documentation
+        with Sphinx documentation for Python, C or other languages and produce
+        output in additional formats like Latex.
+
+        The Sphinx formatter produces the file `index.rst` along with
+        secondary files in the Ruff! output directory. To generate HTML from this
+        file,
+
+        ```
+        sphinx-build /PATH/TO/RUFF/OUTPUTDIR /PATH/TO/HTMLOUTPUT
+        ```
+
+        ### Asciidoctor formatter
+
+        The Asciidoctor formatter generates documentation in the
+        [Asciidoc](https://docs.asciidoctor.org/asciidoc/latest/) format as
+        processed by the
+        [Asciidoctor](https://docs.asciidoctor.org/asciidoctor/latest/)
+        text processor.
+
+        Asciidoctor does not have native support for producing multipage output
+        so use of the `-pagesplit namespace` option to Ruff! will require additional
+        post-processing.
+
+        The Asciidoctor formatter produces the file `index.adoc` along with
+        secondary files in the output directory. To generate HTML from this
+        file,
+
+        ```
+        asciidoctor index.adoc
+        ```
+
+        Asciidoctor also supports other output formats. To produce PDF instead
+        of HTML,
+        ```
+        asciidoctor-pdf index.adoc
+        ```
     }
 
     namespace eval private {
@@ -3583,7 +3624,27 @@ proc ruff::formatters {} {
     # documentation in that format.
     #
     # Returns a list of available formatters.
-    return {html markdown nroff sphinx}
+    return {asciidoctor html markdown nroff sphinx}
+}
+
+proc ruff::private::map_html_entity {html_entity} {
+    # Maps an HTML entity to its character.
+    #  html_entity - HTML string to map
+    # The command depends on availability of the tcllib htmlparse package
+    # Returns the mapping result or the original $html_entity if it was not
+    # an entity or the mapping was not successful.
+
+    if {[catch {package require htmlparse}]} {
+        app::log_error "Warning: HTML entity found ($html_entity) but htmlparse package not present."
+        proc mapHtmlEntity {html_entity} {
+            return $html_entity
+        }
+    } else {
+        proc mapHtmlEntity {html_entity} {
+            return [htmlparse::mapEscapes $html_entity]
+        }
+    }
+    tailcall mapHtmlEntity $html_entity
 }
 
 # TBD - where is this used
