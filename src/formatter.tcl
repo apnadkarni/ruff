@@ -102,6 +102,13 @@ oo::class create ruff::formatter::Formatter {
         error "Method AddParagraph not overridden."
     }
 
+    method MarkupInlineHtml {html} {
+        # Returns markup to pass inline HTML.
+        #  html - HTML text to inline
+        # This method should be overridden by the concrete formatter.
+        error "Method MarkupInlineHtml not overridden."
+    }
+
     method AddParagraphText {text scope} {
         # Adds a paragraph to the document content.
         #  text - Paragraph text to add.
@@ -1354,13 +1361,6 @@ oo::class create ruff::formatter::Formatter {
         return [my ProcessLiteral $text]
     }
 
-    method InlineHtmlSupported {} {
-        # Returns boolean indicating whether the formatter supports inline HTML.
-        #
-        # The default implementation assumes formatter supports inline HTML.
-        return true
-    }
-
     # Credits: tcllib/Caius markdown module
     method FormatInline {text {scope {}}} {
         # Parses inline Markdown text and returns it formatted as per the output
@@ -1525,10 +1525,7 @@ oo::class create ruff::formatter::Formatter {
                         }
                         incr index [string length $m]
                     } elseif {[regexp -start $index $re_htmltag $text m]} {
-                        if {![my InlineHtmlSupported]} {
-                            app::log_error "Warning: [info object class [self object]] does not support inline HTML."
-                        }
-                        append result $m
+                        append result [my MarkupInlineHtml $m]
                         incr index [string length $m]
                     } else {
                         append result [my Escape $chr]
@@ -1538,16 +1535,15 @@ oo::class create ruff::formatter::Formatter {
                 {&} {
                     # ENTITIES
                     if {[regexp -start $index $re_entity $text m]} {
-                        if {![my InlineHtmlSupported]} {
-                            app::log_error "Warning: [self class] does not support inline HTML."
+                        set mapped_entity [map_html_entity $m]
+                        if {$mapped_entity eq $m} {
+                            app::log_error "Unrecognized HTML entity $m"
+                            append result [my Escape $chr]
+                            incr index
+                        } else {
+                            append result [my Escape $mapped_entity]
+                            incr index [string length $m]
                         }
-                        # Disabled because the <tag> method in method tables
-                        # gets interpreted as an HTML tag. Somewhere there is
-                        # this proc gets called recursively with < being
-                        # mapped to &lt; on the first pass and then back
-                        # to < on the second pass
-                        append result [my Escape [string map $entity_map $m]]
-                        incr index [string length $m]
                     } else {
                         append result [my Escape $chr]
                         incr index

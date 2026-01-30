@@ -183,6 +183,12 @@ oo::class create ruff::formatter::Markdown {
         return
     }
 
+    method MarkupInlineHtml {html} {
+        # Returns markup to pass inline HTML.
+        #  html - HTML text to inline
+        return $html
+    }
+
     method AddParagraph {lines scope} {
         # See [Formatter.AddParagraph].
         #  lines  - The paragraph lines.

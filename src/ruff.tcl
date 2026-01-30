@@ -3627,6 +3627,26 @@ proc ruff::formatters {} {
     return {asciidoctor html markdown nroff sphinx}
 }
 
+proc ruff::private::map_html_entity {html_entity} {
+    # Maps an HTML entity to its character.
+    #  html_entity - HTML string to map
+    # The command depends on availability of the tcllib htmlparse package
+    # Returns the mapping result or the original $html_entity if it was not
+    # an entity or the mapping was not successful.
+
+    if {[catch {package require htmlparse}]} {
+        app::log_error "Warning: HTML entity found ($html_entity) but htmlparse package not present."
+        proc mapHtmlEntity {html_entity} {
+            return $html_entity
+        }
+    } else {
+        proc mapHtmlEntity {html_entity} {
+            return [htmlparse::mapEscapes $html_entity]
+        }
+    }
+    tailcall mapHtmlEntity $html_entity
+}
+
 # TBD - where is this used
 proc ruff::private::wrap_text {text args} {
     # Wraps a string such that each line is less than a given width

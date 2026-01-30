@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Ashok P. Nadkarni
+# Copyright (c) 2021-2026, Ashok P. Nadkarni
 # All rights reserved.
 # See the file LICENSE in the source root directory for license.
 
@@ -177,6 +177,14 @@ oo::class create ruff::formatter::Nroff {
             append Body [nr_p] [nr_bldr $text]
         }
         return
+    }
+
+    method MarkupInlineHtml {html} {
+        # Returns markup to pass inline HTML.
+        #  html - HTML text to inline
+        # Nroff does not support inline HTML so logged and ignored.
+        app::log_error "Warning: [info object class [self object]] does not support inline HTML. Ignored."
+        return ""
     }
 
     method AddParagraph {lines scope} {
@@ -476,13 +484,6 @@ oo::class create ruff::formatter::Nroff {
         # can override the method.
         return [nr_ulr $text]
     }
-
-    method InlineHtmlSupported {} {
-        # Returns boolean indicating whether the formatter supports inline HTML.
-        #
-        return false
-    }
-
 
     method extension {} {
         # Returns the default file extension to be used for output files.

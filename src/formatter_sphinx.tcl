@@ -194,6 +194,14 @@ oo::class create ruff::formatter::Sphinx {
         return
     }
 
+    method MarkupInlineHtml {html} {
+        # Returns markup to pass inline HTML.
+        #  html - HTML text to inline
+        # Sphinx does not support inline HTML so logged and ignored.
+        app::log_error "Warning: [info object class [self object]] does not support inline HTML. Ignored."
+        return ""
+    }
+
     method AddParagraph {lines scope} {
         # See [Formatter.AddParagraph].
         #  lines  - The paragraph lines.
@@ -603,12 +611,6 @@ oo::class create ruff::formatter::Sphinx {
             append comment ".. " [my Escape $line] \n
         }
         return $comment
-    }
-
-    method InlineHtmlSupported {} {
-        # Returns boolean indicating whether the formatter supports inline HTML.
-        #
-        return false
     }
 
     method extension {} {

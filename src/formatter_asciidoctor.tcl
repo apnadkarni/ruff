@@ -167,6 +167,12 @@ oo::class create ruff::formatter::Asciidoctor {
         return
     }
 
+    method MarkupInlineHtml {html} {
+        # Returns markup to pass inline HTML.
+        #  html - HTML text to inline
+        return "pass:\[" $html "\]"
+    }
+
     method AddParagraph {lines scope} {
         # See [Formatter.AddParagraph].
         #  lines  - The paragraph lines.
@@ -548,17 +554,12 @@ oo::class create ruff::formatter::Asciidoctor {
 
     method ProcessComment {text} {
         # Returns the markup for a comment.
-        
+
         set comment ""
         foreach line [split $text \n] {
             append comment "// " [my Escape $line] \n
         }
         return $comment
-    }
-
-    method InlineHtmlSupported {} {
-        # Returns boolean indicating whether the formatter supports inline HTML.
-        return false
     }
 
     method extension {} {
