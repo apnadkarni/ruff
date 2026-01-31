@@ -380,8 +380,10 @@ namespace eval ruff {
 
         ## Documenting classes
 
-        Class documentation includes methods, properties, superclasses and
-        mixins.
+        Class documentation includes methods, classmethods, properties,
+        superclasses and mixins for all selected classes. Classes created from
+        user-defined metaclasses are also included.
+
 
         The format for method documentation is as described above for
         procedures. If a property has specialized setter and getter methods,
@@ -390,16 +392,25 @@ namespace eval ruff {
         lists or diagrams are ignored.
 
         Information about superclasses and mixins is automatically collected and
-        need not be explicitly provided. Note that unlike for procedures and
-        methods, Tcl does not provide a means to retrieve the body of the class
-        so that comments can be extracted from them. Thus to document
-        information about the class as a whole, you can either include it in the
-        comments for the constructor, which is often a reasonable place for such
-        information, or include it in the general information section as
-        described in the next section.
+        need not be explicitly provided.
 
-        Classes created from user-defined metaclasses are also included
-        in the generated documentation.
+        Note that unlike for procedures and methods, Tcl does not provide a
+        means to retrieve the body of the class so that comments can be
+        extracted from them. Thus to document information about the class as a
+        whole, you can either include it in the comments for the constructor,
+        which is often a reasonable place for such information, or define a
+        classmethod called `_ruffGetClassDescription`. The method should return
+        a dictionary with the following two keys, both optional.
+
+        preamble - This will be placed right after the class name heading.
+        options - This will be placed right after the class method summary section.
+
+        The value of each is a docstring as described in [Documenting namespaces]
+        and may contain any elements there except for headings. See the
+        [::ruff::sample::Base] class for an example.
+
+        The `_ruffGetClassDescription` method must be a class method and is
+        therefore only available with Tcl 9.
 
         ## Documenting namespaces
 
@@ -961,6 +972,9 @@ namespace eval ruff {
         variable output_file_base ""
         # Extension of base output file
         variable output_file_ext ""
+
+        # Name of method that classes can use to return class descriptions
+        variable class_description_method "_ruffGetClassDescription"
 
         # Dictionary to count number of occurrences of an unqualified name.
         # Currently used to control index format
@@ -2907,6 +2921,8 @@ proc ruff::private::extract_ooclass {classname args} {
     # The metainformation. returned is in the form of a dictionary with
     # the following keys:
     # name - name of the class
+    # preamble - top level preamble of class. Similar to _ruff_preamble
+    #  for namespaces.
     # methods - a list of method definitions for this class in the form
     #  returned by extract_ooclass_method with the additional key
     #  'visibility' which may have values 'public' or 'private'.
@@ -2929,12 +2945,17 @@ proc ruff::private::extract_ooclass {classname args} {
     #   returned by extract_ooclass_method
     # destructor - method definition for the destructor
     #   returned by extract_ooclass_method
+    # options - text section, may be arbitrary but generally contains description
+    #   of options (e.g. for Tk megawidgets)
     #
     # Each method definition is in the format returned by the
     # extract_ooclass_method command with an additional keys:
     # visibility - indicates whether the method is 'public' or 'private'
 
+    variable class_description_method
+
     count_symbol_occurrence [namespace tail $classname]
+    set class_ns [info object namespace $classname]
 
     array set opts {-includeprivate false}
     array set opts $args
@@ -2966,10 +2987,28 @@ proc ruff::private::extract_ooclass {classname args} {
     set external_methods {}
     set class_methods {}
 
+    if {[Tcl9]} {
+        if {$class_description_method in [info class methods $classname -private]} {
+
+            set class_general_info \
+                [namespace eval $class_ns [list my $class_description_method]]
+            # Will return keys preamble and options. Neither mandatory.
+            foreach key {preamble options} {
+                if {[dict exists $class_general_info $key]} {
+                    dict set result $key \
+                        [extract_docstring [dict get $class_general_info $key] $classname]
+                }
+            }
+        }
+    }
+
     # Dictionary to hold property information
     set properties {}
 
     foreach name [concat [lsort -dictionary $all_methods] $property_methods] {
+        if {$name eq $class_description_method} {
+            continue
+        }
         set implementing_class [locate_ooclass_method $classname $name]
         if {$name ni $property_methods && [lsearch -exact $all_local_methods $name] < 0} {
             # Skip the destroy method which is standard and
@@ -3015,8 +3054,7 @@ proc ruff::private::extract_ooclass {classname args} {
                 # Could be a class method as well
                 if {[lindex $forward 0] eq "myclass"} {
                     # Classmethod
-                    set cls_ns [info object namespace $classname]
-                    set delegate [string cat $cls_ns ":: oo ::delegate"]
+                    set delegate [string cat $class_ns ":: oo ::delegate"]
                     set method_info [extract_ooclass_method $delegate $name]
                     dict set method_info class $classname
                     #dict set method_info proctype classmethod

@@ -942,6 +942,7 @@ oo::class create ruff::formatter::Formatter {
         foreach key {
             superclasses subclasses mixins method_summaries mixins
             filters methods constructor destructor forwards properties
+            preamble options
         } {
             if {[info exists $key]} {
                 dict set result $key [set $key]
@@ -954,10 +955,13 @@ oo::class create ruff::formatter::Formatter {
         # classinfo dictionary contains the following keys. All except
         # name are optional.
         #  fqn - Fully qualified name of the class
+        #  preamble - Preamble for the class (optional)
         #  display_name - Name of class for display purposes.
         #  superclasses - List of superclasses.
         #  subclasses - List of subclasses.
         #  properties - dictionary keyed by "readable", "writable"
+        #  options - parsed docstring, generally describing options. Shown after
+        #   parameters section (optional)
         #  mixins - List of mixins.
         #  filters - List of filter methods.
         #  method_summaries - Definition list mapping method name to description.
@@ -966,12 +970,14 @@ oo::class create ruff::formatter::Formatter {
         #  constructor - Constructor definition in the same format.
         #  destructor - Destructor definition in the same format.
         #  forwards - forwarded methods
-
         dict with classinfo {
             # Creates locals for all the classinfo keys listed above.
         }
         my AddProgramElementHeading class $fqn
         set scope $fqn
+        if {[info exists preamble]} {
+            my AddParagraphs $preamble $scope
+        }
         if {[info exists method_summaries]} {
             my AddHeading nonav "Method summary" $scope
             # The method names need to be escaped and linked.
@@ -987,6 +993,10 @@ oo::class create ruff::formatter::Formatter {
                     dict set definition term [markup_code $term]
                 }
             }] $scope none
+        }
+        if {[info exists options]} {
+            my AddHeading nonav "Options" $scope
+            my AddParagraphs $options $scope
         }
         if {[info exists properties] && [dict size $properties]} {
             my AddHeading nonav "Properties" $scope

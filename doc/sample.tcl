@@ -393,6 +393,31 @@ proc ruff::sample::proc_with_conditional_content {} {
 }
 
 oo::class create ruff::sample::Base {
+    classmethod _ruffGetClassDescription {} {
+        return {
+            preamble {
+                This is the preamble containing the class section. It will
+                appear immediately below the class heading.
+
+                It may contain multiple text elements including
+                - paragraphs
+                - definition lists
+                - lists
+                - table
+                etc.
+
+                It is generally not advisable to include headings in the text.
+            } options {
+                The options text appears under the `Options` heading right
+                after the `Parameters` section. It may contain any docstring
+                though it generally should contain only options, like for
+                Tk widgets, as a definition list:
+
+                -option1 - the first option
+                -option1 ARG - the second option
+            }
+        }
+    }
     constructor {arg} {
         # Constructs the class
         #   arg - argument to constructor
