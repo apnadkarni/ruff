@@ -17,6 +17,7 @@ oo::class create ruff::formatter::Asciidoctor {
         set HeaderLevels {
             class 3
             proc 3
+            classmethod 4
             method 4
             nonav 5
             parameters 5

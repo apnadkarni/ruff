@@ -402,6 +402,11 @@ oo::class create ruff::sample::Base {
     destructor {
         # Releases all resources and destroys the class
     }
+    if {[::ruff::Tcl9]} {
+        classmethod class_method {} {
+            # This method is defined on the class, not class instance
+        }
+    }
     method base_method {arga argb}  {
         # base_method is defined only in the base class
         # arga - first argument

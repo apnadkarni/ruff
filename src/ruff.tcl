@@ -2964,6 +2964,7 @@ proc ruff::private::extract_ooclass {classname args} {
     }
     set public_methods [concat [info class methods $classname -all] $property_methods]
     set external_methods {}
+    set class_methods {}
 
     # Dictionary to hold property information
     set properties {}
@@ -3011,6 +3012,17 @@ proc ruff::private::extract_ooclass {classname args} {
             if {! [catch {
                 set forward [info class forward $classname $name]
             } res]} {
+                # Could be a class method as well
+                if {[lindex $forward 0] eq "myclass"} {
+                    # Classmethod
+                    set cls_ns [info object namespace $classname]
+                    set delegate [string cat $cls_ns ":: oo ::delegate"]
+                    set method_info [extract_ooclass_method $delegate $name]
+                    dict set method_info class $classname
+                    #dict set method_info proctype classmethod
+                    dict lappend result methods $method_info
+                    continue
+                }
                 dict lappend result forwards [dict create name $name forward $forward]
             } else {
                 # Log original error

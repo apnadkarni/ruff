@@ -21,6 +21,7 @@ oo::class create ruff::formatter::Html {
         set HeaderLevels {
             class 3
             proc 3
+            classmethod 4
             method 4
             nonav 5
             parameters 5
@@ -28,6 +29,7 @@ oo::class create ruff::formatter::Html {
         set CssClasses {
             class ruffclass
             proc  ruffproc
+            classmethod ruffmethod
             method ruffmethod
         }
         set GlobalIndex [dict create]
