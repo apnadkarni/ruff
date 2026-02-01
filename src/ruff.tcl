@@ -400,14 +400,23 @@ namespace eval ruff {
         whole, you can either include it in the comments for the constructor,
         which is often a reasonable place for such information, or define a
         classmethod called `_ruffGetClassDescription`. The method should return
-        a dictionary with the following two keys, both optional.
+        a dictionary with the following keys, all optional.
 
-        preamble - This will be placed right after the class name heading.
         options - This will be placed right after the class method summary section.
+        preamble - This will be placed right after the class name heading.
+        propertydescriptions - The content is added to the description of properties
+          defined for the class.
 
-        The value of each is a docstring as described in [Documenting namespaces]
-        and may contain any elements there except for headings. See the
-        [::ruff::sample::Base] class for an example.
+        The value for `options` and `preamble` is a docstring as described in
+        [Documenting namespaces] and may contain any elements there except for
+        headings. See the [::ruff::sample::Base] class for an example.
+
+        The value for `propertydescriptions` should be a nested dictionary keyed
+        by the property name and the inner value being a docstring consisting of
+        paragraphs. Inlike markup is permitted but not block constructs like
+        tables. The content will be shown in the second column of the property
+        description table. See the [::ruff::sample::ConfigurableClass] class for
+        an example.
 
         The `_ruffGetClassDescription` method must be a class method and is
         therefore only available with Tcl 9.
@@ -2987,6 +2996,7 @@ proc ruff::private::extract_ooclass {classname args} {
     set external_methods {}
     set class_methods {}
 
+    set class_general_info [dict create]
     if {[Tcl9]} {
         if {$class_description_method in [info class methods $classname -private]} {
 
@@ -3095,16 +3105,26 @@ proc ruff::private::extract_ooclass {classname args} {
         }
     }
     dict set result superclasses $classes
+
+    # Add property information
     if {[Tcl9]} {
-        set local_props [info class properties $classname -readable]
-        foreach prop_name [info class properties $classname -all -readable] {
+        set local [info class properties $classname -readable]
+        set readable [info class properties $classname -all -readable]
+        foreach prop_name $readable {
             dict set properties $prop_name readable {}
-            dict set properties $prop_name inherited [expr {$prop_name ni $local_props}]
+            dict set properties $prop_name inherited [expr {$prop_name ni $local}]
         }
-        set local_props [info class properties $classname -writable]
-        foreach prop_name [info class properties $classname -all -writable] {
+        set local [info class properties $classname -writable]
+        set writable [info class properties $classname -all -writable]
+        foreach prop_name $writable {
             dict set properties $prop_name writable {}
-            dict set properties $prop_name inherited [expr {$prop_name ni $local_props}]
+            dict set properties $prop_name inherited [expr {$prop_name ni $local}]
+        }
+        foreach prop_name [lsort -unique [concat $readable $writable]] {
+            if {[dict exists $class_general_info propertydescriptions $prop_name]} {
+                dict set properties $prop_name description \
+                    [dict get $class_general_info propertydescriptions $prop_name]
+            }
         }
     }
     dict set result properties $properties

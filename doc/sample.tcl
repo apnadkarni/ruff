@@ -393,28 +393,30 @@ proc ruff::sample::proc_with_conditional_content {} {
 }
 
 oo::class create ruff::sample::Base {
-    classmethod _ruffGetClassDescription {} {
-        return {
-            preamble {
-                This is the preamble containing the class section. It will
-                appear immediately below the class heading.
+    if {[::ruff::Tcl9]} {
+        classmethod _ruffGetClassDescription {} {
+            return {
+                preamble {
+                    This is the preamble containing the class section. It will
+                    appear immediately below the class heading.
 
-                It may contain multiple text elements including
-                - paragraphs
-                - definition lists
-                - lists
-                - table
-                etc.
+                    It may contain multiple text elements including
+                    - paragraphs
+                    - definition lists
+                    - lists
+                    - table
+                    etc.
 
-                It is generally not advisable to include headings in the text.
-            } options {
-                The options text appears under the `Options` heading right
-                after the `Parameters` section. It may contain any docstring
-                though it generally should contain only options, like for
-                Tk widgets, as a definition list:
+                    It is generally not advisable to include headings in the text.
+                } options {
+                    The options text appears under the `Options` heading right
+                    after the `Parameters` section. It may contain any docstring
+                    though it generally should contain only options, like for
+                    Tk widgets, as a definition list:
 
-                -option1 - the first option
-                -option1 ARG - the second option
+                    -option1 - the first option
+                    -option1 ARG - the second option
+                }
             }
         }
     }
@@ -534,7 +536,7 @@ if {[package vsatisfies [package require Tcl] 9]} {
         property rwprop -set {
             # This is a special function for setting a rw property.
             #
-            # Some more information about the same.
+            # The property is an attribute of the [ConfigurableClass] class.
         } -get {
             # This is a special function for reading a rw property.
         }
@@ -542,11 +544,37 @@ if {[package vsatisfies [package require Tcl] 9]} {
         constructor {} {
             # A class with properties
         }
+
+        classmethod _ruffGetClassDescription {} {
+            return {
+                preamble {
+                    This is a configurable class with properties.
+                } propertydescriptions {
+                    -rprop {
+                        This is the documentation for the -rprop property.
+                    }
+                    -rwprop {
+                        This is the documentation for the -rwprop property.
+
+                        It belongs to the [ConfigurableClass] class.
+                    }
+                }
+            }
+        }
     }
     oo::configurable create ruff::sample::DerivedConfigurableClass {
         superclass ruff::sample::ConfigurableClass
         property derivedprop -get {
             # This is a derived property.
+        }
+        classmethod _ruffGetClassDescription {} {
+            return {
+                propertydescriptions {
+                    -derivedprop {
+                        This is the documentation for the -derivedprop property.
+                    }
+                }
+            }
         }
     }
 }

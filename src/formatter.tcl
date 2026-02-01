@@ -959,7 +959,7 @@ oo::class create ruff::formatter::Formatter {
         #  display_name - Name of class for display purposes.
         #  superclasses - List of superclasses.
         #  subclasses - List of subclasses.
-        #  properties - dictionary keyed by "readable", "writable"
+        #  properties - dictionary keyed by property name
         #  options - parsed docstring, generally describing options. Shown after
         #   parameters section (optional)
         #  mixins - List of mixins.
@@ -1011,16 +1011,22 @@ oo::class create ruff::formatter::Formatter {
                 set term [markup_code $prop_name]
                 set prop_text [list "[join $prop_rw {, }]."]
                 foreach rw {readprop writeprop} {
-                    if {[dict exists $properties $prop_name $rw summary]} {
+                    if {0 && [dict exists $properties $prop_name $rw summary]} {
                         lappend prop_text {*}[dict get $properties $prop_name $rw summary]
                     }
-                    if {[dict exists $properties $prop_name $rw body]} {
+                    if {0 && [dict exists $properties $prop_name $rw body]} {
                         foreach {body_elem_type body_elem} [dict get $properties $prop_name $rw body] {
                             if {$body_elem_type eq "paragraph"} {
                                 lappend prop_text {*}$body_elem
                             }
                         }
                     }
+                }
+                if {[dict get $properties $prop_name inherited]} {
+                    lappend prop_text "Inherited."
+                }
+                if {[dict exists $properties $prop_name description]} {
+                    lappend prop_text [dict get $properties $prop_name description]
                 }
                 lappend property_defs [list term $term definition $prop_text]
             }
