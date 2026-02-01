@@ -148,7 +148,10 @@ oo::class create ruff::formatter::Sphinx {
         }
 
         append Document ".. _$anchor:\n"
-        append Document ".. _$exported_anchor:\n\n"
+        if {[string equal -nocase $anchor $exported_anchor]} {
+            append Document ".. _$exported_anchor:\n"
+        }
+        append Document \n
 
         set heading [my ProcessLiteral [namespace tail $name]]
         if {0 && [string length $ns]} {
@@ -181,7 +184,10 @@ oo::class create ruff::formatter::Sphinx {
             set linkinfo [dict create tag h$level href "#$anchor"]
             dict set linkinfo label $text
             append Document "\n.. _$anchor:\n"
-            append Document ".. _$exported_anchor:\n\n"
+            if {[string compare -nocase $anchor $exported_anchor]} {
+                append Document ".. _$exported_anchor:\n"
+            }
+            append Document \n
         }
 
         set heading_text [my FormatInline $text $scope]
@@ -424,7 +430,10 @@ oo::class create ruff::formatter::Sphinx {
             append Document "\n"
             if {$anchor ne ""} {
                 append Document ".. _$anchor:\n"
-                append Document ".. _$exported_anchor:\n\n"
+                if {[string compare -nocase $anchor $exported_anchor]} {
+                    append Document ".. _$exported_anchor:\n"
+                }
+                append Document \n
             }
             append Document ".. figure:: $image_url\n"
 
@@ -442,7 +451,10 @@ oo::class create ruff::formatter::Sphinx {
             append Document "\n"
             if {$anchor ne ""} {
                 append Document ".. _$anchor:\n"
-                append Document ".. _$exported_anchor:\n\n"
+                if {[string compare -nocase $anchor $exported_anchor]} {
+                    append Document ".. _$exported_anchor:\n"
+                }
+                append Document \n
             }
             append Document ".. code-block:: $lang\n"
 
