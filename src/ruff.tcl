@@ -3821,6 +3821,7 @@ proc ruff::private::wrap_text {text args} {
 }
 
 
+source [file join $::ruff::private::ruff_dir getopt.tcl]
 source [file join $::ruff::private::ruff_dir formatter.tcl]
 source [file join $::ruff::private::ruff_dir diagram.tcl]
 
@@ -3853,12 +3854,183 @@ proc ruff::Abort {msg} {
     exit 1
 }
 
+proc ruff::private::parse_options {argv} {
+    # Maps command line options to options to the [::ruff::document] command.
+
+    set options {}
+    set namespaces {}
+
+    # NOTE: the comments in the code below are also used by getopt
+    # for generating help text. CAREFUL modifying them.
+    # For the same reason, do NOT combine the various cases.
+    # Note that options without comments will not show up in --help
+    getopt::getopt opt arg $argv {
+        --punctuate {
+            # Capitalize and add periods as necessary.
+            lappend options -autopunctuate 1
+        }
+        --compact {
+            # Generate compact form of documentation if
+            # supported by formatter.
+            lappend options -compact 1
+        }
+        --diagrammer:ARGS {
+            # Arguments to pass to the diagram
+            # processor if none specified in the
+            # diagram block header. Defaults to
+            # "kroci ditaa"
+            lappend options -diagrammer $arg
+        }
+        --exclude-classes:REGEX {
+            # Exclude any classes with names
+            # matching regular expression REGEX.
+            # This option may be specified
+            # multiple times.
+            lappend classexclusions $arg
+        }
+        --exclude-procs:REGEX {
+            # Exclude any procedures with names
+            # matching regular expression REGEX.
+            # This option may be specified
+            # multiple times.
+            lappend procexclusions $arg
+        }
+        --format:FORMAT {
+            # Generate documentation in the format FORMAT.
+            # For example, "html", "markdown" etc.
+            lappend options -format $arg
+        }
+        --hide-namespace:NS {
+            # Omit namespace qualifiers in class and
+            # procedure names in namespace NS.
+            lappend options -hidenamespace $arg
+        }
+        --include-private-methods {
+            # Include private methods in generated
+            # documentation.
+            lappend options -includeprivate $arg
+        }
+        --include-source {
+            # Include procedure and method source code
+            # in generated documentation.
+            lappend options -includesource $arg
+        }
+        --link-assets {
+            # Link CSS and Javascript assets instead of
+            # embedding even when generating
+            # single-page output.
+            lappend options -linkassets $arg
+        }
+        --split:SPLIT {
+            # Generate single-page output (SPLIT="none") or
+            # multi-page output (SPLIT="namespace").
+            lappend options -pagesplit $arg
+        }
+        --locale:LOCALE {
+            # Sets the locale for pre-defined texts
+            lappend options -locale $arg
+        }
+        --noindex {
+            # Do not generate an index page
+            lappend options -makeindex 0
+        }
+        --html-navigation:NAV {
+            # Controls behavior of the navigation pane
+            # for the HTML formatter. NAV may be
+            # "sticky" or "scrolled".
+            lappend options -navigation $arg
+        }
+        --only-exports {
+            # Only document procedures that are
+            # exported from the namespace.
+            lappend options -onlyexports $arg
+        }
+        --output-directory:PATH {
+            # Write output files to directory PATH.
+            lappend options -outdir [file normalize $arg]
+        }
+        --output-file:PATH {
+            # Specifies the name of the output file. If
+            # the output is to multiple files, this is
+            # the name of the documentation main page.
+            # Other files will named accordingly by
+            # appending the namespace. Defaults to a
+            # name constructed from the first namespace
+            # specified.
+            lappend options -outfile [file normalize $arg]
+        }
+        --preload:PACKAGELIST {
+            # Load the packages named in PACKAGELIST as
+            # part of initialization. PACKAGELIST must
+            # be in the form of a Tcl list.
+            foreach package $arg {
+                append preeval "package require $arg;"
+            }
+        }
+        --product:PRODUCT {
+            # The short name of the product. Defaults
+            # to the first namespace passed. This
+            # should be a short name and is used by
+            # formatters to identify the documentation
+            # set as a whole when documenting multiple
+            # namespaces.
+            lappend options -product $arg
+        }
+        --recurse {
+            # Recurse passed namespaces.
+            lappend options -recurse $arg
+        }
+        --nroff-section:SECTION {
+            # The manpage section to be used by the
+            # Nroff formatter.
+            lappend options -section $arg
+        }
+        --sort-namespaces {
+            # Sort the namespaces in the navigation. By
+            # default, they are shown in the order they
+            # appear in the argument list.
+            lappend options -sortnamespaces $arg
+        }
+        --title:TITLE {
+            # This text is shown in a
+            # formatter-specific area on every
+            # generated page. The `nroff` formatter for
+            # manpages has only a limited space to
+            # display this so `TITLE` should be limited
+            # to roughly 50 characters if that
+            # formatter is to be used. If unspecified,
+            # it is constructed from the --product
+            # option.
+            lappend options -title $arg
+        }
+        --version:VER {
+            # The version of the package being documented.
+            lappend options -version $arg
+        }
+        arglist {
+            # NAMESPACE ...
+            set namespaces $arg
+        }
+    }
+    return [list $namespaces $options]
+}
+
+proc ruff::private::main {} {
+    global argv
+    lassign [parse_options $::argv] namespaces options
+
+    puts namespaces:$namespaces
+    puts options:$options
+}
+
 package provide ruff $::ruff::version
 
 # If we are the main script, accept commands.
 if {[info exists argv0] &&
     [file dirname [file normalize [info script]/...]] eq [file dirname [file normalize $argv0/...]]} {
     if {[catch {
+        ruff::private::main
+        exit 0
         ruff::document {*}$::argv
     } result]} {
         puts stderr $result

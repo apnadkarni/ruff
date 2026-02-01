@@ -4,7 +4,7 @@
 namespace eval ruff::sample {
 
     variable _ruff_ns_opts {
-        heading "Ruff! example"
+        heading "Examples"
         -excludeclasses ExcludedClass
         -excludeprocs excluded.*
         -onlyexports false
