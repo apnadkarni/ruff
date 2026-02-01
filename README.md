@@ -30,7 +30,8 @@ mix-ins etc.
 
 On the output side,
 
-* Ruff! supports multiple formats (currently HTML, Markdown and nroff).
+* Ruff! supports multiple formats (HTML, Markdown, reStructuredText, Asciidoc
+and nroff).
 
 * Generated documentation can optionally be split across multiple pages.
 
@@ -40,11 +41,10 @@ make navigation easy and efficient.
 * A table of contents and optional searchable index permits quick
 location of command and class documentation.
 
-* Class relationships are extracted
-and the full API for a class, with inherited and mixed-in methods, is
-flattened and summarized.
+* Class relationships are extracted and the full API for a class, with inherited
+and mixed-in methods and properties, is flattened and summarized.
 
-* HTML output supports user-selectable themes.
+* HTML output supports navigation and user-selectable themes.
 
 See https://ruff.magicsplat.com for features and reference documentation.
 
@@ -66,6 +66,24 @@ For additional examples of Ruff! generated documentation, see
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
+## Release notes for 3.0
+
+Note this is a major release and there may be subtle incompatibilities with
+2.x releases in both parsing of input and generated output.
+
+* New output formats reStructuredText (Sphinx) and Asciidoc
+* Support for numbered lists
+* Support for block quotes
+* Support for tables
+* Support for HTML entities
+* Include OO class methods in documentation
+* Provision for class preambles, oo::configurable property descriptions and
+  Tk-like option documentation via the `_ruffGetClassDescription_` 
+  method (Tcl 9 only)
+* Customizatble namespace headings
+* Customizable per-namespace options
+* New `-onlyexports` option to only document exported commands
+* Tcl core built-ins are ignored when documenting global namespace (bugfix)
 
 ## Release notes for 2.7
 
