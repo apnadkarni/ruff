@@ -4,9 +4,9 @@
 namespace eval ruff::sample {
 
     variable _ruff_ns_opts {
-        heading "Sample for Ruff!"
+        heading "Ruff! example"
         -excludeclasses ExcludedClass
-        -excludeprocs excluded.* 
+        -excludeprocs excluded.*
         -onlyexports false
     }
 
@@ -14,13 +14,12 @@ namespace eval ruff::sample {
     variable _ruff_preamble {
         ## Introduction
 
-        The code in this namespace illustrates the various documentation
-        features in [Ruff!](ruff.html). The corresponding source is
-        [here](https://raw.githubusercontent.com/apnadkarni/ruff/refs/heads/master/doc/sample.tcl)
-        or click the *Show source* link below each procedure
-        or method documentation to see the source from which the
-        documentation was generated. See the main [::ruff] documentation
-        for a full description.
+        This page illustrates the various documentation features in
+        [Ruff!](ruff.html) via examples. The corresponding source is
+        [here](https://raw.githubusercontent.com/apnadkarni/ruff/refs/heads/master/doc/sample.tcl).
+        Alternatively, for procedures and methods, you can click the *Show
+        source* link below each procedure or method documentation to see the
+        source from which the documentation was generated.
 
         The documentation (such as this section) not specific to a *procedure*
         or *method* is placed in the variable `_ruff_preamble` within each
@@ -326,6 +325,17 @@ proc ruff::sample::proc_full {arg {optarg AVALUE} args} {
     # a feature right next to the code implementing it.
 
     some more code.
+}
+
+proc ruff::sample::proc_args_and_options {c a b args} {
+    # This proc for testing argument order
+    #
+    # -secondopt - second option
+    # b - arg b
+    # a - arg a
+    # c - arg c
+    # args - optional args
+    # -firstopt - first option
 }
 
 proc ruff::sample::proc_with_custom_synopsis {args} {

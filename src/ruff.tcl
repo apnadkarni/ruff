@@ -64,21 +64,20 @@ namespace eval ruff {
 
         * Supports inline formatting using Markdown syntax.
 
-        * Embedded diagrams in multiple formats
+        * Diagrams can be embedded using multiple formats.
 
         * Program elements like command arguments, defaults and
         class relationships like inheritance are automatically derived.
 
         * Maintenance is less of a burden as documentation is automatically
-        updated with source modification such as changes to defaults, addition of
-        mix-ins etc.
+        updated when source is modified.
 
         On the output side,
 
-        * Ruff! supports output formats HTML, Markdown, nroff and
-        reStructuredText (experimental).
+        * Ruff! supports output formats HTML, Markdown, Nroff, Asciidoctor
+        and reStructuredText.
 
-        * Generated documentation can optionally be split across multiple pages.
+        * Documentation can be in single-page or multi-page formats.
 
         * Hyperlinks between program elements, and optionally source code,
         make navigation easy and efficient.
@@ -86,11 +85,13 @@ namespace eval ruff {
         * A table of contents and optional searchable index permits quick
         location of command and class documentation.
 
-        * Class relationships are extracted
-        and the full API for a class, with inherited and mixed-in methods, is
-        flattened and summarized.
+        * Class relationships are extracted and the full API for a class, with
+        inherited and mixed-in methods, is flattened and summarized.
 
         * The HTML formatter includes multiple themes switchable by the end-user.
+
+        * Documentation can be integrated with that for other languages using
+        Sphinx or Asciidoctor.
 
         The Ruff! documentation itself is produced with Ruff!. Examples of other
         packages documented with Ruff! include
@@ -172,8 +173,7 @@ namespace eval ruff {
         namespaces were implemented by the `mypac` package,
 
         ````
-        tclsh /path/to/ruff.tcl "::NS ::NS2" -preeval "package require mypac" \
-                -outfile docs.html -recurse true -pagesplit none
+        tclsh /path/to/ruff.tcl "::NS ::NS2" -preeval "package require mypac" -outfile docs.html
         ````
 
         All arguments passed to the script are passed to the [document]
