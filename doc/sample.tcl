@@ -394,7 +394,7 @@ proc ruff::sample::proc_with_conditional_content {} {
 
 oo::class create ruff::sample::Base {
     if {[::ruff::Tcl9]} {
-        classmethod _ruffGetClassDescription {} {
+        classmethod _ruffClassHook {} {
             return {
                 preamble {
                     This is the preamble containing the class section. It will
@@ -545,7 +545,7 @@ if {[package vsatisfies [package require Tcl] 9]} {
             # A class with properties
         }
 
-        classmethod _ruffGetClassDescription {} {
+        classmethod _ruffClassHook {} {
             return {
                 preamble {
                     This is a configurable class with properties.
@@ -567,7 +567,7 @@ if {[package vsatisfies [package require Tcl] 9]} {
         property derivedprop -get {
             # This is a derived property.
         }
-        classmethod _ruffGetClassDescription {} {
+        classmethod _ruffClassHook {} {
             return {
                 propertydescriptions {
                     -derivedprop {

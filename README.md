@@ -78,7 +78,7 @@ Note this is a major release and there may be subtle incompatibilities with
 * Support for HTML entities
 * Include OO class methods in documentation
 * Provision for class preambles, oo::configurable property descriptions and
-  Tk-like option documentation via the `_ruffGetClassDescription_` 
+  Tk-like option documentation via the `_ruffClassHook_` 
   method (Tcl 9 only)
 * Customizatble namespace headings
 * Customizable per-namespace options

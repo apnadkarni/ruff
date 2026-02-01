@@ -399,7 +399,7 @@ namespace eval ruff {
         extracted from them. Thus to document information about the class as a
         whole, you can either include it in the comments for the constructor,
         which is often a reasonable place for such information, or define a
-        classmethod called `_ruffGetClassDescription`. The method should return
+        classmethod called `_ruffClassHook`. The method should return
         a dictionary with the following keys, all optional.
 
         options - This will be placed right after the class method summary section.
@@ -418,7 +418,7 @@ namespace eval ruff {
         description table. See the [::ruff::sample::ConfigurableClass] class for
         an example.
 
-        The `_ruffGetClassDescription` method must be a class method and is
+        The `_ruffClassHook` method must be a class method and is
         therefore only available with Tcl 9.
 
         ## Documenting namespaces
@@ -983,7 +983,7 @@ namespace eval ruff {
         variable output_file_ext ""
 
         # Name of method that classes can use to return class descriptions
-        variable class_description_method "_ruffGetClassDescription"
+        variable class_description_method "_ruffClassHook"
 
         # Dictionary to count number of occurrences of an unqualified name.
         # Currently used to control index format
