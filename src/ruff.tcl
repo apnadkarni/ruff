@@ -74,18 +74,99 @@ namespace eval ruff {
 
         ### Usage from the command line
 
-        For simpler cases, documentation can also be generated from the command
-        line by invoking the `ruff.tcl` script. Assuming the `NS` and `NS2`
-        namespaces were implemented by the `mypac` package,
+        *The command line interface has changed in 3.0.*
+
+        Documentation can also be generated from the command line by invoking
+        the `ruff.tcl` script. The `--help` option will print the interface
+        documentation.
+
+        ```
+        Usage: tclsh.exe ruff.tcl [OPTION]... NAMESPACE ...
+        Copyright (c) 2009-2026, Ashok P. Nadkarni
+        All rights reserved.
+        See the file LICENSE in the source root directory for license.
+
+        Mandatory arguments to long options are mandatory for short options too.
+              --compact                Generate compact form of documentation if
+                                       supported by formatter.
+              --copyright=TEXT         Include TEXT as the copyright. Not all formatters
+                                       may support this option.
+              --diagrammer=ARGS        Arguments to pass to the diagram processor if
+                                       none specified in the diagram block header.
+                                       Defaults to "kroci ditaa"
+              --exclude-classes=REGEX  Exclude any classes with names matching
+                                       regular expression REGEX. This option may be
+                                       specified multiple times.
+              --exclude-procs=REGEX    Exclude any procedures with names matching
+                                       regular expression REGEX. This option may be
+                                       specified multiple times.
+          -f, --format=FORMAT          Generate documentation in the format given by
+                                       FORMAT. Defaults to only html.
+              --hide-namespace=NS      Omit namespace qualifiers in class and
+                                       procedure names in namespace NS.
+              --with-private-methods   Include private methods in generated
+                                       documentation.
+              --with-source            Include procedure and method source code in
+                                       generated documentation.
+              --link-assets            Link CSS and Javascript assets instead of
+                                       embedding even when generating single-page
+                                       output.
+          -s, --split=SPLIT            Generate single-page (SPLIT="none") or
+                                       multi-page output (SPLIT="namespace").
+              --locale=LOCALE          Sets the locale for pre-defined texts.
+              --noindex                Do not generate an index page.
+              --html-navigation=NAV    Controls behavior of the navigation pane for
+                                       the HTML formatter. NAV may be "sticky" or
+                                       "scrolled".
+              --only-exports           Only document procedures that are exported
+                                       from the namespace.
+          -d, --directory=PATH         Write output files to directory PATH.
+          -o, --output=PATH            Specifies the name of the output file. If the
+                                       output is to multiple files, this is the name
+                                       of the documentation main page. Other files
+                                       will named accordingly by appending the
+                                       namespace. Defaults to a name constructed from
+                                       the first namespace specified.
+          -e, --preeval=SCRIPT         Evaluate SCRIPT before generating
+                                       documentation. Generally used to load packages
+                                       being documented. May be specified multiple
+                                       times. If SCRIPT has the form "@PATH", the
+                                       script is read from the file PATH.
+          -p, --preamble=TEXT          Any text that should be appear as a preamble
+                                       outside of any namespace documentation, for
+                                       example an introduction or overview of a
+                                       package. This shows up as the Start page
+                                       content when used with the --split namespace
+                                       option. If TEXT has the form "@PATH", the
+                                       preamble is read from the file PATH.
+              --product=PRODUCT        The short name of the product. Defaults to the
+                                       first namespace passed. This should be a short
+                                       name and is used by formatters to identify the
+                                       documentation set as a whole when documenting
+                                       multiple namespaces.
+              --punctuate              Capitalize and add periods as necessary.
+          -r, --recurse                Recurse passed namespaces.
+              --nroff-section=SECTION  The manpage section to be used by the Nroff
+                                       formatter. Defaults to 3tcl.
+              --sort-namespaces        Sort the namespaces in the navigation. By
+                                       default, they are shown in the order they
+                                       appear in the argument list.
+          -t, --title=TITLE            This text is shown in a formatter-specific
+                                       area on every generated page. The `nroff`
+                                       formatter for manpages has only a limited
+                                       space to display this so `TITLE` should be
+                                       limited to roughly 50 characters if that
+                                       formatter is to be used. If unspecified, it is
+                                       constructed from the --product option.
+          -v, --version=VER            The version of the package being documented.
+              --help                   display this help and exit
+        ```
+
+        The following invocation is equivalent to the earlier example.
 
         ````
-        tclsh /path/to/ruff.tcl "::NS ::NS2" -preeval "package require mypac" -outfile docs.html
+        tclsh /path/to/ruff.tcl -preeval "package require mypac" -d /path/to/docdir -r -s namespace ::NS ::NS2
         ````
-
-        All arguments passed to the script are passed to the [document]
-        command. The `-preeval` option is required to load the packages being
-        documented, generally using the `package require` or `source`
-        commands.
 
         ## Documenting procedures
 
@@ -3804,8 +3885,8 @@ proc ruff::private::parse_options {argv} {
             lappend procexclusions $arg
         }
         -f: - --format:FORMAT {
-            # Generate documentation in formats given by
-            # FORMATS. Defaults to only html.
+            # Generate documentation in the format given by
+            # FORMAT. Defaults to only html.
             lappend options -format $arg
         }
         --hide-namespace:NS {
@@ -3882,7 +3963,7 @@ proc ruff::private::parse_options {argv} {
             # outside of any namespace documentation, for
             # example an introduction or overview of a
             # package. This shows up as the Start page
-            # content when used with the -split namespace
+            # content when used with the --split namespace
             # option. If TEXT has the form "@PATH", the
             # preamble is read from the file PATH.
             if {[string index $arg 0] eq "@"} {
