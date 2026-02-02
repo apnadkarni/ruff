@@ -290,7 +290,6 @@ namespace eval ruff {
         superclasses and mixins for all selected classes. Classes created from
         user-defined metaclasses are also included.
 
-
         The format for method documentation is as described above for
         procedures. If a property has specialized setter and getter methods,
         their documentation is extracted in the same fashion except that
@@ -318,11 +317,11 @@ namespace eval ruff {
         headings. See the [::ruff::sample::Base] class for an example.
 
         The value for `propertydescriptions` should be a nested dictionary keyed
-        by the property name and the inner value being a docstring consisting of
-        paragraphs. Inlike markup is permitted but not block constructs like
-        tables. The content will be shown in the second column of the property
-        description table. See the [::ruff::sample::ConfigurableClass] class for
-        an example.
+        by the property name and the inner value being a docstring. Inlike
+        markup is permitted but not block constructs like tables and multiple
+        paragraphs will be coalesced. The content will be shown in the second
+        column of the property description table. See the
+        [::ruff::sample::ConfigurableClass] class for an example.
 
         The `_ruffClassHook` method must be a class method and is
         therefore only available with Tcl 9.
@@ -1019,10 +1018,10 @@ proc ruff::private::get_namespace_heading {fqns} {
     # Returns the heading to be used for the given namespace.
     #  fqns - fully qualified namespace
     if {[info exists ${fqns}::_ruff_ns_opts] &&
-        [dict exists [set ${fqns}::_ruff_ns_opts] heading]} {
-        set heading [dict get [set ${fqns}::_ruff_ns_opts] heading]
+        [dict exists [set ${fqns}::_ruff_ns_opts] -heading]} {
+        set heading [dict get [set ${fqns}::_ruff_ns_opts] -heading]
         if {$heading eq ""} {
-            error "The \"heading\" entry in ${ns}::_ruff_ns_opts is empty."
+            error "The \"-heading\" entry in ${ns}::_ruff_ns_opts is empty."
         }
         return $heading
     } else {
