@@ -32,7 +32,12 @@ oo::class create ruff::formatter::Asciidoctor {
         # The anchor is constructed to work with Asciidoctor's reference system.
         # Returns an anchor suitable for Asciidoctor references.
 
-        return [string tolower [make_id {*}$args]]
+        # Asciidoctor permits any string in the anchor
+        set parts [lmap arg $args {
+            if {$arg eq ""} continue
+            my Escape $arg
+        }]
+        return [join $parts -]
     }
 
     method HeadingReference {ns heading} {
@@ -91,13 +96,22 @@ oo::class create ruff::formatter::Asciidoctor {
         return $doc
     }
 
+    method Anchor args {
+        # Construct an anchor from the passed arguments.
+        #  args - String from which the anchor is to be constructed.
+        # The anchor is formed by joining the passed strings with separators.
+        # Empty arguments are ignored.
+
+        return [my MakeAsciidocId {*}$args]
+    }
+
     method AddAnchor {anchor} {
         # Adds an anchor (link target) to the document 
         #  anchor - The anchor id to add
 
         # Must use explicit macro. Using the [[anchor]] form will be ignored
         # if followed immediately by another anchor.
-        append Document "\nanchor:$anchor\[\]\n"
+        append Document "\n\[id=\"$anchor\"\]\n"
         return
     }
 
@@ -116,8 +130,7 @@ oo::class create ruff::formatter::Asciidoctor {
         set name [namespace tail $fqn]
         dict set linkinfo label $name
 
-        append Document "\n\[\[" $anchor "\]\]\n"
-        append Document "\[\[" $exported_anchor "\]\]\n"
+        my AddAnchor $anchor
 
         set heading [my ProcessLiteral [namespace tail $name]]
         if {0 && [string length $ns]} {
@@ -150,11 +163,9 @@ oo::class create ruff::formatter::Asciidoctor {
 
         if {$do_link} {
             set anchor [my MakeAsciidocId $scope $text]
-            set exported_anchor [make_exported_id $scope $text]
             set linkinfo [dict create tag h$level href "#$anchor"]
             dict set linkinfo label $text
-            append Document "\n\[\[$anchor\]\]\n"
-            append Document "\[\[$exported_anchor\]\]\n"
+            my AddAnchor $anchor
         }
 
         set heading_text [my FormatInline $text $scope]
@@ -356,7 +367,6 @@ oo::class create ruff::formatter::Asciidoctor {
         if {[dict exists $fence_options -caption]} {
             set caption [dict get $fence_options -caption]
             set anchor [my MakeAsciidocId $scope $caption]
-            set exported_anchor [make_exported_id $scope $caption]
             if {[my ResolvableReference? $caption $scope ref] && [dict exists $ref label]} {
                 set display_caption [dict get $ref label]
             } else {
@@ -366,7 +376,6 @@ oo::class create ruff::formatter::Asciidoctor {
             set caption ""
             set display_caption ""
             set anchor ""
-            set exported_anchor ""
         }
 
         # Check if this is a diagram
@@ -385,8 +394,7 @@ oo::class create ruff::formatter::Asciidoctor {
 
             append Document "\n"
             if {$anchor ne ""} {
-                append Document "\[\[$anchor\]\]\n"
-                append Document "\[\[$exported_anchor\]\]\n"
+                my AddAnchor $anchor
             }
 
             if {$display_caption ne ""} {
@@ -413,8 +421,7 @@ oo::class create ruff::formatter::Asciidoctor {
 
             append Document "\n"
             if {$anchor ne ""} {
-                append Document "\[\[$anchor\]\]\n"
-                append Document "\[\[$exported_anchor\]\]\n"
+                my AddAnchor $anchor
             }
 
             if {$display_caption ne ""} {
