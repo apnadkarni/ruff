@@ -1023,10 +1023,13 @@ oo::class create ruff::formatter::Formatter {
                     }
                 }
                 if {[dict get $properties $prop_name inherited]} {
-                    lappend prop_text "Inherited."
+                    append prop_text " Inherited."
                 }
                 if {[dict exists $properties $prop_name description]} {
-                    lappend prop_text [dict get $properties $prop_name description]
+                    # Definition lists expect a single paragraph. Join all
+                    # paragraphs.
+                    set prop_desc [dict get $properties $prop_name description]
+                    append prop_text " " [regsub -all {\s+} $prop_desc { }]
                 }
                 lappend property_defs [list term $term definition $prop_text]
             }

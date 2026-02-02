@@ -93,10 +93,10 @@ proc ruff::private::document_self {args} {
 
 if {[catch {
     ruff::private::document_self -format html {*}$argv
-    #ruff::private::document_self -format markdown {*}$argv
-    #ruff::private::document_self -format nroff {*}$argv
-    #ruff::private::document_self -format sphinx {*}$argv
-    #ruff::private::document_self -format asciidoctor -pagesplit none {*}$argv
+    ruff::private::document_self -format markdown {*}$argv
+    ruff::private::document_self -format nroff {*}$argv
+    ruff::private::document_self -format sphinx {*}$argv
+    ruff::private::document_self -format asciidoctor -pagesplit none {*}$argv
 } result edict]} {
     puts stderr "Error: $result"
     puts [dict get $edict -errorinfo]
