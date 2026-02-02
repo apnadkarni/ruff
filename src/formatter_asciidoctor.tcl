@@ -443,15 +443,15 @@ oo::class create ruff::formatter::Asciidoctor {
         #             and the parameter list for it.
         #  scope  - The documentation scope of the content.
 
-        append Document "\n"
+        append Document "\n\[source,subs=\"verbatim,quotes\"\]\n----\n"
         foreach {cmds params} $synopsis {
-            append Document "*[join $cmds { }]*"
+            append Document "[join $cmds { }]"
             if {[llength $params]} {
                 append Document " _[join $params { }]_"
             }
             append Document "\n"
         }
-        append Document "\n"
+        append Document "----\n\n"
         return
     }
 
