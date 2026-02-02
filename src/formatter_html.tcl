@@ -602,7 +602,6 @@ oo::class create ruff::formatter::Html {
                 sticky { set scrolling "style='position: sticky; top: 0;'" }
             }
         }
-
         append Document "<nav class='ruff-nav'><ul $scrolling>"
         if {[my Option -pagesplit none] ne "none"} {
             # Split pages. Add navigation to each page.

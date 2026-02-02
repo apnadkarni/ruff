@@ -58,7 +58,9 @@ proc ruff::diagram::generate {text filename generator args} {
         set filename diagram[incr diagram_counter]
     }
     set url "assets/$filename.svg"
-    set fd [open [file join [program_option -outdir] $url] wb]
+    set path [file join [program_option -outdir] $url]
+    file mkdir [file dirname $path]
+    set fd [open [file join $path] wb]
     try {
         set commands [info commands generators::$generator]
         if {[llength $commands] == 1} {
