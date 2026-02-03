@@ -162,10 +162,11 @@ namespace eval ruff {
               --help                   display this help and exit
         ```
 
-        The following invocation is equivalent to the earlier example.
+        The following invocation is equivalent to the earlier example
+        (assuming the `mypac` package implements the `NS` and `NS2` namespaces).
 
         ````
-        tclsh /path/to/ruff.tcl -preeval "package require mypac" -d /path/to/docdir -r -s namespace ::NS ::NS2
+        tclsh /path/to/ruff.tcl -r -e "package require mypac" -d /path/to/docdir -s namespace ::NS ::NS2
         ````
 
         ## Documenting procedures
@@ -3528,9 +3529,6 @@ proc ruff::document {namespaces args} {
     #  or overview of a package. This shows up as the Start page content
     #  when used with the `-pagesplit namespace` option.
     #  `TEXT` is assumed to be in Ruff! syntax.
-    # -preeval SCRIPT - a script to run before generating documentation. This
-    #  is generally used from the command line to load the packages being
-    #  documented.
     # -product PRODUCTNAME - the short name of the product. If unspecified, this
     #  defaults to the first element in $namespaces. This should be a short name
     #  and is used by formatters to identify the documentation set as a whole
@@ -3574,7 +3572,6 @@ proc ruff::document {namespaces args} {
         -sortnamespaces true
         -locale en
         -section 3tcl
-        -preeval ""
         -diagrammer "kroki ditaa"
     }
 
@@ -3583,9 +3580,6 @@ proc ruff::document {namespaces args} {
     if {[info exists opts(-output)]} {
         error "Option -output is obsolete. Use -outdir and/or -outfile instead."
     }
-
-    # Load any dependencies
-    uplevel #0 $opts(-preeval)
 
     if {![info exists opts(-makeindex)]} {
         set opts(-makeindex) [expr {$opts(-pagesplit) ne "none"}]

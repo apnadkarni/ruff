@@ -72,19 +72,22 @@ Note this is a major release and there may be subtle incompatibilities with
 2.x releases in both parsing of input and generated output.
 
 * New output formats reStructuredText (Sphinx) and Asciidoc
-* New command line interface *2.x Incompatibility*
+* New command line interface *2.x incompatibility*
 * Support for numbered lists
 * Support for block quotes
 * Support for tables
 * Support for HTML entities
 * Include OO class methods in documentation
 * Provision for class preambles, oo::configurable property descriptions and
-  Tk-like option documentation via the `_ruffClassHook_` 
+  Tk-like option documentation via the `_ruffClassHook_`
   method (Tcl 9 only)
 * Customizatble namespace headings
 * Customizable per-namespace options
 * New `-onlyexports` option to only document exported commands
 * Tcl core built-ins are ignored when documenting global namespace (bugfix)
+* The `document` command does not support the `-preeval` option. Do any
+  required evaluation in the caller before invoking `document`.
+  *2.x incompatibility*
 
 ## Release notes for 2.7
 
