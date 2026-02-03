@@ -3673,6 +3673,10 @@ proc ruff::document {namespaces args} {
         # TBD - format of -preamble argument passed to formatters
         # is different so override what was passed in.
         lappend args -preamble [extract_docstring $opts(-preamble) ::]
+    } else {
+        if {$ProgramOptions(-pagesplit) eq "namespace"} {
+            app::log_error "Warning: no main preamble specified for multipage output. Some formatters may complain."
+        }
     }
     reset_symbol_occurrence_counts
     set classprocinfodict [extract_namespaces $namespaces \

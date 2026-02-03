@@ -19,6 +19,7 @@ proc ruff::private::distribute {{dir {}}} {
         formatter_nroff.tcl
         formatter_sphinx.tcl
         formatter_asciidoctor.tcl
+        getopt.tcl
         diagram.tcl
         ../doc/sample.tcl
         ../doc/html/ruff.html

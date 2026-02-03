@@ -72,6 +72,7 @@ Note this is a major release and there may be subtle incompatibilities with
 2.x releases in both parsing of input and generated output.
 
 * New output formats reStructuredText (Sphinx) and Asciidoc
+* New command line interface *2.x Incompatibility*
 * Support for numbered lists
 * Support for block quotes
 * Support for tables
