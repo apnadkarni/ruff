@@ -22,9 +22,9 @@ proc ruff::private::distribute {{dir {}}} {
         getopt.tcl
         diagram.tcl
         ../doc/sample.tcl
-        ../doc/html/ruff.html
-        ../doc/html/ruff-ruff.html
-        ../doc/html/ruff-ruff-sample.html
+        ../doc/out/html/ruff.html
+        ../doc/out/html/ruff-ruff.html
+        ../doc/out/html/ruff-ruff-sample.html
         ../LICENSE
         ../README.md
     }
