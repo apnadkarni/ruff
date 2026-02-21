@@ -1028,8 +1028,11 @@ proc ruff::private::builtin_url {fqcmd} {
     }
 
     # ::oo::class.create -> ::oo::class
-    set fqcmd [lindex [split $fqcmd .] 0]
-    return [list "https://www.tcl-lang.org/man/tcl9.0/TclCmd/index.html" $fqcmd]
+    lassign [split $fqcmd .] fqcmd label
+    if {$label eq ""} {
+        set label $fqcmd
+    }
+    return [list "https://www.tcl-lang.org/man/tcl9.0/TclCmd/index.html" $label]
 }
 
 proc ruff::private::ruff_dir {} {
@@ -1236,10 +1239,22 @@ proc ruff::private::markup_emphasis {text} {
     return "*[markup_escape $text]*"
 
 }
+
 proc ruff::private::markup_reference {symbol} {
     # Returns the markup text for cross-referencing a symbol.
     #  symbol - the symbol to reference
     return "\[$symbol\]"
+}
+
+proc ruff::private::markup_reference_to_method {symbol} {
+    # Returns the markup text for cross-referencing a qualified method name.
+    #  symbol - the symbol to reference
+    # The method name is presumed prefixed with a period.
+    set dot_pos [string last . $symbol]
+    if {$dot_pos < 0} {
+        return "\[$symbol\]"
+    }
+    return "\[[string range $symbol $dot_pos+1 end]\]\[$symbol\]"
 }
 
 proc ruff::private::markup_code {text} {

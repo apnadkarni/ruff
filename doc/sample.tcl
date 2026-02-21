@@ -66,16 +66,18 @@ namespace eval ruff::sample {
 
         This is a **definition list**.
         ````
-          itema - Definition of item A
-          itemb - Definition of item B
-            across multiple lines.
+        itema - Definition of item A
+        `itemb` - Definition of item B
+        across multiple input lines
+        in code font.
         ````
 
         Definition lists are displayed in an output-specific format.
 
         itema - Definition of item A
-        itemb - Definition of item B
-        across multiple lines.
+        `itemb` - Definition of item B
+        across multiple input lines
+        in code font.
 
         ### Inline formatting
 

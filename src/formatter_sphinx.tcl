@@ -260,8 +260,9 @@ oo::class create ruff::formatter::Sphinx {
             }
 
             # Use field list format for parameters. If the term itself is a
-            # reference link, do not double colons
-            if {[string match ":ref:`*`" $term]} {
+            # link, do not add colons
+            if {[string match ":ref:`*`" $term] ||
+                [string match "`*`_" $term]} {
                 append Document "$term\n   $def\n"
             } else {
                 append Document ":$term:\n   $def\n"

@@ -901,7 +901,7 @@ oo::class create ruff::formatter::Formatter {
                 # NOTE: method summaries are carefully constructed to pass Sphinx
                 # idiosyncracies such as not markup in definition lists.
                 if {$referenced_class eq "::oo::configuresupport::configurable"} {
-                    lappend method_summaries [list term [markup_reference $method_name] definition [list "Configure properties. See [markup_reference $referenced_class]."]]
+                    lappend method_summaries [list term $referenced_class.$method_name definition [list "Configure properties. See [markup_reference $referenced_class]."]]
                 } else {
                     lappend method_summaries [list term $referenced_class.$method_name definition [list "Inherited from [markup_reference $referenced_class]."]]
                 }
@@ -988,6 +988,8 @@ oo::class create ruff::formatter::Formatter {
                 # in superclasses/mixins etc. will not be found. So
                 # those we just mark as code.
                 if {[my ResolvableReference? $term $scope dontcare]} {
+                    dict set definition term [markup_reference_to_method $term]
+                } elseif {[is_builtin $term]} {
                     dict set definition term [markup_reference $term]
                 } else {
                     dict set definition term [markup_code $term]
@@ -1358,6 +1360,8 @@ oo::class create ruff::formatter::Formatter {
         set url [dict get $code_link ref]
         if {$text eq ""} {
             set text [my Escape [dict get $code_link label]]
+        } else {
+            set text [my Escape $text]
         }
         set title $text
         set link_class [dict get $code_link type]
