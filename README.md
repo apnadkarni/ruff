@@ -81,13 +81,16 @@ Note this is a major release and there may be subtle incompatibilities with
 * Provision for class preambles, oo::configurable property descriptions and
   Tk-like option documentation via the `_ruffClassHook_`
   method (Tcl 9 only)
-* Customizatble namespace headings
+* Customizable namespace headings
 * Customizable per-namespace options
-* New `-onlyexports` option to only document exported commands
+* New `-onlyexports` / `--only-exports` option to only document exported commands
+* Order in which classes and command are displayed is now based
+  on the `-include` / `--include` option
 * Tcl core built-ins are ignored when documenting global namespace (bugfix)
 * The `document` command does not support the `-preeval` option. Do any
   required evaluation in the caller before invoking `document`.
   *2.x incompatibility*
+
 
 ## Release notes for 2.7
 
