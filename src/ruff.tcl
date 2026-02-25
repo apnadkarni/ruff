@@ -3390,7 +3390,8 @@ proc ruff::document {namespaces args} {
     #  in such cases.
     # -include LIST - Specifies which program elements are to be documented.
     #  `LIST` must be a list from one or both amongst `classes` or `procs`.
-    #  Defaults to both.
+    #  Defaults to `procs classes`. This also controls the order in which
+    #  they appear in the output documentation.
     # -includeprivate BOOLEAN - if true private methods are also included
     #  in the generated documentation. Default is false.
     # -includesource BOOLEAN - if true, the source code of the
@@ -3582,7 +3583,10 @@ proc ruff::document {namespaces args} {
                                -include $opts(-include) \
                                -includeprivate $opts(-includeprivate)]
 
-    set docs [$formatter generate_document $classprocinfodict {*}$args]
+    set docs [$formatter generate_document \
+                  $classprocinfodict \
+                  -include $opts(-include) \
+                  {*}$args]
     if {$opts(-makeindex)} {
         set docindex [$formatter generate_document_index]
         if {$docindex ne ""} {
@@ -3794,15 +3798,14 @@ proc ruff::private::parse_options {argv} {
             # procedure names in namespace NS.
             lappend options -hidenamespace $arg
         }
-        --with-private-methods {
-            # Include private methods in generated
-            # documentation.
-            lappend options -includeprivate $arg
-        }
-        --with-source {
-            # Include procedure and method source code in
-            # generated documentation.
-            lappend options -includesource $arg
+        --include:TYPES {
+            # Type of program elements to include in the
+            # documentation. TYPES must be a list containing
+            # one or both of "classes" and "procs". Only
+            # program elements of the included types will
+            # be output and in that order. Defaults to
+            # "procs classes".
+            lappend options -include $arg
         }
         --link-assets {
             # Link CSS and Javascript assets instead of
@@ -3911,6 +3914,16 @@ proc ruff::private::parse_options {argv} {
         -v: - --version:VER {
             # The version of the package being documented.
             lappend options -version $arg
+        }
+        --with-private-methods {
+            # Include private methods in generated
+            # documentation.
+            lappend options -includeprivate $arg
+        }
+        --with-source {
+            # Include procedure and method source code in
+            # generated documentation.
+            lappend options -includesource $arg
         }
         arglist {
             # NAMESPACE ...

@@ -1148,6 +1148,7 @@ oo::class create ruff::formatter::Formatter {
                  -title "" \
                  -sortnamespaces 1 \
                  -autopunctuate 0 \
+                 -include {procs classes}
                 ]
 
         array set Options $args
@@ -1211,16 +1212,20 @@ oo::class create ruff::formatter::Formatter {
             # Print the preamble for this namespace
             my AddParagraphs [dict get $ns_info $ns preamble] $ns
 
-            set nprocs [dict size [dict get $ns_info $ns procs]]
-            if {$nprocs != 0} {
-                my AddHeading 2 [::msgcat::mc Commands] $ns
-                my AddProcedures [dict get $ns_info $ns procs]
-            }
-
-            set nclasses [dict size [dict get $ns_info $ns classes]]
-            if {$nclasses != 0} {
-                my AddHeading 2 [::msgcat::mc Classes] $ns
-                my AddClasses [dict get $ns_info $ns classes]
+            foreach program_element_type $Options(-include) {
+                if {$program_element_type eq "procs"} {
+                    set nprocs [dict size [dict get $ns_info $ns procs]]
+                    if {$nprocs != 0} {
+                        my AddHeading 2 [::msgcat::mc Commands] $ns
+                        my AddProcedures [dict get $ns_info $ns procs]
+                    }
+                } elseif {$program_element_type eq "classes"} {
+                    set nclasses [dict size [dict get $ns_info $ns classes]]
+                    if {$nclasses != 0} {
+                        my AddHeading 2 [::msgcat::mc Classes] $ns
+                        my AddClasses [dict get $ns_info $ns classes]
+                    }
+                }
             }
 
             if {[my Option -pagesplit none] ne "none"} {
