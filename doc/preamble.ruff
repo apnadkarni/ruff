@@ -49,8 +49,9 @@ inherited and mixed-in methods, is flattened and summarized.
 
 * The HTML formatter includes multiple themes switchable by the end-user.
 
-* Documentation can be integrated with that for other languages using
-Sphinx or Asciidoctor.
+* Output targets like Sphinx and Asciidoctor allow Ruff! generated
+documentation to be integrated with that for other languages or to
+produce additional formats like PDF.
 
 The Ruff! documentation itself is produced with Ruff!. Examples of other
 packages documented with Ruff! include

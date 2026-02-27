@@ -1,10 +1,4 @@
-#  From https://wiki.tcl-lang.org/page/alternative+getopt
-# Alternatives in case this code is not satisfactory:
-# - https://github.com/tcler/getopt.tcl
-# - https://wiki.tcl-lang.org/page/basic+getopts
-# - https://wiki.tcl-lang.org/page/GetOpt%2Dish
-# Note any alternative must allow option repetition. Check if the ones
-# above do that before use.
+# From https://wiki.tcl-lang.org/page/alternative+getopt
 
 namespace eval getopt {
     namespace export getopt
@@ -37,6 +31,7 @@ namespace eval getopt::app {
     if {[llength [info commands help_prelude]] == 0} {
         proc help_prelude {} {
             set prelude {}
+            # XXX - bug - info script assumes it is invoked during script sourcing
             if {![catch {open [uplevel 1 info script]} f]} {
                 while {[gets $f line] > 0} {
                     if {[string match "#\[#!]*" $line]} continue
@@ -268,7 +263,7 @@ proc getopt::help {body} {
         set opts {}
     }
     set name [app::program_name_prefix]
-    app::error_note [format {Usage: %s [OPTION]... %s} $name $arg]
+    app::error_note [format {Usage: %s [OPTION...] %s} $name $arg]
     app::error_note [app::help_prelude]
     app::error_note "\nMandatory arguments to long options\
       are mandatory for short options too."

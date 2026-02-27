@@ -15,7 +15,7 @@ foreach fmt $formats {
         [file join .. src assets ruff-logo.png] \
         [file join $outdir assets ruff-logo.png]
 
-    ruff::private::main \
+    ruff::private::main document \
         --format $fmt \
         --compact \
         --copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \

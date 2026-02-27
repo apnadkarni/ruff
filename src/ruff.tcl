@@ -77,14 +77,16 @@ namespace eval ruff {
         *The command line interface has changed in 3.0.*
 
         Documentation can also be generated from the command line by invoking
-        the `ruff.tcl` script. The `--help` option will print the interface
-        documentation.
+        the `ruff.tcl` script. The `help` command or `--help` option will display
+        usage information.
 
         ```
-        Usage: tclsh.exe ruff.tcl [OPTION]... NAMESPACE ...
+        Usage: tclsh.exe ruff.tcl command [OPTION...] NAMESPACE ...
         Copyright (c) 2009-2026, Ashok P. Nadkarni
         All rights reserved.
         See the file LICENSE in the source root directory for license.
+
+        Argument "command" must be one of "document", "analyze" or "help".
 
         Mandatory arguments to long options are mandatory for short options too.
               --compact                Generate compact form of documentation if
@@ -93,7 +95,7 @@ namespace eval ruff {
                                        may support this option.
               --diagrammer=ARGS        Arguments to pass to the diagram processor if
                                        none specified in the diagram block header.
-                                       Defaults to "kroci ditaa"
+                                       Defaults to "kroci ditaa".
               --exclude-classes=REGEX  Exclude any classes with names matching
                                        regular expression REGEX. This option may be
                                        specified multiple times.
@@ -104,10 +106,12 @@ namespace eval ruff {
                                        FORMAT. Defaults to only html.
               --hide-namespace=NS      Omit namespace qualifiers in class and
                                        procedure names in namespace NS.
-              --with-private-methods   Include private methods in generated
-                                       documentation.
-              --with-source            Include procedure and method source code in
-                                       generated documentation.
+              --include=TYPES          Type of program elements to include in the
+                                       documentation. TYPES must be a list containing
+                                       one or both of "classes" and "procs". Only
+                                       program elements of the included types will
+                                       be output and in that order. Defaults to
+                                       "procs classes".
               --link-assets            Link CSS and Javascript assets instead of
                                        embedding even when generating single-page
                                        output.
@@ -121,12 +125,13 @@ namespace eval ruff {
               --only-exports           Only document procedures that are exported
                                        from the namespace.
           -d, --directory=PATH         Write output files to directory PATH.
-          -o, --output=PATH            Specifies the name of the output file. If the
+          -o, --output=FILENAME        Specifies the name of the output file. If the
                                        output is to multiple files, this is the name
                                        of the documentation main page. Other files
                                        will named accordingly by appending the
                                        namespace. Defaults to a name constructed from
-                                       the first namespace specified.
+                                       the first namespace specified. FILENAME must
+                                       not include a path.
           -e, --preeval=SCRIPT         Evaluate SCRIPT before generating
                                        documentation. Generally used to load packages
                                        being documented. May be specified multiple
@@ -159,14 +164,19 @@ namespace eval ruff {
                                        formatter is to be used. If unspecified, it is
                                        constructed from the --product option.
           -v, --version=VER            The version of the package being documented.
+              --with-private-methods   Include private methods in generated
+                                       documentation.
+              --with-source            Include procedure and method source code in
+                                       generated documentation.
               --help                   display this help and exit
+
         ```
 
         The following invocation is equivalent to the earlier example
         (assuming the `mypac` package implements the `NS` and `NS2` namespaces).
 
         ````
-        tclsh /path/to/ruff.tcl -r -e "package require mypac" -d /path/to/docdir -s namespace ::NS ::NS2
+        tclsh /path/to/ruff.tcl document -r -e "package require mypac" -d /path/to/docdir -s namespace ::NS ::NS2
         ````
 
         ## Documenting procedures
@@ -928,6 +938,10 @@ namespace eval ruff {
         sphinx-build /PATH/TO/RUFF/OUTPUTDIR /PATH/TO/HTMLOUTPUT
         ```
 
+        [OSVVM](https://osvvm.github.io/OSVVM-Scripts/osvvm-scripts/osvvm.html)
+        is an example of Ruff! generated documentation integrated within a
+        larger Sphinx documentation set.
+
         ### Asciidoctor formatter
 
         The Asciidoctor formatter generates documentation in the
@@ -948,10 +962,11 @@ namespace eval ruff {
         asciidoctor index.adoc
         ```
 
-        Asciidoctor also supports other output formats. To produce PDF instead
-        of HTML,
+        Asciidoctor also supports other output formats. For example,
+        [Ruff! PDF documentation](ruff.pdf) is generated by
+
         ```
-        asciidoctor-pdf index.adoc
+        asciidoctor-pdf -o ruff.pdf index.adoc
         ```
     }
 
@@ -3841,14 +3856,15 @@ proc ruff::private::parse_options {argv} {
             # Write output files to directory PATH.
             lappend options -outdir [file normalize $arg]
         }
-        -o: - --output:PATH {
+        -o: - --output:FILENAME {
             # Specifies the name of the output file. If the
             # output is to multiple files, this is the name
             # of the documentation main page. Other files
             # will named accordingly by appending the
             # namespace. Defaults to a name constructed from
-            # the first namespace specified.
-            lappend options -outfile [file normalize $arg]
+            # the first namespace specified. FILENAME must
+            # not include a path.
+            lappend options -outfile $arg
         }
         -e: - --preeval:SCRIPT {
             # Evaluate SCRIPT before generating
@@ -3953,8 +3969,40 @@ proc ruff::private::parse_options {argv} {
 }
 
 proc ruff::private::main {args} {
-    lassign [parse_options $args] namespaces options
-    ruff::document $namespaces {*}$options
+    # Set the program command name as reported by getopt
+    proc [namespace current]::getopt::app::program_name_prefix {} {
+        return "[file tail [info nameofexecutable]] $::argv0 command"
+    }
+    proc [namespace current]::getopt::app::help_prelude {} {
+        set prelude "Copyright (c) 2009-2026, Ashok P. Nadkarni\n"
+        append prelude "All rights reserved.\n"
+        append prelude "See the file LICENSE in the source root directory for license.\n"
+        append prelude "\nArgument \"command\" must be one of \"document\", \"analyze\" or \"help\"."
+        proc help_prelude {} [list return $prelude]
+        tailcall help_prelude
+    }
+
+    if {[llength $args] == 0} {
+        app::log_error "No arguments specified.\n"
+        parse_options --help
+        exit 1
+    }
+    set arguments [lassign $args command]
+    switch $command {
+        document -
+        analyze {}
+        help {
+            parse_options --help
+            exit 1
+        }
+        default {
+            app::log_error "No command specified. Assuming \"document\"."
+            set command document
+            set arguments $args
+        }
+    }
+    lassign [parse_options $arguments] namespaces options
+    ruff::$command $namespaces {*}$options
 }
 
 package provide ruff $::ruff::version
