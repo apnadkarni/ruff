@@ -469,7 +469,7 @@ oo::class create ruff::formatter::Nroff {
         #  scope - not used
         #  link_type - not used
         app::log_error "Warning: Image URL $url found. Images are not supported for Nroff output."
-        return [string cat $txt " \[Image: $url\]"]
+        return [string cat $text " \[Image: $url\]"]
     }
 
     method ProcessComment {text} {
