@@ -187,10 +187,16 @@ namespace eval ruff {
         tclsh /path/to/ruff.tcl document -r -e "package require mypac" -d /path/to/docdir -s namespace ::NS ::NS2
         ````
 
-        Similarly, to identify missing documentation,
+        Similarly, to list all program elements and identify missing documentation,
 
         ```
         tclsh /path/to/ruff.tcl coverage -r -e "package require mypac" ::NS ::NS2
+        ```
+
+        To only list program elements with missing documentation,
+
+        ```
+        tclsh /path/to/ruff.tcl coverage --compact -r -e "package require mypac" ::NS ::NS2
         ```
 
         ## Documenting procedures
@@ -3668,8 +3674,8 @@ proc ruff::coverage {namespaces args} {
     # Generates documentation coverage information.
     # namespaces - list of namespaces for which documentation is to be generated.
     # args - Options described below. Unknown options are ignored.
-    # -compact BOOLEAN - If `true`, coverage documentation is generated in a more
-    #  compact form.
+    # -compact BOOLEAN - If `true`, only components with missing information
+    #  are included.
     # -excludeclasses REGEXP - If specified, any classes whose names
     #  match `REGEXPR` will not be included in the documentation.
     # -excludeprocs REGEXP - If specified, any procedures whose names
@@ -3775,7 +3781,7 @@ proc ruff::coverage {namespaces args} {
         set fmt "%-${min_name_width}s"
         dict for {proc_name proc_info} [dict get $ns_info procs] {
             set tags [check_proc_doc $proc_info]
-            if {[llength $tags]} {
+            if {[llength $tags] || !$opts(-compact)} {
                 append coverage [string cat "proc   " \
                                      [format $fmt $proc_name] \
                                      " " $tags \n]
@@ -3789,14 +3795,17 @@ proc ruff::coverage {namespaces args} {
                     set constructor_exists 1
                 }
                 set tags [check_proc_doc $method_info]
-                if {[llength $tags]} {
+                if {[llength $tags] || !$opts(-compact)} {
                     append coverage [string cat "method " [format $fmt $class_name.[dict get $method_info name]] \
                                          " " $tags \n]
                 }
             }
             # preamble should exists unless constructor is documented
             if {![dict exists $class_info preamble] && !$constructor_exists} {
-                append coverage [string cat "class  " [format $fmt $class_name] " " preamble] \n
+                append coverage [string cat "class  " \
+                                     [format $fmt $class_name] " " preamble] \n
+            } elseif {!$opts(-compact)} {
+                append coverage [string cat "class  " [format $fmt $class_name]] \n
             }
         }
         # List all commands that are not procs and therefore not documented
@@ -4008,7 +4017,9 @@ proc ruff::private::parse_options {argv} {
     getopt::getopt opt arg $argv {
         --compact {
             # Generate compact form of documentation if
-            # supported by formatter.
+            # supported by formatter. For the coverage command
+            # this will only emit program elements that have
+            # missing documentation.
             lappend options -compact 1
         }
         --copyright:TEXT {
