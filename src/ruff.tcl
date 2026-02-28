@@ -54,6 +54,8 @@ namespace eval ruff {
         To document a package or packages, first load them into a Tcl
         interpreter. Then load `ruff` and invoke the [document] command to
         document classes and commands within one or more namespaces.
+        Alternatively, invoke the [coverage] command to identify missing components
+        in the documentation.
 
         For example, the following command will document the `NS` namespace using
         the built-in HTML formatter.
@@ -72,6 +74,12 @@ namespace eval ruff {
         ::ruff::document {::NS ::NS2} -outdir /path/to/docdir -recurse true -pagesplit namespace
         ````
 
+        To identify components with missing documentation,
+
+        ````
+        ::ruff::coverage {::NS ::NS2}
+        ````
+
         ### Usage from the command line
 
         *The command line interface has changed in 3.0.*
@@ -86,7 +94,7 @@ namespace eval ruff {
         All rights reserved.
         See the file LICENSE in the source root directory for license.
 
-        Argument "command" must be one of "document", "analyze" or "help".
+        Argument "command" must be one of "document", "coverage" or "help".
 
         Mandatory arguments to long options are mandatory for short options too.
               --compact                Generate compact form of documentation if
@@ -178,6 +186,12 @@ namespace eval ruff {
         ````
         tclsh /path/to/ruff.tcl document -r -e "package require mypac" -d /path/to/docdir -s namespace ::NS ::NS2
         ````
+
+        Similarly, to identify missing documentation,
+
+        ```
+        tclsh /path/to/ruff.tcl coverage -r -e "package require mypac" ::NS ::NS2
+        ```
 
         ## Documenting procedures
 
@@ -973,6 +987,12 @@ namespace eval ruff {
     namespace eval private {
         namespace path [namespace parent]
 
+        variable ProgramOptions
+        array set ProgramOptions {
+            -format html
+            -pagesplit none
+        }
+
         variable ruff_dir
         set ruff_dir [file dirname [info script]]
         variable names
@@ -1006,6 +1026,7 @@ namespace eval ruff {
             return 0
         }
     }
+
     namespace path private
 }
 
@@ -1028,6 +1049,9 @@ proc ruff::private::is_builtin {fqcmd} {
             dict set built_ins $built_in $built_in
         }
         interp delete $ip
+        foreach cmd {::registry ::dde} {
+            dict set built_ins $cmd $cmd
+        }
     }
     if {![fqn? $fqcmd]} {
         set fqcmd ::$fqcmd
@@ -2816,7 +2840,8 @@ proc ruff::private::extract_proc_or_method {proctype procname param_names
     # least indented line to 0 spaces and then add 4 spaces for each line.
     append source [::textutil::adjust::indent [::textutil::adjust::undent $body] "    "]
     append source "\n}"
-    if {$ProgramOptions(-hidesourcecomments)} {
+    if {[info exists ProgramOptions(-hidesourcecomments)] &&
+        $ProgramOptions(-hidesourcecomments)} {
         regsub -line -all {^\s*#.*$} $source "" source
         regsub -all {\n{2,}} $source "\n" source
     }
@@ -3639,6 +3664,212 @@ proc ruff::document {namespaces args} {
     return
 }
 
+proc ruff::coverage {namespaces args} {
+    # Generates documentation coverage information.
+    # namespaces - list of namespaces for which documentation is to be generated.
+    # args - Options described below. Unknown options are ignored.
+    # -compact BOOLEAN - If `true`, coverage documentation is generated in a more
+    #  compact form.
+    # -excludeclasses REGEXP - If specified, any classes whose names
+    #  match `REGEXPR` will not be included in the documentation.
+    # -excludeprocs REGEXP - If specified, any procedures whose names
+    #  match `REGEXPR` will not be included in the documentation.
+    # -format FORMAT - The output format. `FORMAT` defaults to `html`.
+    #  Relevant because some documentation may be excluded depending on format.
+    # -include LIST - Specifies which program elements are to be examined.
+    #  `LIST` must be a list from one or both amongst `classes` or `procs`.
+    #  Defaults to `procs classes`.
+    # -includeprivate BOOLEAN - if true private methods are also inspected.
+    #  Default is false.
+    # -onlyexports BOOLEAN - if true, only procs exported from namespaces
+    #  are included.
+    # -outdir DIRPATH - Specifies the output directory path. Defaults to the
+    #  current directory.
+    # -outfile FILENAME - Specifies the name of the output file.
+    # -recurse BOOLEAN - if true, child namespaces are recursively
+    #  documented.
+    # -sortnamespaces BOOLEAN - If `true` (default) the namespaces are
+    #  sorted in the output.
+    #
+    # The command generates documentation coverage information for one or more
+    # namespaces and writes it out to stdout or file per the options shown above.
+    # Each line of the output is indicative of missing documentation. The first
+    # two words of the each line is identify the program element type and its name
+    # with rest of the line providing additional details.
+    #
+    # When the first word is `proc`, `class` or `method`, with obvious semantics,
+    # the name field is followed by a list of tags, shown in the table below, that
+    # identify the missing documentation.
+    #
+    # `summary` - The procedure or method has no summary line.
+    # `description` - The procedure or method has no description. Since missing
+    # subscription default to the summary line for short procedures, this also
+    # means the summary line is also absent.
+    # `params` - One or more parameters, whose names follow the `params` word,
+    # do not have descriptions.
+    # `preamble` - Indicates the class has neither a descriptive preamble nor a
+    # constructor which may include general description of the class.
+    #
+    # The first word may also be `native` or `alias`. The following name identifies
+    # a command in the namespace that is not documented by Ruff! as it is not a
+    # procedure.
+
+    namespace upvar private ProgramOptions ProgramOptions
+    variable gFormatter
+
+    array set opts {
+        -compact 0
+        -excludeprocs {}
+        -excludeclasses {}
+        -format html
+        -include {procs classes}
+        -includeprivate false
+        -onlyexports false
+        -recurse false
+        -sortnamespaces true
+    }
+
+    array set opts $args
+
+    if {[info exists opts(-output)]} {
+        error "Option -output is obsolete. Use -outdir and/or -outfile instead."
+    }
+
+    # Fully qualify namespaces
+    set namespaces [lmap ns $namespaces {
+        if {![string match ::* $ns]} {
+            set ns "[string trimright [uplevel 1 {namespace current}] ::]::$ns"
+        }
+        if {![namespace exists $ns]} {
+            error "Namespace $ns does not exist."
+        }
+        set ns
+    }]
+    if {[llength $namespaces] == 0} {
+        error "At least one namespace needs to be specified."
+    }
+
+
+    if {$opts(-recurse)} {
+        set namespaces [namespace_tree $namespaces]
+    }
+
+    # Coverage needs formatter because some docs may be excluded based
+    # on formatter.
+    set formatter [[load_formatter $opts(-format)] new]
+    set gFormatter $formatter
+    set ProgramOptions(-format) $opts(-format)
+
+    set classprocinfodict [extract_namespaces $namespaces \
+                               -excludeprocs $opts(-excludeprocs) \
+                               -excludeclasses $opts(-excludeclasses) \
+                               -onlyexports $opts(-onlyexports) \
+                               -include $opts(-include) \
+                               -includeprivate $opts(-includeprivate)]
+
+    set coverage ""
+
+    dict for {ns ns_info} $classprocinfodict {
+        set min_name_width [string len $ns]
+        incr min_name_width 32
+        set fmt "%-${min_name_width}s"
+        dict for {proc_name proc_info} [dict get $ns_info procs] {
+            set tags [check_proc_doc $proc_info]
+            if {[llength $tags]} {
+                append coverage [string cat "proc   " \
+                                     [format $fmt $proc_name] \
+                                     " " $tags \n]
+            }
+        }
+        dict for {class_name class_info} [dict get $ns_info classes] {
+            set constructor_exists 0
+            foreach method_info [dict get $class_info methods] {
+                set method_name [dict get $method_info name]
+                if {$method_name eq "constructor"} {
+                    set constructor_exists 1
+                }
+                set tags [check_proc_doc $method_info]
+                if {[llength $tags]} {
+                    append coverage [string cat "method " [format $fmt $class_name.[dict get $method_info name]] \
+                                         " " $tags \n]
+                }
+            }
+            # preamble should exists unless constructor is documented
+            if {![dict exists $class_info preamble] && !$constructor_exists} {
+                append coverage [string cat "class  " [format $fmt $class_name] " " preamble] \n
+            }
+        }
+        # List all commands that are not procs and therefore not documented
+        if {[Tcl9]} {
+            foreach cmd [info commands ${ns}::*] {
+                if {[is_builtin $cmd]} {
+                    continue
+                }
+                set cmd_type [info cmdtype $cmd]
+                if {$cmd_type in "native alias"} {
+                    append coverage "$cmd_type " $cmd \n
+                }
+            }
+        }
+    }
+
+    if {![info exists opts(-outdir)] && ![info exists opts(-outfile)]} {
+        # To stdout
+        puts $coverage
+    } else {
+        if {![info exists opts(-outdir)]} {
+            set opts(-outdir) [pwd]
+        }
+
+        if {![info exists opts(-outfile)]} {
+            # Special cases  - :: -> "", ::foo::bar:: -> ::foo::bar
+            set ns [string trimright [lindex $namespaces 0] :]
+            if {$ns eq ""} {
+                set opts(-outfile) "global-doc-coverage.txt"
+            } else {
+                set opts(-outfile) [namespace tail $ns]-doc-coverage.txt
+            }
+        } elseif {[file tail $opts(-outfile)] ne $opts(-outfile)} {
+            error "Option -outfile must not include a path."
+        }
+        set fd [open [file join $opts(-outdir) $opts(-outfile)] w]
+        try {
+            puts $fd $coverage
+        } finally {
+            close $fd
+        }
+    }
+    return
+}
+
+proc ruff::private::check_proc_doc {proc_info} {
+    # Returns a list of tags describing undocumented components
+    # of a procedure.
+    set tags [list ]
+    # Note if summary exists, it is ok if the description body does not
+    if {![dict exists $proc_info summary] ||
+        [dict get $proc_info summary] eq ""} {
+        lappend tags summary
+        if {![dict exists $proc_info body] ||
+            [dict get $proc_info body] eq ""} {
+            lappend tags description
+        }
+    }
+    if {[dict exists $proc_info parameters]} {
+        set missing_params [list ]
+        foreach param_info [dict get $proc_info parameters] {
+            # XXX - Hack
+            if {[dict get $param_info definition] eq "Not documented."} {
+                lappend missing_params [dict get $param_info term]
+            }
+        }
+        if {[llength $missing_params]} {
+            lappend tags params:[join $missing_params ,]
+        }
+    }
+    return $tags
+}
+
 proc ruff::formatters {} {
     # Gets the available output formatters.
     #
@@ -3977,7 +4208,7 @@ proc ruff::private::main {args} {
         set prelude "Copyright (c) 2009-2026, Ashok P. Nadkarni\n"
         append prelude "All rights reserved.\n"
         append prelude "See the file LICENSE in the source root directory for license.\n"
-        append prelude "\nArgument \"command\" must be one of \"document\", \"analyze\" or \"help\"."
+        append prelude "\nArgument \"command\" must be one of \"document\", \"coverage\" or \"help\"."
         proc help_prelude {} [list return $prelude]
         tailcall help_prelude
     }
@@ -3990,7 +4221,7 @@ proc ruff::private::main {args} {
     set arguments [lassign $args command]
     switch $command {
         document -
-        analyze {}
+        coverage {}
         help {
             parse_options --help
             exit 1

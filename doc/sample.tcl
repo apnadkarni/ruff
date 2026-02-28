@@ -530,6 +530,9 @@ oo::class create ruff::sample::FunnyMethods {
 
 }
 
+oo::class create ruff::sample::ClassWithMissingDocs {
+    method m {a b} {}
+}
 
 oo::class create ruff::sample::MetaClass {
     superclass ::oo::class
