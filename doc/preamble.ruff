@@ -54,7 +54,7 @@ documentation to be integrated with that for other languages or to
 produce additional formats like PDF.
 
 The Ruff! documentation itself is produced with Ruff!. Examples of other
-packages documented with Ruff! include
+packages documented with Ruff!'s HTML output include
 [iocp](https://iocp.magicsplat.com),
 [cffi](https://cffi.magicsplat.com),
 [CAWT](http://www.cawt.tcl3d.org/download/CawtReference.html),
@@ -62,12 +62,18 @@ packages documented with Ruff! include
 [apave](https://aplsimple.github.io/en/tcl/pave/apave.html),
 [baltip](https://aplsimple.github.io/en/tcl/baltip/baltip.html),
 [hl-tcl](https://aplsimple.github.io/en/tcl/hl_tcl/hl_tcl.html),
-[SpiceGenTcl](https://georgtree.github.io/SpiceGenTcl/),
 [promise](https://tcl-promise.magicsplat.com),
 [obex](https://tcl-obex.magicsplat.com),
 [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
+
+For examples of Sphinx-integrated documentation, see
+[SpiceGenTcl](https://georgtree.github.io/SpiceGenTcl/) or
+[OSVVM](https://osvvm.github.io/OSVVM-Scripts/osvvm-scripts/osvvm.html).
+
+[Ruff!'s PDF documentation](ruff.pdf) is an exambple of PDF output using
+Asciidoctor.
 
 ## Documentation
 

@@ -15,20 +15,23 @@ foreach fmt $formats {
         [file join .. src assets ruff-logo.png] \
         [file join $outdir assets ruff-logo.png]
 
-    ruff::private::main document \
-        --format $fmt \
-        --compact \
-        --copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
-        --directory $outdir \
-        --html-navigation=sticky \
-        --locale en \
-        --only-exports \
-        --preamble @[file join $dir preamble.ruff] \
-        --product Ruff! \
-        --punctuate \
-        --split namespace \
-        -v [ruff::version] \
-        --with-source \
-        ::ruff ::ruff::app ::ruff::sample
+    set opts [list \
+                  --format $fmt \
+                  --compact \
+                  --copyright "[clock format [clock seconds] -format %Y] Ashok P. Nadkarni" \
+                  --directory $outdir \
+                  --html-navigation=sticky \
+                  --locale en \
+                  --only-exports \
+                  --preamble @[file join $dir preamble.ruff] \
+                  --product Ruff! \
+                  --punctuate \
+                  --split namespace \
+                  -v [ruff::version]]
+    if {$fmt eq "html"} {
+        lappend opts --with-source
+    }
+
+    ruff::private::main document {*}$opts ::ruff ::ruff::app ::ruff::sample
 }
 
