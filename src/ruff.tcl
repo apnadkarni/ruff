@@ -4244,7 +4244,8 @@ proc ruff::private::main {args} {
         }
     }
     lassign [parse_options $arguments] namespaces options
-    ruff::$command $namespaces {*}$options
+    # uplevel so namespaces get resolved in global context
+    uplevel #0 [list ruff::$command $namespaces {*}$options]
 }
 
 package provide ruff $::ruff::version
@@ -4256,7 +4257,7 @@ if {[info exists argv0] &&
         ruff::private::main {*}$argv
     } result]} {
         puts stderr $result
-        puts stderr $::errorInfo
+        #puts stderr $::errorInfo
     } else {
         if {$result ne ""} {
             puts stdout $result
