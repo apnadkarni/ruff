@@ -98,12 +98,14 @@ namespace eval ruff {
 
         Mandatory arguments to long options are mandatory for short options too.
               --compact                Generate compact form of documentation if
-                                       supported by formatter.
+                                       supported by formatter. For the coverage command
+                                       this will only emit program elements that have
+                                       missing documentation.
               --copyright=TEXT         Include TEXT as the copyright. Not all formatters
                                        may support this option.
               --diagrammer=ARGS        Arguments to pass to the diagram processor if
                                        none specified in the diagram block header.
-                                       Defaults to "kroci ditaa".
+                                       Defaults to "kroci ditaa"
               --exclude-classes=REGEX  Exclude any classes with names matching
                                        regular expression REGEX. This option may be
                                        specified multiple times.

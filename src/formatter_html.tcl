@@ -655,7 +655,9 @@ oo::class create ruff::formatter::Html {
                 }
                 set level  [dict get $link level]
                 set href [dict get $link href]
-                if {[dict get $navinfo Type] eq "proc"} {
+                set nav_type [dict get $navinfo Type]
+                if {$nav_type eq "proc"} {
+                    # Catch in case not a well formed list in which case just ignore
                     catch {
                         set remain [lassign $label lead_word]
                         if {[llength $remain] > 0} {
@@ -665,6 +667,9 @@ oo::class create ruff::formatter::Html {
                         }
                         set last_lead_word $lead_word
                     }
+                }
+                if {$nav_type in {proc method class}} {
+                    set label [string cat <code> $label </code>]
                 }
                 if {[dict exists $link tip]} {
                     append Document "<li class='ruff-toc$level ruff-tip'><a href='$href'>$label</a><span class='ruff-tiptext'>[dict get $link tip]</span></li>"

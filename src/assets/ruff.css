@@ -527,6 +527,10 @@ blockquote.ruff {
   margin-bottom:0.2em;
 }
 
+.ruff-nav li a code {
+    font-family: Consolas, "Courier New", monospace;
+}
+
 .ruff-nav a:link, .ruff-nav a:visited, .ruff-nav a:hover {
   text-decoration: none;
   /* Bug #70 Edge/Chrome - color:inherit makes visited link keep browser visited color */

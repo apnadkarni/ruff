@@ -86,6 +86,7 @@ Note this is a major release and there may be subtle incompatibilities with
 * New `-onlyexports` / `--only-exports` option to only document exported commands
 * Order in which class and command sections are displayed is now based
   on the `-include` / `--include` option
+* Program elements in navigation pane now use a monospace font.
 * Tcl core built-ins are ignored when documenting global namespace (bug fix)
 * The `document` command no longer supports supports the `-preeval` option. Do any
   required evaluation in the caller before invoking `document`.
