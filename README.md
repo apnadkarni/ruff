@@ -66,7 +66,7 @@ For additional examples of Ruff! generated documentation, see
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
-## Release notes for 3.0
+## Release notes for 3.0.3
 
 Note this is a major release and there may be subtle incompatibilities with
 2.x releases in both parsing of input and generated output.
