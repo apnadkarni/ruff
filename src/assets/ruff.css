@@ -855,3 +855,8 @@ summary.ruff-expand {
     color: #86efac;
     border-color: #86efac;
 }
+
+/* avoid microflicker on theme change, disable transitions until page is ready. */
+html:not(.ruff-theme-ready) * {
+    transition: none !important;
+}

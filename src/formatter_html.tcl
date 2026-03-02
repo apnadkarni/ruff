@@ -92,6 +92,23 @@ oo::class create ruff::formatter::Html {
         set titledesc [my Option -title]
         append Header "<title>$titledesc</title>\n"
 
+        # To avoid flashing when a page is displayed with the default CSS and
+        # then switched to a previously selected theme, chatGPT suggests the
+        # following fragment to add the theme to the <html> element right in
+        # the beginning.
+        append Header [::textutil::adjust::undent {
+            <script>
+            (function () {
+                try {
+                    var theme = localStorage.getItem("ruff_theme");
+                    if (theme) {
+                        document.documentElement.classList.add("ruff-theme-" + theme);
+                    }
+                } catch (e) {}
+            })();
+            </script>
+        }]
+
         if {[my Option -linkassets 1]} {
             append Header [my LinkAsset ruff-min.css ruff.css]
             append Header [my LinkAsset ruff-min.js ruff.js]
@@ -136,7 +153,13 @@ oo::class create ruff::formatter::Html {
         }
         append Footer "</footer>\n"
 
-        append Footer "</div></body></html>"
+        append Footer "</div>"
+
+        # From chatGPT - suggestion to prevent micro flicker on theme transitions.
+        # See ruff.css
+        append Footer "<script>document.documentElement.classList.add(\"ruff-theme-ready\"); </script>"
+
+        append Footer "</body></html>"
 
         return
     }
@@ -157,9 +180,6 @@ oo::class create ruff::formatter::Html {
 
     method DocumentEnd {} {
         # See [Formatter.DocumentEnd].
-
-        # Close off <div class='yui-b'><div id=yui-main> from DocumentBegin
-        #append Document "</div></div>"
 
         append Document "</main>"
 
