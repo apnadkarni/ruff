@@ -5,6 +5,9 @@ for programs written in the Tcl programming language. Ruff! uses runtime
 introspection in conjunction with comment analysis to generate reference
 documentation for Tcl programs with minimal effort on the programmer's part.
 
+See https://ruff.magicsplat.com for features and reference documentation. Source
+repository lives at https://github.com/apnadkarni/ruff.
+
 ## Why Ruff!
 
 Ruff! produces documentation that not only requires less duplication
@@ -46,8 +49,6 @@ and mixed-in methods and properties, is flattened and summarized.
 
 * HTML output supports navigation and user-selectable themes.
 
-See https://ruff.magicsplat.com for features and reference documentation.
-
 For additional examples of Ruff! generated documentation, see
 
 [iocp](https://iocp.magicsplat.com),
@@ -65,6 +66,10 @@ For additional examples of Ruff! generated documentation, see
 [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
+
+## Release notes for 3.0.4
+
+* Avoid flash when loading dark pages
 
 ## Release notes for 3.0.3
 
@@ -91,7 +96,6 @@ Note this is a major release and there may be subtle incompatibilities with
 * The `document` command no longer supports supports the `-preeval` option. Do any
   required evaluation in the caller before invoking `document`.
   *2.x incompatibility*
-
 
 ## Release notes for 2.7
 
