@@ -72,7 +72,7 @@ For examples of Sphinx-integrated documentation, see
 [SpiceGenTcl](https://georgtree.github.io/SpiceGenTcl/) or
 [OSVVM](https://osvvm.github.io/OSVVM-Scripts/osvvm-scripts/osvvm.html).
 
-[Ruff!'s PDF documentation](ruff.pdf) is an exambple of PDF output using
+[Ruff!'s PDF documentation](ruff.pdf) is an example of PDF output using
 Asciidoctor.
 
 ## Documentation
