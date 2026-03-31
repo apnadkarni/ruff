@@ -114,7 +114,7 @@ oo::class create ruff::formatter::Sphinx {
     }
 
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
-        # Adds heading for a program element like procedure, class or method.
+        # Adds heading without leading :: for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
         #  fqn - Fully qualified name of element.
         #  tooltip - The tooltip lines, if any, to be displayed in the
@@ -123,8 +123,8 @@ oo::class create ruff::formatter::Sphinx {
 
         set level    [dict get $HeaderLevels $type]
         set ns       [namespace qualifiers $fqn]
-        set anchor   [my MakeSphinxId $fqn]
-        set exported_anchor [make_exported_id $fqn]
+        set anchor   [my MakeSphinxId [string trimleft $fqn :]]
+        set exported_anchor [make_exported_id [string trimleft $fqn :]]
 
         # Track anchors for navigation
         set linkinfo [dict create tag h$level href "#$anchor"]

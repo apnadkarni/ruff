@@ -71,7 +71,7 @@ oo::class create ruff::formatter::Html {
 
     method SymbolReference {ns symbol} {
         # Implements the [Formatter.SymbolReference] method for HTML.
-        set ref [ns_file_base $ns]
+	    set ref [ns_file_base $ns]
         # Reference to the global namespace is to the file itself.
         if {$ns eq "::" && $symbol eq ""} {
             return $ref
@@ -277,7 +277,7 @@ oo::class create ruff::formatter::Html {
     }
 
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
-        # Adds heading for a program element like procedure, class or method.
+        # Adds heading without leading :: for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
         #  fqn - Fully qualified name of element.
         #  tooltip - The tooltip lines, if any, to be displayed in navigation pane.
@@ -288,9 +288,18 @@ oo::class create ruff::formatter::Html {
 
         set level    [dict get $HeaderLevels $type]
         set ns       [namespace qualifiers $fqn]
-        set anchor   [my Anchor $fqn]
-        set href     [my SymbolReference $ns $fqn]
-        set linkinfo [dict create level $level href $href ns $ns]
+        set anchor   [my Anchor [string trimleft $fqn :]]
+        set href     [my SymbolReference $ns [string trimleft $fqn :]]
+        set name     [namespace tail $fqn]
+        set scope    $ns
+	    if {$type eq {method}} {
+            # use fqn as <classname>.<methodname>
+	        if {[set i [string first . $name]] != -1} {
+		        set name [string range $name [incr i] end]
+                set scope [string range $fqn 2 end-[expr {[string length $name]+1}]]
+	        }
+        }
+        set linkinfo [dict create level $level href $href ns $scope]
 
         # Construct tooltip from synopsis and tooltip
         if {[llength $synopsis]} {
@@ -302,14 +311,16 @@ oo::class create ruff::formatter::Html {
         if {[info exists tip]} {
             dict set linkinfo tip $tip
         }
-
-        set name [namespace tail $fqn]
         dict set linkinfo label $name
         dict set NavigationLinks $anchor [dict create LinkInfo $linkinfo Type $type]
         dict set GlobalIndex $anchor $linkinfo
-        if {[string length $ns]} {
-            set ns_link [my FormatInline [markup_reference $ns]]
-            set heading "<a name='$anchor'>[my Escape $name]</a><span class='ns_scope'> \[${ns_link}\]</span>"
+        if {[string length $scope]} {
+            if {[my Reference? $scope ref]} {
+                set heading "<a name='$anchor'>[my Escape $name]</a><a href='[dict get $ref ref]'> [my Escape $scope]</a>"
+	        } else {
+                set ns_link [my FormatInline [markup_reference $scope]]
+                set heading "<a name='$anchor'>[my Escape $name]</a><span class='ns_scope'> \[${ns_link}\]</span>"
+	        }
         } else {
             set heading "<a name='$anchor'>[my Escape $fqn]</a>"
         }
