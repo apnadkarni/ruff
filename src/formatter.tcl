@@ -501,6 +501,7 @@ oo::class create ruff::formatter::Formatter {
         # but only if lookup value is not fully qualified.
 
         if {![my Reference? $lookup ref] && ! [string match ::* $lookup]} {
+            set scope [string trimleft $scope]
             while {$scope ne "" && ![info exists ref]} {
                 # Check class (.) and namespace scope (::)
                 if {[my Reference? ${scope}.$lookup ref]} {
