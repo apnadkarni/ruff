@@ -11,11 +11,13 @@ oo::class create ruff::formatter::Formatter {
     variable Namespaces; # Namespaces we are documenting
     variable SortedNamespaces;  # Exactly what it says
     variable FigureCounter; # Counter for figure captions
+    variable CurrentProcContext; # Current procedure context
 
     constructor {} {
         # Base class for output formatters.
         namespace path [linsert [namespace path] 0 ::ruff ::ruff::private]
         set References [dict create]
+        set CurrentProcContext ""
     }
 
     method Option {opt {default {}}} {
@@ -322,6 +324,7 @@ oo::class create ruff::formatter::Formatter {
         }
 
         set scope [namespace qualifiers $fqn]
+        set CurrentProcContext $fqn
 
         if {[info exists parameters]} {
             my AddParameters $parameters $scope
@@ -1515,7 +1518,11 @@ oo::class create ruff::formatter::Formatter {
                             set title $txt 
                             set match_found 1
                         } else {
-                            app::log_error "Warning: no target found for link \"$lbl\". Assuming markdown reference."
+                            set ctx_msg ""
+                            if {$CurrentProcContext ne ""} {
+                                set ctx_msg " in \"${CurrentProcContext}\""
+                            }
+                            app::log_error "Warning: no target found for link \"$lbl\"${ctx_msg}. Assuming markdown reference."
                             set lbl [string tolower $lbl]
                             append result [my Escape $m]
                             incr index [string length $m]
