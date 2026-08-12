@@ -123,7 +123,7 @@ oo::class create ruff::formatter::Markdown {
     }
 
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
-        # Adds heading for a program element like procedure, class or method.
+        # Adds heading without leading :: for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
         #  fqn - Fully qualified name of element.
         #  tooltip - The tooltip lines, if any, to be displayed in the navigation pane.
@@ -132,7 +132,7 @@ oo::class create ruff::formatter::Markdown {
         set level    [dict get $HeaderLevels $type]
         set atx      [string repeat # $level]
         set ns       [namespace qualifiers $fqn]
-        set anchor   [my Anchor $fqn]
+        set anchor   [my Anchor [string trimleft $fqn :]]
         set linkinfo [dict create tag h$level href "#$anchor"]
         if {[llength $tooltip]} {
             set tip "[my FormatInline [string trim [join $tooltip { }]] $ns]\n"
