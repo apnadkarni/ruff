@@ -112,9 +112,11 @@ oo::class create ruff::formatter::Html {
         if {[my Option -linkassets 1]} {
             append Header [my LinkAsset ruff-min.css ruff.css]
             append Header [my LinkAsset ruff-min.js ruff.js]
+            append Header [my LinkAsset highlight-tcl-min.js]
         } else {
             append Header [my GetAsset ruff-min.css ruff.css]
             append Header [my GetAsset ruff-min.js ruff.js]
+            append Header [my GetAsset highlight-tcl-min.js]
         }
 
         append Header "</head>\n"
@@ -157,7 +159,9 @@ oo::class create ruff::formatter::Html {
 
         # From chatGPT - suggestion to prevent micro flicker on theme transitions.
         # See ruff.css
-        append Footer "<script>document.documentElement.classList.add(\"ruff-theme-ready\"); </script>"
+        append Footer "\n<script>document.documentElement.classList.add(\"ruff-theme-ready\"); </script>"
+        # Apply Tcl syntax highlighting to all code blocks.
+        append Footer "\n<script>document.querySelectorAll('code.language-tcl').forEach(function (element) {hljs.highlightElement(element);});</script>"
 
         append Footer "</body></html>"
 
@@ -495,13 +499,21 @@ oo::class create ruff::formatter::Html {
         return
     }
 
-    method AddPreformattedText {text scope} {
+    method AddPreformattedText {text scope {highlight false}} {
         # See [Formatter.AddPreformattedText].
-        #  text  - Preformatted text.
-        #  scope - The documentation scope of the content.
-        append Document "<pre class='ruff'>\n" \
-            [my Escape $text] \
-            "\n</pre>\n"
+        #  text      - Preformatted text.
+        #  scope     - The documentation scope of the content.
+        #  highlight - Highlight the preformatted text
+
+        if {$highlight} {
+            append Document "<pre class='ruff'><code class='language-tcl'>" \
+                [my Escape $text] \
+                "</code></pre>\n"
+        } else {
+            append Document "<pre class='ruff'>\n" \
+                [my Escape $text] \
+                "\n</pre>\n"
+        }
         return
     }
 
@@ -530,6 +542,9 @@ oo::class create ruff::formatter::Html {
         }
 
         set fig_classes ruff-figure
+
+        set snippet_highlight [dict get $fence_options -highlight]
+
         if {[dict exists $fence_options -align]} {
             append fig_classes " ruff-[dict get $fence_options -align]"
         }
@@ -547,7 +562,7 @@ oo::class create ruff::formatter::Html {
             append Document "\n<img src='$image_url'></img>"
         } else {
             append Document "\n<figure $id class='ruff-snippet $fig_classes'>"
-            append Document [my AddPreformattedText [join $lines \n] $scope]
+            append Document [my AddPreformattedText [join $lines \n] $scope $snippet_highlight]
         }
         if {$display_caption ne ""} {
             append Document "\n<figcaption class='ruff-caption'>$display_caption</figcaption>"
@@ -593,6 +608,7 @@ oo::class create ruff::formatter::Html {
         set src_id [string map {:: _} $procname]
         set src_id [string map {: _ \" _ < _ > _ # _ $ _ ? _ ! _ . _ ( _ ) _} $src_id]
         set src_id [string trimleft $src_id _]
+        set highlight_sc [my Option -highlightsourcecode 1]
         if {$src_id eq {}} {
             set src_id [my NewSourceId]
         }
@@ -600,7 +616,12 @@ oo::class create ruff::formatter::Html {
         append Document "<p class='ruff_source_link'>"
         append Document "<a id='l_$src_id' href=\"javascript:toggleSource('$src_id')\">Show source</a>"
         append Document "</p>\n"
-        append Document "<div id='$src_id' class='ruff_dyn_src'><pre>[my Escape $source]</pre></div>\n"
+        if {$highlight_sc} {
+            append Document "<div id='$src_id' class='ruff_dyn_src'><pre>" \
+            "<code class='language-tcl'>[my Escape $source]</code></pre></div>\n"
+        } else {
+            append Document "<div id='$src_id' class='ruff_dyn_src'><pre>[my Escape $source]</pre></div>\n"
+        }
         append Document "</div>";    # class='ruff_source'
 
         return
@@ -798,7 +819,7 @@ oo::class create ruff::formatter::Html {
         #
 
         file mkdir [file join $outdir assets]
-        foreach fn {ruff-min.css ruff-min.js ruff-index-min.js} {
+        foreach fn {ruff-min.css ruff-min.js ruff-index-min.js highlight-tcl-min.js} {
             file copy -force [file join [ruff_dir] assets $fn] [file join $outdir assets $fn]
         }
     }
