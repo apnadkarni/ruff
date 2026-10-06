@@ -1644,7 +1644,7 @@ proc ruff::private::parse_fence_options {option_line} {
     # Returns a dictionary of the option values.
 
     set n [llength $option_line]
-    set options [dict create]
+    set options [dict create -highlight 1]
     for {set i 0} {$i < $n} {incr i} {
         set option [lindex $option_line $i]
         if {[string index $option 0] ne "-"} {
