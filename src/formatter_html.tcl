@@ -608,7 +608,7 @@ oo::class create ruff::formatter::Html {
         set src_id [string map {:: _} $procname]
         set src_id [string map {: _ \" _ < _ > _ # _ $ _ ? _ ! _ . _ ( _ ) _} $src_id]
         set src_id [string trimleft $src_id _]
-        set highlight_sc [my Option -highlightsourcecode 1]
+        set highlight_sc [my Option -highlightsource 1]
         if {$src_id eq {}} {
             set src_id [my NewSourceId]
         }
