@@ -26,6 +26,7 @@ foreach fmt $formats {
                   --preamble @[file join $dir preamble.ruff] \
                   --product Ruff! \
                   --punctuate \
+                  --highlights=all \
                   --split namespace \
                   -v [ruff::version]]
     if {$fmt eq "html"} {

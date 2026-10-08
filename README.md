@@ -33,7 +33,7 @@ mix-ins etc.
 
 On the output side,
 
-* Ruff! supports multiple formats (HTML, Markdown, reStructuredText, Asciidoc
+* Ruff! supports multiple output formats (HTML, Markdown, Sphinx, Asciidoc
 and nroff).
 
 * Generated documentation can optionally be split across multiple pages.
@@ -47,7 +47,7 @@ location of command and class documentation.
 * Class relationships are extracted and the full API for a class, with inherited
 and mixed-in methods and properties, is flattened and summarized.
 
-* HTML output supports navigation and user-selectable themes.
+* HTML output supports navigation and user-selectable themes with source highlighting.
 
 For additional examples of Ruff! generated documentation, see
 
@@ -66,6 +66,10 @@ For additional examples of Ruff! generated documentation, see
 [Woof!](http://woof.sourceforge.net/woof-ug-0.5/html/_woof/woof_manual.html)
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
+
+## Rekease notes for 3.1.0
+
+* Syntax highlighting support (thanks to Nicolas Robert)
 
 ## Release notes for 3.0.4
 
@@ -99,7 +103,7 @@ Note this is a major release and there may be subtle incompatibilities with
 
 ## Release notes for 2.7
 
-* Added a copy button for fenced blocks (thanks @nico-robert).
+* Added a copy button for fenced blocks (thanks to Nicolas Robert).
 
 ## Release notes for 2.6
 

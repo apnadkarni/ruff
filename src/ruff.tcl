@@ -116,6 +116,10 @@ namespace eval ruff {
                                        FORMAT. Defaults to only html.
               --hide-namespace=NS      Omit namespace qualifiers in class and
                                        procedure names in namespace NS.
+              --highlights=BLOCKTYPES  Controls highlighting of source code
+                                       and fenced blocks. BLOCKTYPES must be "all",
+                                       "none" or a comma separated list of zero
+                                       or more from amongst "source", "fenced".
               --include=TYPES          Type of program elements to include in the
                                        documentation. TYPES must be a list containing
                                        one or both of "classes" and "procs". Only
@@ -570,6 +574,8 @@ namespace eval ruff {
         `-align ALIGNMENT` - Aligns the output as per `ALIGNMENT` which may
         be specified as `left`, `right` or `center`.
         `-caption CAPTION` - Adds a caption below the output.
+        `-highlight BOOLEAN` - Controls whether the fenced block is highlighted.
+        The value will override the global option `-highlightfenced` value.
 
         In addition, a transform can be specified which transforms
         the input lines into some other form as opposed to outputting them
@@ -942,7 +948,7 @@ namespace eval ruff {
 
         ### Sphinx formatter
 
-        The Sphinx formatter generates documentation in reStructuredText
+        The Sphinx output formatter generates documentation in reStructuredText
         format in the form expected by the Sphinx documentation system. Note
         it is not directly usable by Python's doctools.
 
@@ -999,6 +1005,7 @@ namespace eval ruff {
         array set ProgramOptions {
             -format html
             -pagesplit none
+            -highlightfenced 1
         }
 
         variable ruff_dir
@@ -1644,7 +1651,7 @@ proc ruff::private::parse_fence_options {option_line} {
     # Returns a dictionary of the option values.
 
     set n [llength $option_line]
-    set options [dict create -highlight 1]
+    set options [dict create -highlight [program_option -highlightfenced]]
     for {set i 0} {$i < $n} {incr i} {
         set option [lindex $option_line $i]
         if {[string index $option 0] ne "-"} {
@@ -3436,6 +3443,11 @@ proc ruff::document {namespaces args} {
     #  it may result in ambiguities in case of names being present in more than
     #  one namespace. In particular, some formatters may not cross-link correctly
     #  in such cases.
+    # -highlightfenced BOOLEAN - Specifies the global default for highlighting
+    #  fenced blocks. Default is true. A fenced block may override this with
+    #  the `-highlight` option on the block starting line. See [::ruff::Fenced blocks].
+    # -highlightsource BOOLEAN - Controls whether the source code of documented
+    #  procedures is highlighted. Default is true.
     # -include LIST - Specifies which program elements are to be documented.
     #  `LIST` must be a list from one or both amongst `classes` or `procs`.
     #  Defaults to `procs classes`. This also controls the order in which
@@ -3524,6 +3536,7 @@ proc ruff::document {namespaces args} {
         -locale en
         -section 3tcl
         -diagrammer "kroki ditaa"
+        -highlightfenced 1
     }
 
     array set opts $args
@@ -3565,6 +3578,7 @@ proc ruff::document {namespaces args} {
     set ProgramOptions(-makeindex) $opts(-makeindex)
     set ProgramOptions(-diagrammer) $opts(-diagrammer)
     set ProgramOptions(-product) $opts(-product)
+    set ProgramOptions(-highlightfenced) $opts(-highlightfenced)
 
     # Fully qualify namespaces
     set namespaces [lmap ns $namespaces {
@@ -4032,7 +4046,7 @@ proc ruff::private::parse_options {argv} {
         --diagrammer:ARGS {
             # Arguments to pass to the diagram processor if
             # none specified in the diagram block header.
-            # Defaults to "kroci ditaa"
+            # Defaults to "kroci ditaa".
             lappend options -diagrammer $arg
         }
         --exclude-classes:REGEX {
@@ -4056,6 +4070,35 @@ proc ruff::private::parse_options {argv} {
             # Omit namespace qualifiers in class and
             # procedure names in namespace NS.
             lappend options -hidenamespace $arg
+        }
+        --highlights:BLOCKTYPES {
+            # Controls highlighting of source code
+            # and fenced blocks. BLOCKTYPES must be "all",
+            # "none" or a comma separated list of zero
+            # or more from amongst "source", "fenced".
+            switch $arg {
+                all {
+                    set hl_source 1
+                    set hl_fenced 1
+                }
+                none {
+                    set hl_source 0
+                    set hl_fenced 0
+                }
+                default {
+                    set hl_source 0
+                    set hl_fenced 0
+                    foreach blocktype [split $arg ,] {
+                        switch $blocktype {
+                            source { set hl_source 1 }
+                            fenced { set hl_fenced 1 }
+                            default { error "Unknown highlight block type \"$blocktype\""}
+                        }
+                    }
+                }
+            }
+            lappend options -highlightsource $hl_source
+            lappend options -highlightfenced $hl_fenced
         }
         --include:TYPES {
             # Type of program elements to include in the
