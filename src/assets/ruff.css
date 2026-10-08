@@ -860,3 +860,125 @@ summary.ruff-expand {
 html:not(.ruff-theme-ready) * {
     transition: none !important;
 }
+
+/* Highlight.js - Tcl syntax highlighting */
+.ruff-theme-light {
+    --ruff-code-comment: #6a737d;
+    --ruff-code-keyword: #d73a49;
+    --ruff-code-string: #008000;
+    --ruff-code-number: #005cc5;
+    --ruff-code-builtin: #6f42c1;
+    --ruff-code-variable: #e36209;
+}
+
+.ruff-theme-clouds {
+    --ruff-code-comment: #6a737d;
+    --ruff-code-keyword: #d73a49;
+    --ruff-code-string: #008000;
+    --ruff-code-number: #005cc5;
+    --ruff-code-builtin: #6f42c1;
+    --ruff-code-variable: #e36209;
+}
+
+.ruff-theme-dark {
+    --ruff-code-comment: #8b949e;
+    --ruff-code-keyword: #ff7b72;
+    --ruff-code-string: #a5d6ff;
+    --ruff-code-number: #79c0ff;
+    --ruff-code-builtin: #d2a8ff;
+    --ruff-code-variable: #ffa657;
+}
+
+.ruff-theme-solar {
+    --ruff-code-comment: #839496;
+    --ruff-code-keyword: #cb4b16;
+    --ruff-code-string: #2aa198;
+    --ruff-code-number: #268bd2;
+    --ruff-code-builtin: #6c71c4;
+    --ruff-code-variable: #b58900;
+}
+
+.ruff-theme-slate {
+    --ruff-code-comment: #a0aec0;
+    --ruff-code-keyword: #ff9f9f;
+    --ruff-code-string: #9ae6b4;
+    --ruff-code-number: #90cdf4;
+    --ruff-code-builtin: #d6bcfa;
+    --ruff-code-variable: #f6ad55;
+}
+
+.ruff-theme-maroon {
+    --ruff-code-comment: #888888;
+    --ruff-code-keyword: #800000;
+    --ruff-code-string: #008000;
+    --ruff-code-number: #0000cc;
+    --ruff-code-builtin: #660066;
+    --ruff-code-variable: #aa5500;
+}
+
+.ruff-theme-v1 {
+    --ruff-code-comment: #6a737d;
+    --ruff-code-keyword: #a31515;
+    --ruff-code-string: #008000;
+    --ruff-code-number: #0000ff;
+    --ruff-code-builtin: #795e26;
+    --ruff-code-variable: #af00db;
+}
+
+/* Highlight.js base */
+.ruff-bd pre code.hljs {
+    display: block;
+    overflow-x: auto;
+    background: transparent;
+    color: var(--ruff-bd-code-color);
+    padding: 0;
+}
+
+/* Comments */
+.ruff-bd .hljs-comment,
+.ruff-bd .hljs-quote {
+    color: var(--ruff-code-comment);
+    font-style: italic;
+}
+
+/* Keywords */
+.ruff-bd .hljs-keyword,
+.ruff-bd .hljs-selector-tag,
+.ruff-bd .hljs-literal {
+    color: var(--ruff-code-keyword);
+}
+
+/* Strings */
+.ruff-bd .hljs-string,
+.ruff-bd .hljs-regexp {
+    color: var(--ruff-code-string);
+}
+
+/* Numbers */
+.ruff-bd .hljs-number {
+    color: var(--ruff-code-number);
+}
+
+/* Built-in commands / functions */
+.ruff-bd .hljs-built_in,
+.ruff-bd .hljs-builtin-name {
+    color: var(--ruff-code-builtin);
+}
+
+/* Variables */
+.ruff-bd .hljs-variable,
+.ruff-bd .hljs-template-variable {
+    color: var(--ruff-code-variable);
+}
+
+/* Function / command names */
+.ruff-bd .hljs-title,
+.ruff-bd .hljs-title.function_ {
+    color: var(--ruff-code-builtin);
+}
+
+/* Operators / punctuation */
+.ruff-bd .hljs-operator,
+.ruff-bd .hljs-punctuation {
+    color: var(--ruff-bd-code-color);
+}
