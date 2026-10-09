@@ -88,7 +88,7 @@ namespace eval ruff {
         the `ruff.tcl` script. The `help` command or `--help` option will display
         usage information.
 
-        ```
+        ```nolang
         Usage: tclsh.exe ruff.tcl command [OPTION...] NAMESPACE ...
         Copyright (c) 2009-2026, Ashok P. Nadkarni
         All rights reserved.
@@ -189,19 +189,19 @@ namespace eval ruff {
         The following invocation is equivalent to the earlier example
         (assuming the `mypac` package implements the `NS` and `NS2` namespaces).
 
-        ````
+        ```nolang
         tclsh /path/to/ruff.tcl document -r -e "package require mypac" -d /path/to/docdir -s namespace ::NS ::NS2
-        ````
+        ```
 
         Similarly, to list all program elements and identify missing documentation,
 
-        ```
+        ```nolang
         tclsh /path/to/ruff.tcl coverage -r -e "package require mypac" ::NS ::NS2
         ```
 
         To only list program elements with missing documentation,
 
-        ```
+        ```nolang
         tclsh /path/to/ruff.tcl coverage --compact -r -e "package require mypac" ::NS ::NS2
         ```
 
@@ -346,7 +346,7 @@ namespace eval ruff {
         cells. The following is an example of a table with each column
         aligned differently.
 
-        ```
+        ```nolang
         |Left Aligned|Center Aligned|Right Aligned|Unaligned|
         |:-|:-:|-:|--|
         |Cell 0,0|Cell 0,1|Cell 0,2|Cell 0,3
@@ -361,7 +361,7 @@ namespace eval ruff {
 
         The header and separator may be omitted. For example,
 
-        ```
+        ```nolang
         |Cell 0,0|Cell 0,1|Cell 0,2|
         |Cell 1,0|Cell 1,1|Cell 1,2|
         ```
@@ -557,7 +557,7 @@ namespace eval ruff {
         additional options for specialized processing. The general form
         of a fenced block is
 
-        ````
+        ````nolang
         ```?language? ?option value...? ?transform arg...?
         some text
         lines
@@ -574,8 +574,12 @@ namespace eval ruff {
         `-align ALIGNMENT` - Aligns the output as per `ALIGNMENT` which may
         be specified as `left`, `right` or `center`.
         `-caption CAPTION` - Adds a caption below the output.
-        `-highlight BOOLEAN` - Controls whether the fenced block is highlighted.
-        The value will override the global option `-highlightfenced` value.
+        `-highlight BOOLEAN` - Controls whether the fenced block is subject to
+        syntax highlighting by the HTML formatter.
+        The value will override the global option `-highlightfenced` value. The HTML
+        formatter only supports highlighting of fenced blocks with the language
+        token `tcl`. Blocks without a language default to `tcl`. Other languages
+        will not be syntax highlighted.
 
         In addition, a transform can be specified which transforms
         the input lines into some other form as opposed to outputting them
@@ -588,7 +592,7 @@ namespace eval ruff {
 
         The fenced block below illustrates use of the options.
 
-        ````
+        ````nolang
         ``` -align center -caption "An example"
         This is a
         center-aligned
@@ -617,7 +621,7 @@ namespace eval ruff {
         by specifying the `diagram` transform on [fenced blocks][Fenced blocks].
         The following marks the content as a `ditaa` textual description.
 
-        ````
+        ````nolang
         ``` diagram
         +------------+   Ruff!   +---------------+
         | Tcl script |---------->| HTML document |
@@ -635,7 +639,7 @@ namespace eval ruff {
 
         The general format of the `diagram` transform is
 
-        ```
+        ```nolang
         ?fence options? diagram ?GENERATOR ARG ...?
         ```
 
@@ -664,7 +668,7 @@ namespace eval ruff {
         For example, the block below in `graphviz` format
 
 
-        ````
+        ````nolang
         ``` diagram kroki graphviz
         digraph {
             "Tcl package" -> "HTML document" [label=" Ruff!"]
@@ -714,7 +718,7 @@ namespace eval ruff {
         as a `jar` file to a directory included in the `PATH` environment variable.
         Then create a batch file containing the following in that same directory.
 
-        ```
+        ```nolang
         @echo off
         java -jar %~dp0\ditaa-0.11.0-standalone.jar %*
         ```
@@ -729,7 +733,7 @@ namespace eval ruff {
         arguments specified are passed to the `ditaa` executable.
         For example,
 
-        ````
+        ````nolang
         ``` diagram ditaa --round-corners --scale 0.8 --no-shadows
         +------------+   Ruff!   +---------------+
         | Tcl script |---------->| HTML document |
@@ -761,7 +765,7 @@ namespace eval ruff {
 
         Below is a captioned and centered version of the previous example.
 
-        ````
+        ````nolang
         ``` -align center -caption "Centered diagram with caption" diagram ditaa --scale 0.8
         +------------+   Ruff!   +---------------+
         | Tcl script |---------->| HTML document |
@@ -928,7 +932,7 @@ namespace eval ruff {
         ruff::document ::ruff -format markdown -outfile ruff.md -title "Ruff! reference"
         ```
         Then from the shell or Windows command line,
-        ```
+        ```nolang
         pandoc -s -o ruff.html -c ../ruff-md.css --metadata pagetitle="My package" ruff.md
         ```
 
@@ -962,7 +966,7 @@ namespace eval ruff {
         secondary files in the Ruff! output directory. To generate HTML from this
         file,
 
-        ```
+        ```nolang
         sphinx-build /PATH/TO/RUFF/OUTPUTDIR /PATH/TO/HTMLOUTPUT
         ```
 
@@ -986,14 +990,14 @@ namespace eval ruff {
         secondary files in the output directory. To generate HTML from this
         file,
 
-        ```
+        ```nolang
         asciidoctor index.adoc
         ```
 
         Asciidoctor also supports other output formats. For example,
         [Ruff! PDF documentation](ruff.pdf) is generated by
 
-        ```
+        ```nolang
         asciidoctor-pdf -o ruff.pdf index.adoc
         ```
     }
