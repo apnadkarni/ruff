@@ -499,14 +499,17 @@ oo::class create ruff::formatter::Html {
         return
     }
 
-    method AddPreformattedText {text scope {highlight false}} {
+    method AddPreformattedText {text scope {highlight false} {language ""}} {
         # See [Formatter.AddPreformattedText].
         #  text      - Preformatted text.
         #  scope     - The documentation scope of the content.
         #  highlight - Highlight the preformatted text
+        #  language  - Language for syntax highlighting
+
+        set lang [expr {$language ne "" ? [string trim $language] : "tcl"}]
 
         if {$highlight} {
-            append Document "<pre class='ruff'><code class='language-tcl'>" \
+            append Document "<pre class='ruff'><code class='language-$lang'>" \
                 [my Escape $text] \
                 "</code></pre>\n"
         } else {
@@ -544,6 +547,7 @@ oo::class create ruff::formatter::Html {
         set fig_classes ruff-figure
 
         set snippet_highlight [dict get $fence_options -highlight]
+        set language [dict get $fence_options Language]
 
         if {[dict exists $fence_options -align]} {
             append fig_classes " ruff-[dict get $fence_options -align]"
@@ -562,7 +566,8 @@ oo::class create ruff::formatter::Html {
             append Document "\n<img src='$image_url'></img>"
         } else {
             append Document "\n<figure $id class='ruff-snippet $fig_classes'>"
-            append Document [my AddPreformattedText [join $lines \n] $scope $snippet_highlight]
+            append Document [my AddPreformattedText [join $lines \n] \
+                            $scope $snippet_highlight $language]
         }
         if {$display_caption ne ""} {
             append Document "\n<figcaption class='ruff-caption'>$display_caption</figcaption>"
