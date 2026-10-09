@@ -925,8 +925,8 @@ html:not(.ruff-theme-ready) * {
     --ruff-code-variable: #af00db;
 }
 
-/* Highlight.js base */
-.ruff-bd pre code.hljs {
+/* Code blocks base (highlighted or not) */
+.ruff-bd pre code {
     display: block;
     overflow-x: auto;
     background: transparent;
