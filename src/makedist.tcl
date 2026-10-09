@@ -52,6 +52,7 @@ proc ruff::private::distribute {{dir {}}} {
     }
     file copy -force [file join [ruff_dir] assets ruff-md.css] $assets_dir
     file copy -force [file join [ruff_dir] assets ruff-logo.png] $assets_dir
+    file copy -force [file join [ruff_dir] assets highlight-tcl-min.js] $assets_dir
 
     # Zip it all
     set zipfile [file join $dir ${outname}.zip]

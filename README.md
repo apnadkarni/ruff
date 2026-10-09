@@ -67,7 +67,7 @@ For additional examples of Ruff! generated documentation, see
 and
 [tcl-vix](https://tcl-vix.magicsplat.com/).
 
-## Rekease notes for 3.1.0
+## Release notes for 3.1.0
 
 * Syntax highlighting support (thanks to Nicolas Robert)
 
