@@ -324,7 +324,6 @@ oo::class create ruff::formatter::Formatter {
         }
 
         set scope [namespace qualifiers $fqn]
-        set CurrentProcContext $fqn
 
         if {[info exists parameters]} {
             my AddParameters $parameters $scope
@@ -382,6 +381,11 @@ oo::class create ruff::formatter::Formatter {
             # Only the fqn and proctype are mandatory.
         }
         set scope [namespace qualifiers $fqn]
+        # Set the context before the heading and summary are formatted, since both
+        # call FormatInline. Setting it later (e.g. in AddProcedureDetail) would
+        # attribute link warnings in the summary to the previous proc.
+        set CurrentProcContext $fqn
+
         if {[info exists summary]} {
             if {[info exists synopsis]} {
                 my AddProgramElementHeading $proctype $fqn $summary $synopsis
@@ -402,6 +406,9 @@ oo::class create ruff::formatter::Formatter {
         }
 
         my AddProcedureDetail $procinfo
+
+        # Reset so warnings outside a proc.
+        set CurrentProcContext ""
 
         return
 
