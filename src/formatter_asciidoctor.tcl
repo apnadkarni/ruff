@@ -116,14 +116,14 @@ oo::class create ruff::formatter::Asciidoctor {
     }
 
     method AddProgramElementHeading {type fqn {tooltip {}} {synopsis {}}} {
-        # Adds heading for a program element like procedure, class or method.
+        # Adds heading without leading :: for a program element like procedure, class or method.
         #  type - One of `proc`, `class` or `method`
         #  fqn - Fully qualified name of element.
         #  tooltip - The tooltip lines, if any (not used in Asciidoctor).
 
         set level    [dict get $HeaderLevels $type]
-        set ns       [namespace qualifiers $fqn]
-        set anchor   [my MakeAsciidocId $fqn]
+        set ns       [namespace qualifiers [string trimleft $fqn :]]
+        set anchor   [my MakeAsciidocId [string trimleft $fqn:]]
         set exported_anchor [make_exported_id $fqn]
 
         set linkinfo [dict create tag h$level href "#$anchor"]

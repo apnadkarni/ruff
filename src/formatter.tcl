@@ -504,6 +504,7 @@ oo::class create ruff::formatter::Formatter {
         # but only if lookup value is not fully qualified.
 
         if {![my Reference? $lookup ref] && ! [string match ::* $lookup]} {
+            set scope [string trimleft $scope]
             while {$scope ne "" && ![info exists ref]} {
                 # Check class (.) and namespace scope (::)
                 if {[my Reference? ${scope}.$lookup ref]} {
@@ -569,19 +570,20 @@ oo::class create ruff::formatter::Formatter {
             }
         }
 
-        # Gather links for procs
+        # Gather links for procs without leading ::
         foreach proc_name [dict keys [dict get $ns_content procs]] {
             fqn! $proc_name
             ns_member! $ns $proc_name
-            my CollectSymbolReference $ns $proc_name
+            my CollectSymbolReference $ns [string trimleft $proc_name :]
         }
 
-        # Finally gather links for classes and methods
+        # Finally gather links for classes and methods without leading ::
         # A class name is also treated as a namespace component
         # although that is not strictly true.
         foreach {class_name class_info} [dict get $ns_content classes] {
             ns_member! $ns $class_name
-            my CollectSymbolReference $ns $class_name
+	    set class_ref [string trimleft $class_name :]
+            my CollectSymbolReference $ns $class_ref
             set method_info_list [concat [dict get $class_info methods] [dict get $class_info forwards]]
             foreach name {constructor destructor} {
                 if {[dict exists $class_info $name]} {
@@ -589,14 +591,10 @@ oo::class create ruff::formatter::Formatter {
                 }
             }
             foreach method_info $method_info_list {
-                # The class name is the scope for methods. Because of how
-                # the link target lookup works, we use the namespace
-                # operator to separate the class from method. We also
-                # store it a second time using the "." separator as that
-                # is how they are sometimes referenced.
+                # The class name is the scope for methods.
+                # We store and reference methods as <classname>.<methodname>.
                 set method_name [dict get $method_info name]
-                set ref [my CollectSymbolReference $ns ${class_name}::${method_name}]
-                my CollectSymbolReference $ns ${class_name}.${method_name} $ref
+                my CollectSymbolReference $ns ${class_ref}.${method_name}
             }
         }
     }
@@ -690,8 +688,9 @@ oo::class create ruff::formatter::Formatter {
         set display_name [trim_namespace $proc_name $hidenamespace]
 
         if {$proctype eq "method"} {
+            # Scope is class and fqn is <classname>.<methodname>.
             set scope $class; # Scope is name of class
-            set fqn   ${class}::$proc_name
+            set fqn   ${class}.$proc_name
         } else {
             set scope [namespace qualifiers $name]
             set fqn   $proc_name
@@ -906,6 +905,7 @@ oo::class create ruff::formatter::Formatter {
                 if {$referenced_class eq "::oo::configuresupport::configurable"} {
                     lappend method_summaries [list term $referenced_class.$method_name definition [list "Configure properties. See [markup_reference $referenced_class]."]]
                 } else {
+		    set referenced_class [string trimleft $referenced_class :]
                     lappend method_summaries [list term $referenced_class.$method_name definition [list "Inherited from [markup_reference $referenced_class]."]]
                 }
             }
@@ -977,7 +977,7 @@ oo::class create ruff::formatter::Formatter {
             # Creates locals for all the classinfo keys listed above.
         }
         my AddProgramElementHeading class $fqn
-        set scope $fqn
+        set scope [string trimleft $fqn :]
         if {[info exists preamble]} {
             my AddParagraphs $preamble $scope
         }
@@ -986,13 +986,15 @@ oo::class create ruff::formatter::Formatter {
             # The method names need to be escaped and linked.
             my AddDefinitions [lmap definition $method_summaries {
                 set term [dict get $definition term]
-                # TBD - The resolution currently only searches the namespace
-                # hierarchy, not the class hierarchy so methods defined
-                # in superclasses/mixins etc. will not be found. So
-                # those we just mark as code.
-                if {[my ResolvableReference? $term $scope dontcare]} {
-                    dict set definition term [markup_reference_to_method $term]
+               # Methods references as <classname>.<methodname> without leading ::.
+                if {[my ResolvableReference? $scope.$term {} dontcare]} {
+                    # own class method
+                    dict set definition term "\[$term\]\[$term\]"
+                } elseif {[my ResolvableReference? $term {} dontcare]} {
+                    # base class method
+                    dict set definition term "\[$term\]\[$term\]"
                 } elseif {[is_builtin $term]} {
+                    # ???
                     dict set definition term [markup_reference $term]
                 } else {
                     dict set definition term [markup_code $term]
@@ -1042,7 +1044,10 @@ oo::class create ruff::formatter::Formatter {
         }
         foreach var {superclasses mixins subclasses filters} {
             if {[info exists $var]} {
-                my AddReferences [set $var] $scope [string totitle $var]
+                # Add references without leading ::.
+		        set l {}
+		        foreach v [set $var] {lappend l [string trimleft $v :]}
+		        my AddReferences $l $scope [string totitle $var]
             }
         }
         if {[info exists constructor]} {
@@ -1210,6 +1215,7 @@ oo::class create ruff::formatter::Formatter {
                 # Add an anchor for actual namespace as well
                 my AddAnchor [my Anchor $ns]
             }
+            my AddAnchor [my Anchor $ns]
             my AddHeading 1 $ns_heading ""
 
             # Print the preamble for this namespace
